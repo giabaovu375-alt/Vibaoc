@@ -1,0 +1,16 @@
+// 14 — Route dong voi tham so ":id" - gia tri duoc bom vao state $id
+// khi dieu huong toi (vd /san-pham/42 -> $id = "42"). Khong dau.
+lang = "vi";
+
+ung_dung("Route dong") {
+    trang("/") {
+        text("Trang chu", co: 24, dam: true)
+        link("Xem san pham 1", den: "/san-pham/1")
+        link("Xem san pham 2", den: "/san-pham/2")
+    }
+
+    trang("/san-pham/:id") {
+        text("Chi tiet san pham", co: 24, dam: true)
+        text("Ma san pham: $id")
+    }
+}

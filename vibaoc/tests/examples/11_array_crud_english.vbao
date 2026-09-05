@@ -1,0 +1,36 @@
+// 11 — Same CRUD-on-array feature as test 10, English action names:
+// array_push / array_remove_by_id / array_update_by_id.
+app("Task manager EN") {
+    page("/") {
+        state $tasks = [
+            {id: 1, title: "Write docs", done: false},
+            {id: 2, title: "Fix display bug", done: true}
+        ]
+        state $next_id = 3
+
+        button("+ Add task") {
+            on_click {
+                array_push($tasks, {id: $next_id, title: "New task", done: false})
+                $next_id = $next_id + 1
+            }
+        }
+
+        loop $task trong $tasks {
+            box(padding: 12, direction: row, gap: 12) {
+                if $task.done {
+                    text($task.title, color: xam)
+                } else {
+                    text($task.title, bold: true)
+                }
+                button("Done") {
+                    on_click {
+                        array_update_by_id($tasks, "id", $task.id, {id: $task.id, title: $task.title, done: true})
+                    }
+                }
+                button("Remove") {
+                    on_click { array_remove_by_id($tasks, "id", $task.id) }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,10 @@
+// 01 — Ung dung toi thieu: mot trang, mot dong text tinh.
+// Muc tieu: kiem tra khung suon ung_dung()/trang() sinh du 3 file
+// index.html / app.js / style.css.
+lang = "vi";
+
+ung_dung("Ung dung toi thieu") {
+    trang("/") {
+        text("Xin chao ViBao")
+    }
+}

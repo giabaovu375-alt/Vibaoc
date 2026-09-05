@@ -1,0 +1,30 @@
+// 16 — BUG REPRO (khong phai loi cua nguoi viet file test): option key
+// ben trong loi goi action (vd "kieu:"/"thoi_gian:" cua thong_bao) KHONG
+// duoc dua qua locale resolver - vibaoc/src/parser/action.rs doc key
+// nguyen van string ("if let TokenKind::Identifier(k) ... opts.push((key,
+// ...))"), va vibao-runtime/src/runtime/action.rs::dispatch_function_call
+// chi doc dung "kieu"/"thoi_gian" (khong phai "type"/"duration").
+//
+// => Ca 2 nut button duoi day deu BUILD THANH CONG (khong loi), nhung
+// nut thu 2 (dung "kieu"/tieng Viet) se hien dung mau/thoi gian toast
+// nhu mong doi, con nut thu 1 (dung "type"/"duration" tieng Anh, giong
+// SYNTAX_EN.md muc "notify(text, type:, ...)") se LUON hien toast kieu
+// "info" mac dinh va 3000ms mac dinh du gia tri truyen vao la gi - day
+// la 1 su khong nhat quan giua tai lieu (SYNTAX_EN.md) va hanh vi that
+// cua compiler/runtime, khong phai loi cu phap.
+lang = "vi";
+
+ung_dung("Kiem tra bug option key") {
+    trang("/") {
+        button("Toast kieu tieng Anh (se KHONG dung mau)") {
+            khi_nhan {
+                thong_bao("Canh bao!", type: canh_bao, duration: 5000)
+            }
+        }
+        button("Toast kieu tieng Viet (dung nhu mong doi)") {
+            khi_nhan {
+                thong_bao("Canh bao!", kieu: canh_bao, thoi_gian: 5000)
+            }
+        }
+    }
+}

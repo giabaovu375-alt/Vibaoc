@@ -1,0 +1,31 @@
+// 05 — Cau truc re nhanh truong_hop (switch), so khop bang == nghiem
+// ngat, co mac_dinh. Viet tieng Viet KHONG DAU.
+lang = "vi";
+
+ung_dung("Demo truong hop") {
+    trang("/") {
+        state $trang_thai = "dang_tai"
+
+        truong_hop $trang_thai {
+            "dang_tai" {
+                text("Dang tai du lieu...", mau: xam)
+            }
+            "loi" {
+                text("Co loi xay ra", mau: do)
+            }
+            "thanh_cong" {
+                text("Thanh cong!", mau: xanh_la)
+            }
+            mac_dinh {
+                text("Trang thai khong xac dinh")
+            }
+        }
+
+        button("Doi sang loi") {
+            khi_nhan { $trang_thai = "loi" }
+        }
+        button("Doi sang thanh cong") {
+            khi_nhan { $trang_thai = "thanh_cong" }
+        }
+    }
+}

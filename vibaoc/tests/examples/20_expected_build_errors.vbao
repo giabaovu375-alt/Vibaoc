@@ -1,0 +1,47 @@
+// 20 — File nay CO CHU DICH LOI (khong dung de build thanh cong).
+// Dung de kiem tra vibaoc BAO LOI RO RANG cho tung truong hop, thay vi
+// crash hoac im lang sinh sai. Chi nen bat 1 loi tai 1 thoi diem — file
+// nay minh hoa NHIEU loi khac nhau bang comment, giu lai DUY NHAT 1
+// loi dang active o cuoi file (theme block bi tu choi) de co the build
+// thu ngay; cac loi khac duoc ghi chu lai kem mo ta ket qua mong doi de
+// nguoi kiem thu tu bat cap/uncomment tung cai.
+//
+// 1) Goi action khong ton tai (typo):
+//    thongbao("Xin chao")   // ket qua mong doi: LOI "Unknown action" +
+//                            // ten "thongbao" xuat hien trong stderr.
+//
+// 2) Action da biet nhung CHUA HO TRO (khac voi typo):
+//    dang_xuat()             // ket qua mong doi: LOI nhac ten
+//                            // "dang_xuat", KHONG chua chu "Unknown
+//                            // action" (xem action_vi.rs
+//                            // KNOWN_BUT_UNSUPPORTED_ACTIONS_VI).
+//
+// 3) Ham khong ton tai trong bieu thuc:
+//    text(gia_tienn($gia))   // ket qua mong doi: LOI nhac ten ham sai
+//                            // "gia_tienn".
+//
+// 4) Component dinh nghia trung ten:
+//    @the TheThe(nhan: chuoi) { text($nhan) }
+//    @the TheThe(nhan: chuoi) { text("Ban sao") }
+//                            // ket qua mong doi: LOI nhac "TheThe".
+//
+// 5) Range giam dan (N1 > N2) — KHONG duoc ho tro trong 0.1.0:
+//    vong_lap $i tu 5 den 1 { text("$i") }
+//                            // ket qua mong doi: LOI build-time ro
+//                            // rang, khong lang le sinh 0 phan tu.
+//
+// 6) them_vao_mang voi tham so dau la CHUOI (khong phai bien state tran):
+//    them_vao_mang("tasks", "x")
+//                            // ket qua mong doi: LOI nhac "state
+//                            // variable" / ten bien sai.
+
+lang = "vi";
+
+ung_dung("App") {
+    theme SangToi {
+        $mau_chinh = xanh
+    }
+    trang("/") {
+        text("noi dung")
+    }
+}

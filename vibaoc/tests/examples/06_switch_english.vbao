@@ -1,0 +1,29 @@
+// 06 — Same feature as test 05 (switch/case), English surface syntax
+// this time: switch / default keywords, English tag/prop names.
+app("Switch demo EN") {
+    page("/") {
+        state $status = "loading"
+
+        switch $status {
+            "loading" {
+                text("Loading data...", color: xam)
+            }
+            "error" {
+                text("Something went wrong", color: do)
+            }
+            "success" {
+                text("Success!", color: xanh_la)
+            }
+            default {
+                text("Unknown status")
+            }
+        }
+
+        button("Set error") {
+            on_click { $status = "error" }
+        }
+        button("Set success") {
+            on_click { $status = "success" }
+        }
+    }
+}

@@ -1,0 +1,34 @@
+// 15 — Page lifecycle events: on_load (on_tai) runs when the router
+// activates a page, on_unload (on_huy) runs right before leaving it.
+app("Page lifecycle EN") {
+    page("/") {
+        state $visits = 0
+
+        on_load {
+            $visits = $visits + 1
+            // NOTE (real gap found by reading vibaoc/src/parser/action.rs +
+            // vibao-runtime/src/runtime/action.rs): the option key inside
+            // an action call is NOT locale-resolved - the runtime only
+            // ever reads the literal string "kieu"/"thoi_gian". Writing
+            // `type: ...` here (the English prop name) would silently do
+            // nothing (toast always falls back to "info") even though the
+            // build succeeds with no warning. "kieu:" is required even in
+            // an all-English file. See test 16 for a dedicated repro.
+            notify("Welcome to Home!", kieu: thanh_cong)
+        }
+        on_unload {
+            notify("Leaving Home")
+        }
+
+        text("Visits this session: $visits")
+        link("Go to Settings", to: "/settings")
+    }
+
+    page("/settings") {
+        on_load {
+            notify("Settings loaded")
+        }
+        text("Settings page")
+        link("Back home", to: "/")
+    }
+}

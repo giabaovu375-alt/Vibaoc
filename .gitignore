@@ -1,0 +1,4 @@
+/target
+/vibao-runtime/pkg
+*.tar.gz
+/release

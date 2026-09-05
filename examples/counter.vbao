@@ -1,0 +1,31 @@
+lang = "vi";
+
+// Vi du co ban: state, su kien, va dieu kien.
+ung_dung("Bo dem ViBao") {
+    trang("/") {
+        state $dem = 0
+
+        khoi(dem: 24, huong: cot, khoang_chu: 16) {
+            text("ViBao — Bo dem", co: 28, dam: true)
+            text("Gia tri hien tai: $dem", co: 20)
+
+            khoi(huong: hang, khoang_chu: 8) {
+                button("Tang") {
+                    khi_nhan { $dem = $dem + 1 }
+                }
+                button("Giam") {
+                    khi_nhan { $dem = $dem - 1 }
+                }
+                button("Dat lai") {
+                    khi_nhan { $dem = 0 }
+                }
+            }
+
+            neu $dem >= 10 {
+                text("Ban da dat 10!", co: 16, mau: xanh_la)
+            } khong_thi {
+                text("Nhan Tang de dat 10.", co: 16, mau: xam)
+            }
+        }
+    }
+}

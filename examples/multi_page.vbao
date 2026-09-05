@@ -1,0 +1,37 @@
+// Example: multiple pages, navigation, and a reusable component.
+// Written in English surface syntax.
+//
+// NOTE (fixed during the pre-open-source test pass): the previous
+// version of this file used `title: string` (not a valid @the param
+// type - only chuoi/so/mau/bool/mang/doi_tuong/hanh_dong are accepted),
+// `light_gray`/`gray` (not valid color names - only 14 fixed names
+// exist, see docs/VIBAO_SPEC.md section 4), and `direction`/`gap` on
+// `box` (these props have NO CSS effect on `box` - they only work on
+// `flex`/`grid`/`scroll`, see vibaoc/src/codegen/layout.rs::resolve_box).
+// All three are corrected below so this file both compiles AND
+// actually renders the intended layout.
+app("Multi-page ViBao demo") {
+    @the Card(title: chuoi, subtitle: chuoi) {
+        box(padding: 16, border: 1, border_color: xam_nhat, radius: 8) {
+            text($title, font_size: 18, bold: true)
+            text($subtitle, font_size: 14, color: xam)
+        }
+    }
+
+    page("/") {
+        flex(direction: column, padding: 24, gap: 16) {
+            text("Home", font_size: 28, bold: true)
+            Card(title: "Fast to write", subtitle: "Vietnamese or English syntax")
+            Card(title: "Small runtime", subtitle: "WebAssembly, no framework")
+            link("About", to: "/about")
+        }
+    }
+
+    page("/about") {
+        flex(direction: column, padding: 24, gap: 12) {
+            text("About", font_size: 28, bold: true)
+            text("This app was compiled with vibaoc.")
+            link("Back home", to: "/")
+        }
+    }
+}

@@ -1,0 +1,30 @@
+// 12 — Component tự định nghĩa với @the, khai báo tham số kiểu
+// chuoi/so/mau/bool, dùng lại nhiều lần trên cùng 1 trang. Viết CÓ DẤU.
+lang = "vi";
+
+ung_dung("Component demo") {
+    @the TheNhan(nhan: chuoi, mau_nen: mau) {
+        khoi(dem: 6, mau_nen: $mau_nen, radius: 6) {
+            text("$nhan", co: 12, dam: true, mau: trang)
+        }
+    }
+
+    @the TheThanhVien(ten: chuoi, tuoi: so, la_admin: bool) {
+        khoi(dem: 16, mau_nen: xam_nhat, radius: 8) {
+            text($ten, co: 18, dam: true)
+            text("Tuổi: $tuoi", co: 14)
+            neu $la_admin {
+                TheNhan(nhan: "Quản trị viên", mau_nen: do)
+            } khong_thi {
+                TheNhan(nhan: "Thành viên", mau_nen: xam)
+            }
+        }
+    }
+
+    trang("/") {
+        text("Danh sách thành viên", co: 24, dam: true)
+        TheThanhVien(ten: "An", tuoi: 20, la_admin: true)
+        TheThanhVien(ten: "Bình", tuoi: 25, la_admin: false)
+        TheThanhVien(ten: "Chi", tuoi: 22, la_admin: false)
+    }
+}

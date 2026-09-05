@@ -1,0 +1,42 @@
+// 10 — CRUD tren mang: them_vao_mang / xoa_theo_id / cap_nhat_theo_id.
+// Khong dau. Rieng them_vao_mang BAT BUOC tham so dau la BIEN STATE
+// tran (khong duoc truyen string ten bien) - xem
+// vibaoc/tests/e2e_state_and_data.rs::array_push_action_rejects_a_string_literal_as_first_argument.
+lang = "vi";
+
+ung_dung("Quan ly cong viec") {
+    trang("/") {
+        state $tasks = [
+            {id: 1, tieu_de: "Viet tai lieu", xong: false},
+            {id: 2, tieu_de: "Sua loi hien thi", xong: true}
+        ]
+        state $id_ke_tiep = 3
+
+        text("Tong: $tasks.do_dai cong viec")
+
+        button("+ Them cong viec") {
+            khi_nhan {
+                them_vao_mang($tasks, {id: $id_ke_tiep, tieu_de: "Viec moi", xong: false})
+                $id_ke_tiep = $id_ke_tiep + 1
+            }
+        }
+
+        vong_lap $task trong $tasks {
+            khoi(dem: 12, huong: hang, gap: 12) {
+                neu $task.xong {
+                    text("Xong: $task.tieu_de", mau: xam)
+                } khong_thi {
+                    text("$task.tieu_de", dam: true)
+                }
+                button("Xong") {
+                    khi_nhan {
+                        cap_nhat_theo_id($tasks, "id", $task.id, {id: $task.id, tieu_de: $task.tieu_de, xong: true})
+                    }
+                }
+                button("Xoa") {
+                    khi_nhan { xoa_theo_id($tasks, "id", $task.id) }
+                }
+            }
+        }
+    }
+}

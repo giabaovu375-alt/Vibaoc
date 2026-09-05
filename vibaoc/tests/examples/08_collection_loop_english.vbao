@@ -1,0 +1,26 @@
+// 08 — Looping over a state array of objects (collection loop), plus
+// member access on the loop item ($item.field).
+//
+// IMPORTANT REAL GAP (found while reading vibaoc/src/parser/control.rs):
+// the `loop` keyword itself DOES have an English form, but the "trong"
+// connector word inside a collection loop ("vong_lap $x trong $list")
+// has NO English equivalent ("in" is NOT recognized) - the parser only
+// ever checks `self.check_ident("trong")`. So even in an all-English
+// file, you are still required to write the Vietnamese word "trong"
+// here. This is intentional evidence for the docs update, not a typo.
+app("Collection loop EN") {
+    page("/") {
+        state $products = [
+            {id: 1, name: "Keyboard", price: 250000},
+            {id: 2, name: "Mouse", price: 120000}
+        ]
+
+        text("Product list", bold: true)
+        loop $product trong $products {
+            box(padding: 8, border: 1) {
+                text($product.name, bold: true)
+                text($product.price)
+            }
+        }
+    }
+}

@@ -1,0 +1,18 @@
+// 09 — Vong lap bat ca chi so: "vong_lap $item, $idx trong $ds { ... }".
+// Khong dau. Dung de xoa/cap nhat theo vi tri (khac voi cap_nhat_theo_id
+// dua tren truong id).
+lang = "vi";
+
+ung_dung("Vong lap co chi so") {
+    trang("/") {
+        state $ten_list = ["An", "Binh", "Chi"]
+
+        vong_lap $ten, $idx trong $ten_list {
+            khoi(huong: hang, gap: 8) {
+                text("So thu tu:")
+                text($idx)
+                text($ten, dam: true)
+            }
+        }
+    }
+}

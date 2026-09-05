@@ -1,0 +1,49 @@
+// 04 — Moi layout tag va cac prop THUC SU co hieu ung CSS tren tung tag
+// (huong/gap chi co tac dung tren flex/grid/cuon, KHONG co tac dung tren
+// khoi - xem vibaoc/src/codegen/layout.rs::resolve_box). Kiem tra ca 9
+// layout tag deu compile va co display CSS dung.
+lang = "vi";
+
+ung_dung("Layout demo") {
+    trang("/") {
+        khoi(dem: 16, mau_nen: xam_nhat, radius: 8) {
+            text("Khoi (box) - display: block", dam: true)
+        }
+
+        flex(huong: hang, gap: 8, can: giua, doc: giua) {
+            text("Flex item 1")
+            text("Flex item 2")
+        }
+
+        grid(cot: "1fr 1fr 1fr", gap: 8) {
+            text("O 1")
+            text("O 2")
+            text("O 3")
+        }
+
+        stack(can: giua, doc: giua) {
+            text("Lop duoi")
+            text("Lop tren")
+        }
+
+        cuon(cao: 120, huong: doc) {
+            text("Noi dung cuon dai...")
+        }
+
+        lop() {
+            text("Lop goc cho absolute (position: relative)")
+        }
+
+        dinh_dau(offset: 0) {
+            text("Dinh dau man hinh (position: sticky)")
+        }
+
+        dinh_man_hinh(vi_tri: duoi) {
+            text("Dinh man hinh (position: fixed)")
+        }
+
+        can_giua(max_rong: 640, dem: 16) {
+            text("Container can giua, gioi han max_rong")
+        }
+    }
+}

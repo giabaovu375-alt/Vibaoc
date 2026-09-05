@@ -1,0 +1,36 @@
+// 13 — Custom component (@the) mounted on multiple pages + navigation
+// via `link`. Regresses the historical bug where only the LAST page's
+// components were mounted (see docs/VIBAO_SPEC.md section 0).
+app("Multi-page component EN") {
+    @the Card(title: chuoi, subtitle: chuoi) {
+        box(padding: 16, border: 1, border_color: xam_nhat, radius: 8) {
+            text($title, font_size: 18, bold: true)
+            text($subtitle, font_size: 14, color: xam)
+        }
+    }
+
+    page("/") {
+        box(padding: 24, direction: column, gap: 16) {
+            text("Home", font_size: 28, bold: true)
+            Card(title: "Fast to write", subtitle: "Vietnamese or English syntax")
+            Card(title: "Small runtime", subtitle: "WebAssembly, no framework")
+            link("About", den: "/about")
+        }
+    }
+
+    page("/about") {
+        box(padding: 24, direction: column, gap: 12) {
+            text("About", font_size: 28, bold: true)
+            Card(title: "Open source", subtitle: "Compiled with vibaoc")
+            Card(title: "Written in Rust", subtitle: "Fast, safe compiler core")
+            link("Back home", den: "/")
+        }
+    }
+
+    page("/contact") {
+        box(padding: 24, direction: column, gap: 12) {
+            text("Contact", font_size: 28, bold: true)
+            Card(title: "Email us", subtitle: "hello@example.com")
+        }
+    }
+}

@@ -1,0 +1,30 @@
+// 19 — Responsive override block (@di_dong) sinh @media query trong
+// CSS, va kiem tra du 14 ten mau hop le trong color_map(). English tag
+// names + mixed Vietnamese prop "mau_nen"/"rong" to also cover cross-
+// locale mixing on the SAME element (like the existing
+// mixed-props e2e test).
+app("Responsive & colors") {
+    page("/") {
+        box(mau_nen: xam_nhat, rong: 800, padding: 16) {
+            @di_dong {
+                rong: 320
+            }
+            text("Resize trinh duyet de kiem tra @di_dong", bold: true)
+        }
+
+        text("trang", color: trang)
+        text("den", color: den)
+        text("do", color: do)
+        text("xanh", color: xanh)
+        text("xanh_la", color: xanh_la)
+        text("vang", color: vang)
+        text("hong", color: hong)
+        text("tim", color: tim)
+        text("cam", color: cam)
+        text("xam", color: xam)
+        text("xam_nhat", color: xam_nhat)
+        text("xam_dam", color: xam_dam)
+        text("luc", color: luc)
+        text("nau", color: nau)
+    }
+}

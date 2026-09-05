@@ -1,0 +1,19 @@
+// 07 — Vòng lặp theo khoảng số (range) tăng dần bao gồm cả 2 đầu, và
+// vòng lặp lồng nhau (bảng cửu chương nhỏ). Viết CÓ DẤU.
+lang = "vi";
+
+ung_dung("Vòng lặp") {
+    trang("/") {
+        text("Đếm từ 1 đến 5:", dam: true)
+        vong_lap $i tu 1 den 5 {
+            text("Mục số $i")
+        }
+
+        text("Lưới ô vuông (lồng nhau):", dam: true)
+        vong_lap $hang tu 1 den 3 {
+            vong_lap $cot tu 1 den 3 {
+                text("Ô hàng $hang cột $cot")
+            }
+        }
+    }
+}

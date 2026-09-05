@@ -1,0 +1,56 @@
+lang = "vi";
+
+// Vi du: quan ly danh sach cong viec voi mang dong, vong lap, va
+// cac thao tac CRUD tren mang theo id (them_vao_mang / xoa_theo_id /
+// cap_nhat_theo_id).
+ung_dung("Quan ly cong viec") {
+
+    @the TheNhan(nhan: chuoi, mau_nen: mau) {
+        khoi(dem: 6, mau_nen: $mau_nen, radius: 6, huong: hang) {
+            text("$nhan", co: 12, dam: true, mau: trang)
+        }
+    }
+
+    trang("/") {
+        state $tasks = [
+            {id: 1, tieu_de: "Viet tai lieu huong dan", do_uu_tien: "cao", xong: false},
+            {id: 2, tieu_de: "Sua loi hien thi", do_uu_tien: "vua", xong: true}
+        ]
+        state $id_ke_tiep = 3
+
+        khoi(dem: 24, huong: cot, khoang_chu: 16, max_rong: 640) {
+            text("Quan ly cong viec", co: 28, dam: true)
+            text("Tong: $tasks.do_dai cong viec", co: 14, mau: xam)
+
+            button("+ Them cong viec") {
+                khi_nhan {
+                    them_vao_mang($tasks, {id: $id_ke_tiep, tieu_de: "Cong viec moi", do_uu_tien: "vua", xong: false})
+                    $id_ke_tiep = $id_ke_tiep + 1
+                }
+            }
+
+            vong_lap $task trong $tasks {
+                khoi(dem: 12, radius: 6, huong: hang, khoang_chu: 12, mau_vien: xam_nhat, kieu_vien: 1) {
+                    khoi(huong: cot, khoang_chu: 4) {
+                        neu $task.xong {
+                            text("✅ $task.tieu_de", co: 15, mau: xam)
+                        } khong_thi {
+                            text("$task.tieu_de", co: 15, dam: true)
+                        }
+                        TheNhan(nhan: "$task.do_uu_tien", mau_nen: xam)
+                    }
+                    khoi(huong: hang, khoang_chu: 8) {
+                        button("Xong") {
+                            khi_nhan {
+                                cap_nhat_theo_id($tasks, "id", $task.id, {id: $task.id, tieu_de: $task.tieu_de, do_uu_tien: $task.do_uu_tien, xong: true})
+                            }
+                        }
+                        button("Xoa") {
+                            khi_nhan { xoa_theo_id($tasks, "id", $task.id) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

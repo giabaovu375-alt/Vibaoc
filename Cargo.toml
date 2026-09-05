@@ -1,0 +1,3 @@
+[workspace]
+members = ["vibao-ast", "vibaoc", "vibao-runtime"]
+resolver = "2"

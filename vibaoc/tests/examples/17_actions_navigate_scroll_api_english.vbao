@@ -1,0 +1,59 @@
+// 17 — Actions: navigate, scroll_to_top, save_data, load_data, api_call.
+// English surface. Also documents a REAL LIMITATION found while reading
+// the source: open_modal/close_modal expect an element whose HTML id is
+// exactly "vb-modal-<id>", but there is NO prop in the language to set a
+// custom `id` on any element (checked prop_vi.rs/prop_en.rs - no `id`/
+// `ma` PropKey exists at all) - the ONLY element that ever gets that id
+// shape is the `modal` tag itself, and `modal` currently renders as an
+// EMPTY placeholder (see docs section 9 / element.rs::BUILTIN_COMPLEX).
+// So open_modal/close_modal have no working target in 0.1.0. Left
+// commented out below instead of asserting a false positive.
+app("Actions demo EN") {
+    page("/") {
+        state $note = "Hello"
+
+        button("Go to about") {
+            on_click { navigate("/about") }
+        }
+        button("Scroll to top") {
+            on_click { scroll_to_top() }
+        }
+        button("Save note") {
+            on_click { save_data("/api/notes", {text: $note}) }
+        }
+        button("Load notes") {
+            on_click { load_data("/api/notes") }
+        }
+        button("Call API directly") {
+            on_click { api_call("GET", "/api/ping") }
+        }
+        button("Call API with callbacks (bug repro)") {
+            on_click {
+                // ANOTHER REAL GAP (vibaoc/src/parser/action.rs): the
+                // success/failure callback block ONLY recognizes the
+                // literal Vietnamese identifiers "thanh_cong"/"that_bai"
+                // (`if cb_name == "thanh_cong"` / `== "that_bai"`), with
+                // no English equivalent ("success"/"failure" are silently
+                // ignored - parsed as a callback with an unrecognized
+                // name, matching neither branch, so NEITHER on_success
+                // NOR on_failure is ever set). Even in a 100% English
+                // file, "thanh_cong"/"that_bai" are required here.
+                api_call("GET", "/api/ping") {
+                    thanh_cong {
+                        notify("API OK", kieu: thanh_cong)
+                    }
+                    that_bai {
+                        notify("API failed", kieu: loi)
+                    }
+                }
+            }
+        }
+
+        // open_modal/close_modal intentionally NOT exercised here - see
+        // the note above; there is no valid element id target in 0.1.0.
+    }
+
+    page("/about") {
+        text("About page (scroll target)")
+    }
+}

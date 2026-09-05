@@ -1,0 +1,10 @@
+// 02 — Minimal app, English surface syntax.
+// Goal: confirm app()/page() (English keywords) compile to the same
+// shape as ung_dung()/trang() (test 01), with no `lang` directive
+// (English is the default diagnostic locale, no declaration needed).
+
+app("Minimal App") {
+    page("/") {
+        text("Hello ViBao")
+    }
+}

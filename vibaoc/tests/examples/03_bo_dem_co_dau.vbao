@@ -1,0 +1,35 @@
+// 03 — Bộ đếm, viết tiếng Việt CÓ DẤU trong chuỗi/bình luận (phần từ
+// khoá/prop vẫn phải viết không dấu snake_case — ViBao chỉ chấp nhận
+// dấu trong LEXER cho định danh/tên màu qua normalize_vietnamese, còn
+// chuỗi hiển thị thì luôn hỗ trợ có dấu tự nhiên).
+// Mục tiêu: state, on_click (khi_nhan), so sánh, if/else, phép cộng số.
+lang = "vi";
+
+ung_dung("Bộ đếm") {
+    trang("/") {
+        state $dem = 0
+
+        khoi(dem: 24, huong: cot, khoang_chu: 16) {
+            text("Bộ đếm ViBao", co: 28, dam: true)
+            text("Giá trị hiện tại: $dem", co: 20)
+
+            khoi(huong: hang, khoang_chu: 8) {
+                button("Tăng") {
+                    khi_nhan { $dem = $dem + 1 }
+                }
+                button("Giảm") {
+                    khi_nhan { $dem = $dem - 1 }
+                }
+                button("Đặt lại") {
+                    khi_nhan { $dem = 0 }
+                }
+            }
+
+            neu $dem >= 10 {
+                text("Bạn đã đạt 10!", co: 16, mau: xanh_la)
+            } khong_thi {
+                text("Nhấn Tăng để đạt 10.", co: 16, mau: xam)
+            }
+        }
+    }
+}

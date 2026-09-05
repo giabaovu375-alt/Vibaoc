@@ -1,0 +1,29 @@
+// 18 — Input 2 chieu (gia_tri: $bien kich hoat bind_model), dynamic
+// class (lop: {ten: $dieu_kien}), va animation (hieu_ung_hover /
+// hieu_ung_cuon). Viết CÓ DẤU.
+// LƯU Ý theo docs/VIBAO_SPEC.md mục 9: bind_model có code runtime
+// nhưng CHƯA test thực tế với input thật trong trình duyệt — file này
+// chỉ xác nhận nó BUILD được, không khẳng định hành vi trình duyệt.
+lang = "vi";
+
+ung_dung("Input & animation") {
+    trang("/") {
+        state $ten = "Khách"
+        state $dang_chon = false
+        state $im_lặng = true
+
+        text("Nhập tên của bạn:")
+        input(gia_tri: $ten, loai: "text", chu_tro: "Tên của bạn...")
+        text("Xin chào, $ten!")
+
+        button("Chọn tôi", lop: { active: $dang_chon, muted: $im_lặng }) {
+            khi_nhan { $dang_chon = !$dang_chon }
+        }
+
+        button("Di chuột vào đây", hieu_ung_hover: "phong_to")
+
+        khoi(dem: 16, hieu_ung_cuon: "fade_in") {
+            text("Khối này xuất hiện mờ dần khi cuộn tới")
+        }
+    }
+}
