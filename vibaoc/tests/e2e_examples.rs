@@ -4,11 +4,10 @@ use std::fs;
 use std::path::Path;
 
 fn read_example(name: &str) -> String {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/examples")
-        .join(name);
-    fs::read_to_string(&path)
-        .unwrap_or_else(|e| panic!("failed to read example fixture '{}': {}", path.display(), e))
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/examples").join(name);
+    fs::read_to_string(&path).unwrap_or_else(|e| {
+        panic!("failed to read example fixture '{}': {}", path.display(), e)
+    })
 }
 
 #[test]
@@ -33,16 +32,8 @@ fn example_03_bo_dem_co_dau_builds_ok() {
     let (_dir, result) = build_source("ex03", &src);
     result.assert_ok();
     let html = result.html();
-    assert!(
-        html.contains("data-vb-if="),
-        "expected an if-binding, html:\n{}",
-        html
-    );
-    assert!(
-        html.contains("data-vb-else"),
-        "expected an else-binding, html:\n{}",
-        html
-    );
+    assert!(html.contains("data-vb-if="), "expected an if-binding, html:\n{}", html);
+    assert!(html.contains("data-vb-else"), "expected an else-binding, html:\n{}", html);
 }
 
 #[test]
@@ -51,26 +42,10 @@ fn example_04_layout_tags_builds_ok_and_generates_expected_display_css() {
     let (_dir, result) = build_source("ex04", &src);
     result.assert_ok();
     let css = result.css();
-    assert!(
-        css.contains("flex"),
-        "expected a flex display rule, css:\n{}",
-        css
-    );
-    assert!(
-        css.contains("grid"),
-        "expected a grid display rule, css:\n{}",
-        css
-    );
-    assert!(
-        css.contains("sticky"),
-        "expected a sticky position rule, css:\n{}",
-        css
-    );
-    assert!(
-        css.contains("fixed"),
-        "expected a fixed position rule, css:\n{}",
-        css
-    );
+    assert!(css.contains("flex"), "expected a flex display rule, css:\n{}", css);
+    assert!(css.contains("grid"), "expected a grid display rule, css:\n{}", css);
+    assert!(css.contains("sticky"), "expected a sticky position rule, css:\n{}", css);
+    assert!(css.contains("fixed"), "expected a fixed position rule, css:\n{}", css);
 }
 
 #[test]
@@ -103,10 +78,7 @@ fn example_07_vong_lap_range_builds_ok() {
     let (_dir, result) = build_source("ex07", &src);
     result.assert_ok();
     let js = result.js();
-    assert!(
-        js.contains("\"i\"") || js.contains("'i'"),
-        "range loop var name 'i' should be preserved"
-    );
+    assert!(js.contains("\"i\"") || js.contains("'i'"), "range loop var name 'i' should be preserved");
 }
 
 #[test]
@@ -155,11 +127,7 @@ fn example_13_component_multi_page_english_mounts_on_every_page() {
     result.assert_ok();
     let html = result.html();
     let count = html.matches("data-vb-component=\"Card\"").count();
-    assert_eq!(
-        count, 5,
-        "expected 5 mounted Card instances (2+2+1 across 3 pages), found {}",
-        count
-    );
+    assert_eq!(count, 5, "expected 5 mounted Card instances (2+2+1 across 3 pages), found {}", count);
 }
 
 #[test]
@@ -204,11 +172,7 @@ fn example_19_responsive_and_colors_builds_ok_and_emits_media_query() {
     let (_dir, result) = build_source("ex19", &src);
     result.assert_ok();
     let css = result.css();
-    assert!(
-        css.contains("@media"),
-        "expected a @media rule from @di_dong, css:\n{}",
-        css
-    );
+    assert!(css.contains("@media"), "expected a @media rule from @di_dong, css:\n{}", css);
 }
 
 #[test]
@@ -232,52 +196,22 @@ fn portfolio_example_builds_and_copies_public_assets() {
     let result = common::run_build(&source, &out_dir);
     result.assert_ok();
 
-    assert!(
-        out_dir.join("avatar.svg").is_file(),
-        "public/avatar.svg must be copied"
-    );
-    assert!(
-        out_dir.join("favicon.svg").is_file(),
-        "public/favicon.svg must be copied"
-    );
+    assert!(out_dir.join("avatar.svg").is_file(), "public/avatar.svg must be copied");
+    assert!(out_dir.join("favicon.svg").is_file(), "public/favicon.svg must be copied");
 
     let html = result.html();
-    assert!(
-        html.contains("<link rel=\"icon\" type=\"image/svg+xml\" href=\"./favicon.svg\">"),
-        "{}",
-        html
-    );
-    assert!(
-        html.contains("<meta name=\"description\" content=\"Portfolio của Gia Bảo"),
-        "{}",
-        html
-    );
+    assert!(html.contains("<link rel=\"icon\" type=\"image/svg+xml\" href=\"./favicon.svg\">"), "{}", html);
+    assert!(html.contains("<meta name=\"description\" content=\"Portfolio của Gia Bảo"), "{}", html);
     assert!(html.contains("<meta property=\"og:title\""), "{}", html);
-    assert!(
-        html.contains("href=\"https://github.com/giabaovu375-alt\""),
-        "{}",
-        html
-    );
+    assert!(html.contains("href=\"https://github.com/giabaovu375-alt\""), "{}", html);
     assert!(
         !html.contains("data-vb-link=\"https://github.com/giabaovu375-alt\""),
         "an external link must not be intercepted by the router: {}",
         html
     );
     assert!(html.contains("data-vb-link=\"#du-an\""), "{}", html);
-    for element in [
-        "<header ",
-        "<main ",
-        "<section ",
-        "<footer ",
-        "<h1 ",
-        "<h2 ",
-    ] {
-        assert!(
-            html.contains(element),
-            "semantic element {} missing: {}",
-            element,
-            html
-        );
+    for element in ["<header ", "<main ", "<section ", "<footer ", "<h1 ", "<h2 "] {
+        assert!(html.contains(element), "semantic element {} missing: {}", element, html);
     }
 
     let css = result.css();
@@ -289,33 +223,15 @@ fn portfolio_example_builds_and_copies_public_assets() {
     assert!(css.contains("[data-vb-loop] { display: none; }"), "{}", css);
 
     assert!(css.contains(":root { --nen: #FFFFFF;"), "{}", css);
-    assert!(
-        css.contains("@media (prefers-color-scheme: dark)"),
-        "{}",
-        css
-    );
+    assert!(css.contains("@media (prefers-color-scheme: dark)"), "{}", css);
     assert!(css.contains("--nen: #1a202c"), "{}", css);
     assert!(css.contains("background-color: var(--nen)"), "{}", css);
     assert!(html.contains("var(--nhan)"), "{}", html);
-    assert!(
-        html.contains("<html lang=\"vi\" data-vb-themes=\"sang,toi\">"),
-        "{}",
-        html
-    );
+    assert!(html.contains("<html lang=\"vi\" data-vb-themes=\"sang,toi\">"), "{}", html);
     assert!(result.js().contains("dat_chu_de"), "{}", result.js());
     assert!(html.contains("Repo mới trên GitHub"), "{}", html);
-    assert!(
-        result
-            .js()
-            .contains("api.github.com/users/giabaovu375-alt/repos"),
-        "{}",
-        result.js()
-    );
-    assert!(
-        result.js().contains("\"background\":true"),
-        "{}",
-        result.js()
-    );
+    assert!(result.js().contains("api.github.com/users/giabaovu375-alt/repos"), "{}", result.js());
+    assert!(result.js().contains("\"background\":true"), "{}", result.js());
 }
 
 #[test]
@@ -345,13 +261,7 @@ ung_dung("Style") {
     assert!(css.contains("scroll-behavior: smooth"), "{}", css);
     assert!(css.contains("scroll-padding-top: 64px"), "{}", css);
     let html = result.html();
-    assert!(
-        html.contains(
-            "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Inter\">"
-        ),
-        "{}",
-        html
-    );
+    assert!(html.contains("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Inter\">"), "{}", html);
 }
 
 #[test]
@@ -369,11 +279,7 @@ app("Style") {
 "#;
     let (_dir, result) = common::build_source("global-style-en", src);
     result.assert_ok();
-    assert!(
-        result.css().contains("font-family: Georgia, serif"),
-        "{}",
-        result.css()
-    );
+    assert!(result.css().contains("font-family: Georgia, serif"), "{}", result.css());
 }
 
 #[test]
@@ -410,11 +316,7 @@ fn chat_groq_example_builds_with_headers_index_and_preserved_lines() {
     assert!(html.contains("overflow-wrap:anywhere"), "{}", html);
 
     let js = result.js();
-    assert!(
-        js.contains("api.groq.com/openai/v1/chat/completions"),
-        "{}",
-        js
-    );
+    assert!(js.contains("api.groq.com/openai/v1/chat/completions"), "{}", js);
     assert!(js.contains("Authorization"), "{}", js);
     assert!(js.contains("\"choices\""), "{}", js);
 }
@@ -423,46 +325,23 @@ fn chat_groq_example_builds_with_headers_index_and_preserved_lines() {
 fn build_voi_site_url_sinh_sitemap_robots_404_va_the_seo() {
     let repo_examples = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../examples");
     let dir = common::TempDir::new("site-url");
-    let source = dir.write(
-        "app.vbao",
-        &std::fs::read_to_string(repo_examples.join("multi_page.vbao")).unwrap(),
-    );
+    let source = dir.write("app.vbao", &std::fs::read_to_string(repo_examples.join("multi_page.vbao")).unwrap());
     std::fs::create_dir_all(dir.path.join("public")).unwrap();
     std::fs::write(dir.path.join("public").join("og-image.png"), "png").unwrap();
     let out_dir = dir.path.join("dist");
-    let result =
-        common::run_build_with_args(&source, &out_dir, &["--site-url", "https://vi-du.com/"]);
+    let result = common::run_build_with_args(&source, &out_dir, &["--site-url", "https://vi-du.com/"]);
     result.assert_ok();
 
     let html = result.html();
-    assert!(
-        html.contains("<link rel=\"canonical\" href=\"https://vi-du.com/\">"),
-        "{}",
-        html
-    );
-    assert!(
-        html.contains("<meta property=\"og:image\" content=\"https://vi-du.com/og-image.png\">"),
-        "{}",
-        html
-    );
+    assert!(html.contains("<link rel=\"canonical\" href=\"https://vi-du.com/\">"), "{}", html);
+    assert!(html.contains("<meta property=\"og:image\" content=\"https://vi-du.com/og-image.png\">"), "{}", html);
     assert!(html.contains("summary_large_image"), "{}", html);
 
     let sitemap = std::fs::read_to_string(out_dir.join("sitemap.xml")).unwrap();
-    assert!(
-        sitemap.contains("<loc>https://vi-du.com/</loc>"),
-        "{}",
-        sitemap
-    );
+    assert!(sitemap.contains("<loc>https://vi-du.com/</loc>"), "{}", sitemap);
     let robots = std::fs::read_to_string(out_dir.join("robots.txt")).unwrap();
-    assert!(
-        robots.contains("Sitemap: https://vi-du.com/sitemap.xml"),
-        "{}",
-        robots
-    );
-    assert_eq!(
-        std::fs::read_to_string(out_dir.join("404.html")).unwrap(),
-        html
-    );
+    assert!(robots.contains("Sitemap: https://vi-du.com/sitemap.xml"), "{}", robots);
+    assert_eq!(std::fs::read_to_string(out_dir.join("404.html")).unwrap(), html);
 }
 
 #[test]
@@ -485,11 +364,7 @@ fn example_21_tinh_nang_0_1_5_builds_with_theme_api_index_and_preserved_lines() 
     result.assert_ok();
 
     let html = result.html();
-    assert!(
-        html.contains("<html lang=\"vi\" data-vb-themes=\"sang,toi\">"),
-        "{}",
-        html
-    );
+    assert!(html.contains("<html lang=\"vi\" data-vb-themes=\"sang,toi\">"), "{}", html);
     assert!(html.contains("white-space:pre-wrap"), "{}", html);
     assert!(html.contains("Danh sách trống"), "{}", html);
 
@@ -503,3 +378,4 @@ fn example_21_tinh_nang_0_1_5_builds_with_theme_api_index_and_preserved_lines() 
     assert!(js.contains("\"property\":\"0\""), "{}", js);
     assert!(js.contains("dat_chu_de"), "{}", js);
 }
+

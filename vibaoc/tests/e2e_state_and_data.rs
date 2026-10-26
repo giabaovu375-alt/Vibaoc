@@ -20,14 +20,8 @@ ung_dung("App") {
     );
     result.assert_ok();
     let js = result.js();
-    assert!(
-        js.contains("dem_trang_chu"),
-        "state from the first page must be present"
-    );
-    assert!(
-        js.contains("dem_khac"),
-        "state from a later page must also be present"
-    );
+    assert!(js.contains("dem_trang_chu"), "state from the first page must be present");
+    assert!(js.contains("dem_khac"), "state from a later page must also be present");
 }
 
 #[test]
@@ -160,10 +154,7 @@ ung_dung("App") {
     );
     result.assert_ok();
     let html = result.html();
-    assert!(
-        html.contains("ten"),
-        "the bound state variable name should appear in the emitted markup"
-    );
+    assert!(html.contains("ten"), "the bound state variable name should appear in the emitted markup");
 }
 
 #[test]

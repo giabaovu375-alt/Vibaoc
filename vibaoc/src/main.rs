@@ -1,13 +1,13 @@
-mod codegen;
-mod deploy;
-mod diagnostic;
 mod lexer;
 mod locale;
 mod parser;
+mod codegen;
 mod resolver;
+mod validator;
+mod diagnostic;
 mod serve;
 mod theme_check;
-mod validator;
+mod deploy;
 
 use std::env;
 use std::fs;
@@ -26,10 +26,7 @@ fn main() {
         }
         Some("build") | Some("check") => {
             if args.len() < 3 {
-                eprintln!(
-                    "{}\n\nerror[E0003] Missing input file.",
-                    diagnostic::usage()
-                );
+                eprintln!("{}\n\nerror[E0003] Missing input file.", diagnostic::usage());
                 process::exit(2);
             }
             let subcommand = args[1].as_str();
@@ -51,24 +48,19 @@ fn main() {
             let path = match args.get(2) {
                 Some(path) => path,
                 None => {
-                    eprintln!(
-                        "{}\n\nerror[E0003] Missing input file.",
-                        diagnostic::usage()
-                    );
+                    eprintln!("{}\n\nerror[E0003] Missing input file.", diagnostic::usage());
                     process::exit(2);
                 }
             };
             let out_dir = parse_out_dir(&args).unwrap_or_else(|| PathBuf::from("dist"));
             let port = match flag_value(&args, "--port") {
-                Some(raw) => {
-                    match raw.parse::<u16>() {
-                        Ok(port) => port,
-                        Err(_) => {
-                            eprintln!("error[E0005] Invalid --port value '{}'. Use a number from 1 to 65535.", raw);
-                            process::exit(2);
-                        }
+                Some(raw) => match raw.parse::<u16>() {
+                    Ok(port) => port,
+                    Err(_) => {
+                        eprintln!("error[E0005] Invalid --port value '{}'. Use a number from 1 to 65535.", raw);
+                        process::exit(2);
                     }
-                }
+                },
                 None => 8000,
             };
             let host = flag_value(&args, "--host").unwrap_or_else(|| "127.0.0.1".to_string());
@@ -86,11 +78,7 @@ fn main() {
             cmd_build(path, Path::new("dist"), None);
         }
         Some(command) => {
-            eprintln!(
-                "error[E0004] Unknown command '{}'.\n\n{}",
-                command,
-                diagnostic::usage()
-            );
+            eprintln!("error[E0004] Unknown command '{}'.\n\n{}", command, diagnostic::usage());
             process::exit(2);
         }
         None => {
@@ -121,10 +109,7 @@ fn compile(path: &str) -> (codegen::CodegenOutput, diagnostic::Locale) {
     let source = match fs::read_to_string(path) {
         Ok(s) => s,
         Err(e) => {
-            eprintln!(
-                "{}",
-                diagnostic::missing_file(diagnostic::Locale::English, Path::new(path), &e)
-            );
+            eprintln!("{}", diagnostic::missing_file(diagnostic::Locale::English, Path::new(path), &e));
             process::exit(1);
         }
     };
@@ -133,21 +118,7 @@ fn compile(path: &str) -> (codegen::CodegenOutput, diagnostic::Locale) {
     let tokens = match lexer::tokenize(&source) {
         Ok(t) => t,
         Err(e) => {
-            eprintln!(
-                "{}",
-                diagnostic::render(
-                    source_locale,
-                    "error",
-                    "E1001",
-                    "lexer",
-                    Path::new(path),
-                    &source,
-                    e.line,
-                    e.column,
-                    &e.message,
-                    None
-                )
-            );
+            eprintln!("{}", diagnostic::render(source_locale, "error", "E1001", "lexer", Path::new(path), &source, e.line, e.column, &e.message, None));
             process::exit(1);
         }
     };
@@ -155,21 +126,7 @@ fn compile(path: &str) -> (codegen::CodegenOutput, diagnostic::Locale) {
     let (program, locale) = match parser::parse_with_locale(tokens) {
         Ok(p) => p,
         Err(e) => {
-            eprintln!(
-                "{}",
-                diagnostic::render(
-                    source_locale,
-                    "error",
-                    "E2001",
-                    "parser",
-                    Path::new(path),
-                    &source,
-                    e.line,
-                    e.column,
-                    &e.message,
-                    None
-                )
-            );
+            eprintln!("{}", diagnostic::render(source_locale, "error", "E2001", "parser", Path::new(path), &source, e.line, e.column, &e.message, None));
             process::exit(1);
         }
     };
@@ -177,53 +134,19 @@ fn compile(path: &str) -> (codegen::CodegenOutput, diagnostic::Locale) {
     let program = match resolver::resolve_with_locale(program, Path::new(path), locale) {
         Ok(p) => p,
         Err(e) => {
-            eprintln!(
-                "{}",
-                diagnostic::render(
-                    e.locale,
-                    "error",
-                    "E3001",
-                    "resolver",
-                    Path::new(&e.path),
-                    &e.source,
-                    e.line,
-                    e.column,
-                    &e.message,
-                    None
-                )
-            );
+            eprintln!("{}", diagnostic::render(e.locale, "error", "E3001", "resolver", Path::new(&e.path), &e.source, e.line, e.column, &e.message, None));
             process::exit(1);
         }
     };
 
     if let Err(errors) = validator::validate(&program.app) {
         for e in &errors {
-            eprintln!(
-                "{}",
-                diagnostic::render(
-                    locale,
-                    "error",
-                    "E4001",
-                    "semantic analysis",
-                    Path::new(path),
-                    &source,
-                    e.line,
-                    e.column,
-                    &e.message,
-                    None
-                )
-            );
+            eprintln!("{}", diagnostic::render(locale, "error", "E4001", "semantic analysis", Path::new(path), &source, e.line, e.column, &e.message, None));
         }
         let summary = if locale == diagnostic::Locale::Vietnamese {
-            format!(
-                "error: tìm thấy {} lỗi ngữ nghĩa; dừng build.",
-                errors.len()
-            )
+            format!("error: tìm thấy {} lỗi ngữ nghĩa; dừng build.", errors.len())
         } else {
-            format!(
-                "error: found {} semantic error(s); build stopped.",
-                errors.len()
-            )
+            format!("error: found {} semantic error(s); build stopped.", errors.len())
         };
         eprintln!("{}", summary);
         process::exit(1);
@@ -233,10 +156,7 @@ fn compile(path: &str) -> (codegen::CodegenOutput, diagnostic::Locale) {
     let output = gen.generate(&program);
 
     for (index, w) in output.warnings.iter().enumerate() {
-        eprintln!(
-            "{}",
-            diagnostic::warning(locale, &format!("W{:04}", index + 1), w)
-        );
+        eprintln!("{}", diagnostic::warning(locale, &format!("W{:04}", index + 1), w));
     }
 
     (output, locale)
@@ -247,10 +167,7 @@ fn cmd_check(path: &str, ast_only: bool) {
         let source = match fs::read_to_string(path) {
             Ok(s) => s,
             Err(e) => {
-                eprintln!(
-                    "{}",
-                    diagnostic::missing_file(diagnostic::Locale::English, Path::new(path), &e)
-                );
+                eprintln!("{}", diagnostic::missing_file(diagnostic::Locale::English, Path::new(path), &e));
                 process::exit(1);
             }
         };
@@ -258,42 +175,14 @@ fn cmd_check(path: &str, ast_only: bool) {
         let tokens = match lexer::tokenize(&source) {
             Ok(t) => t,
             Err(e) => {
-                eprintln!(
-                    "{}",
-                    diagnostic::render(
-                        source_locale,
-                        "error",
-                        "E1001",
-                        "lexer",
-                        Path::new(path),
-                        &source,
-                        e.line,
-                        e.column,
-                        &e.message,
-                        None
-                    )
-                );
+                eprintln!("{}", diagnostic::render(source_locale, "error", "E1001", "lexer", Path::new(path), &source, e.line, e.column, &e.message, None));
                 process::exit(1);
             }
         };
         let (program, _locale) = match parser::parse_with_locale(tokens) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!(
-                    "{}",
-                    diagnostic::render(
-                        source_locale,
-                        "error",
-                        "E2001",
-                        "parser",
-                        Path::new(path),
-                        &source,
-                        e.line,
-                        e.column,
-                        &e.message,
-                        None
-                    )
-                );
+                eprintln!("{}", diagnostic::render(source_locale, "error", "E2001", "parser", Path::new(path), &source, e.line, e.column, &e.message, None));
                 process::exit(1);
             }
         };
@@ -335,24 +224,13 @@ fn cmd_build(path: &str, out_dir: &Path, site_url: Option<&str>) -> diagnostic::
     let description = output.default_description.as_deref().unwrap_or("");
     let public_dir = public_dir_for(Path::new(path));
     let favicon = find_favicon(&public_dir);
-    let site_url = site_url
-        .map(deploy::normalize_site_url)
-        .filter(|url| !url.is_empty());
+    let site_url = site_url.map(deploy::normalize_site_url).filter(|url| !url.is_empty());
     let og_image = deploy::find_og_image(&public_dir);
     let seo_head = match &site_url {
         Some(url) => deploy::head_fragment(url, og_image.as_deref()),
         None => String::new(),
     };
-    let full_html = assemble_html_page(
-        &all_pages_html,
-        title,
-        description,
-        favicon.as_deref(),
-        &output.stylesheets,
-        &output.theme_names,
-        &seo_head,
-        locale,
-    );
+    let full_html = assemble_html_page(&all_pages_html, title, description, favicon.as_deref(), &output.stylesheets, &output.theme_names, &seo_head, locale);
     let index_path = out_dir.join("index.html");
     write_file(&index_path, &full_html, locale);
 
@@ -360,16 +238,8 @@ fn cmd_build(path: &str, out_dir: &Path, site_url: Option<&str>) -> diagnostic::
         write_file(&out_dir.join("404.html"), &full_html, locale);
     }
     if let Some(url) = &site_url {
-        write_file(
-            &out_dir.join("sitemap.xml"),
-            &deploy::sitemap_xml(url, &routes),
-            locale,
-        );
-        write_file(
-            &out_dir.join("robots.txt"),
-            &deploy::robots_txt(url),
-            locale,
-        );
+        write_file(&out_dir.join("sitemap.xml"), &deploy::sitemap_xml(url, &routes), locale);
+        write_file(&out_dir.join("robots.txt"), &deploy::robots_txt(url), locale);
     } else if og_image.is_some() {
         if locale == diagnostic::Locale::Vietnamese {
             eprintln!("Lưu ý: tìm thấy public/{} nhưng chưa có --site-url nên og:image không được ghi (cần URL tuyệt đối).", og_image.as_deref().unwrap_or(""));
@@ -438,10 +308,7 @@ fn assemble_html_page(
     let og_description = if description.is_empty() {
         String::new()
     } else {
-        format!(
-            "\n  <meta property=\"og:description\" content=\"{}\">",
-            description_attr
-        )
+        format!("\n  <meta property=\"og:description\" content=\"{}\">", description_attr)
     };
     let favicon_link = match favicon {
         Some(name) => format!(
@@ -452,30 +319,15 @@ fn assemble_html_page(
         None => String::new(),
     };
     let mut extra_styles = String::new();
-    if stylesheets
-        .iter()
-        .any(|url| url.contains("fonts.googleapis.com"))
-    {
-        extra_styles
-            .push_str("\n  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">");
-        extra_styles.push_str(
-            "\n  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>",
-        );
+    if stylesheets.iter().any(|url| url.contains("fonts.googleapis.com")) {
+        extra_styles.push_str("\n  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">");
+        extra_styles.push_str("\n  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>");
     }
     for url in stylesheets {
-        extra_styles.push_str(&format!(
-            "\n  <link rel=\"stylesheet\" href=\"{}\">",
-            codegen::css::esc_attr(url)
-        ));
+        extra_styles.push_str(&format!("\n  <link rel=\"stylesheet\" href=\"{}\">", codegen::css::esc_attr(url)));
     }
     let (html_attrs, theme_script) = if themes.len() >= 2 {
-        (
-            format!(
-                " data-vb-themes=\"{}\"",
-                codegen::css::esc_attr(&themes.join(","))
-            ),
-            THEME_RESTORE_SCRIPT,
-        )
+        (format!(" data-vb-themes=\"{}\"", codegen::css::esc_attr(&themes.join(","))), THEME_RESTORE_SCRIPT)
     } else {
         (String::new(), "")
     };
@@ -543,23 +395,9 @@ fn copy_dir_contents(
                 continue;
             }
         }
-        if top_level
-            && RESERVED_OUTPUT_NAMES
-                .iter()
-                .any(|reserved| name.to_string_lossy() == *reserved)
-        {
+        if top_level && RESERVED_OUTPUT_NAMES.iter().any(|reserved| name.to_string_lossy() == *reserved) {
             if locale == diagnostic::Locale::Vietnamese {
-                eprintln!(
-                    "{}",
-                    diagnostic::warning(
-                        locale,
-                        "W9001",
-                        &format!(
-                            "bỏ qua 'public/{}': trùng tên với file do ViBao sinh ra",
-                            name.to_string_lossy()
-                        )
-                    )
-                );
+                eprintln!("{}", diagnostic::warning(locale, "W9001", &format!("bỏ qua 'public/{}': trùng tên với file do ViBao sinh ra", name.to_string_lossy())));
             } else {
                 eprintln!("{}", diagnostic::warning(locale, "W9001", &format!("skipping 'public/{}': the name is reserved for a file generated by ViBao", name.to_string_lossy())));
             }
@@ -586,27 +424,12 @@ fn copy_runtime_pkg(out_dir: &Path, locale: diagnostic::Locale) {
             format!("ViBao runtime package was not found. Expected '{}' to contain vibao_runtime.js and vibao_runtime_bg.wasm.", src_dir.display())
         };
         eprintln!("error[E5001] runtime: {}", message);
-        eprintln!(
-            "  = {}: {}",
-            if locale == diagnostic::Locale::Vietnamese {
-                "gợi ý"
-            } else {
-                "help"
-            },
-            if locale == diagnostic::Locale::Vietnamese {
-                "chạy 'scripts/build-runtime.sh' khi build từ source, hoặc cài bản release đã đóng gói runtime."
-            } else {
-                "run 'scripts/build-runtime.sh' in the source tree, or install a release build that already bundles the runtime."
-            }
-        );
+        eprintln!("  = {}: {}", if locale == diagnostic::Locale::Vietnamese { "gợi ý" } else { "help" }, if locale == diagnostic::Locale::Vietnamese { "chạy 'scripts/build-runtime.sh' khi build từ source, hoặc cài bản release đã đóng gói runtime." } else { "run 'scripts/build-runtime.sh' in the source tree, or install a release build that already bundles the runtime." });
         process::exit(1);
     }
 
     if let Err(e) = fs::create_dir_all(&dest_pkg_dir) {
-        eprintln!(
-            "{}",
-            diagnostic::generic_build_failure(locale, &dest_pkg_dir, &e)
-        );
+        eprintln!("{}", diagnostic::generic_build_failure(locale, &dest_pkg_dir, &e));
         process::exit(1);
     }
 
@@ -615,19 +438,9 @@ fn copy_runtime_pkg(out_dir: &Path, locale: diagnostic::Locale) {
         let dest = dest_pkg_dir.join(file);
         if let Err(e) = fs::copy(&src, &dest) {
             if locale == diagnostic::Locale::Vietnamese {
-                eprintln!(
-                    "error[E5002] runtime: không thể sao chép '{}' tới '{}': {}",
-                    src.display(),
-                    dest.display(),
-                    e
-                );
+                eprintln!("error[E5002] runtime: không thể sao chép '{}' tới '{}': {}", src.display(), dest.display(), e);
             } else {
-                eprintln!(
-                    "error[E5002] runtime: could not copy '{}' to '{}': {}",
-                    src.display(),
-                    dest.display(),
-                    e
-                );
+                eprintln!("error[E5002] runtime: could not copy '{}' to '{}': {}", src.display(), dest.display(), e);
             }
             process::exit(1);
         }
@@ -640,8 +453,7 @@ fn runtime_pkg_dir() -> PathBuf {
     }
 
     let exe_dir = default_pkg_dir();
-    if exe_dir.join("vibao_runtime.js").is_file() && exe_dir.join("vibao_runtime_bg.wasm").is_file()
-    {
+    if exe_dir.join("vibao_runtime.js").is_file() && exe_dir.join("vibao_runtime_bg.wasm").is_file() {
         return exe_dir;
     }
 
@@ -653,9 +465,7 @@ fn runtime_pkg_dir() -> PathBuf {
     ];
     candidates
         .into_iter()
-        .find(|path| {
-            path.join("vibao_runtime.js").is_file() && path.join("vibao_runtime_bg.wasm").is_file()
-        })
+        .find(|path| path.join("vibao_runtime.js").is_file() && path.join("vibao_runtime_bg.wasm").is_file())
         .unwrap_or(exe_dir)
 }
 
@@ -682,78 +492,23 @@ mod tests {
 
     #[test]
     fn html_shell_has_static_description_and_open_graph_tags() {
-        let html = assemble_html_page(
-            "<p>x</p>",
-            "Trang \"A\" <b>",
-            "Mô tả & thử",
-            None,
-            &[],
-            &[],
-            "",
-            diagnostic::Locale::English,
-        );
-        assert!(
-            html.contains("<title>Trang \"A\" &lt;b&gt;</title>"),
-            "{}",
-            html
-        );
-        assert!(
-            html.contains("<meta name=\"description\" content=\"Mô tả &amp; thử\">"),
-            "{}",
-            html
-        );
-        assert!(
-            html.contains("<meta property=\"og:title\" content=\"Trang &quot;A&quot; &lt;b&gt;\">"),
-            "{}",
-            html
-        );
-        assert!(
-            html.contains("<meta property=\"og:description\" content=\"Mô tả &amp; thử\">"),
-            "{}",
-            html
-        );
+        let html = assemble_html_page("<p>x</p>", "Trang \"A\" <b>", "Mô tả & thử", None, &[], &[], "", diagnostic::Locale::English);
+        assert!(html.contains("<title>Trang \"A\" &lt;b&gt;</title>"), "{}", html);
+        assert!(html.contains("<meta name=\"description\" content=\"Mô tả &amp; thử\">"), "{}", html);
+        assert!(html.contains("<meta property=\"og:title\" content=\"Trang &quot;A&quot; &lt;b&gt;\">"), "{}", html);
+        assert!(html.contains("<meta property=\"og:description\" content=\"Mô tả &amp; thử\">"), "{}", html);
         assert!(!html.contains("rel=\"icon\""));
     }
 
     #[test]
     fn html_shell_with_themes_declares_them_and_restores_the_saved_one() {
         let themes = vec!["sang".to_string(), "toi".to_string()];
-        let html = assemble_html_page(
-            "",
-            "T",
-            "",
-            None,
-            &[],
-            &themes,
-            "",
-            diagnostic::Locale::Vietnamese,
-        );
-        assert!(
-            html.contains("<html lang=\"vi\" data-vb-themes=\"sang,toi\">"),
-            "{}",
-            html
-        );
-        assert!(
-            html.contains("localStorage.getItem(\"vb-theme\")"),
-            "{}",
-            html
-        );
-        assert!(
-            html.find("localStorage").unwrap() < html.find("style.css").unwrap(),
-            "{}",
-            html
-        );
+        let html = assemble_html_page("", "T", "", None, &[], &themes, "", diagnostic::Locale::Vietnamese);
+        assert!(html.contains("<html lang=\"vi\" data-vb-themes=\"sang,toi\">"), "{}", html);
+        assert!(html.contains("localStorage.getItem(\"vb-theme\")"), "{}", html);
+        assert!(html.find("localStorage").unwrap() < html.find("style.css").unwrap(), "{}", html);
 
-        let one = assemble_html_page(
-            "",
-            "T",
-            "",
-            None,
-            &[],
-            &["sang".to_string()],
-            "",
-            diagnostic::Locale::Vietnamese,
-        );
+        let one = assemble_html_page("", "T", "", None, &[], &["sang".to_string()], "", diagnostic::Locale::Vietnamese);
         assert!(!one.contains("data-vb-themes"), "{}", one);
         assert!(!one.contains("localStorage"), "{}", one);
     }
@@ -761,26 +516,9 @@ mod tests {
     #[test]
     fn html_shell_chen_the_seo_sau_og_title() {
         let seo = deploy::head_fragment("https://a.com", None);
-        let html = assemble_html_page(
-            "",
-            "T",
-            "",
-            None,
-            &[],
-            &[],
-            &seo,
-            diagnostic::Locale::Vietnamese,
-        );
-        assert!(
-            html.contains("<link rel=\"canonical\" href=\"https://a.com/\">"),
-            "{}",
-            html
-        );
-        assert!(
-            html.find("og:title").unwrap() < html.find("canonical").unwrap(),
-            "{}",
-            html
-        );
+        let html = assemble_html_page("", "T", "", None, &[], &[], &seo, diagnostic::Locale::Vietnamese);
+        assert!(html.contains("<link rel=\"canonical\" href=\"https://a.com/\">"), "{}", html);
+        assert!(html.find("og:title").unwrap() < html.find("canonical").unwrap(), "{}", html);
     }
 
     #[test]
@@ -792,21 +530,8 @@ mod tests {
 
     #[test]
     fn html_shell_links_the_favicon_with_its_mime_type() {
-        let html = assemble_html_page(
-            "",
-            "T",
-            "",
-            Some("favicon.svg"),
-            &[],
-            &[],
-            "",
-            diagnostic::Locale::Vietnamese,
-        );
-        assert!(
-            html.contains("<link rel=\"icon\" type=\"image/svg+xml\" href=\"./favicon.svg\">"),
-            "{}",
-            html
-        );
+        let html = assemble_html_page("", "T", "", Some("favicon.svg"), &[], &[], "", diagnostic::Locale::Vietnamese);
+        assert!(html.contains("<link rel=\"icon\" type=\"image/svg+xml\" href=\"./favicon.svg\">"), "{}", html);
         assert!(html.contains("<html lang=\"vi\">"));
         assert_eq!(favicon_mime("favicon.png"), "image/png");
         assert_eq!(favicon_mime("favicon.ico"), "image/x-icon");
@@ -815,28 +540,9 @@ mod tests {
     #[test]
     fn html_shell_links_requested_stylesheets_and_preconnects_google_fonts() {
         let urls = vec!["https://fonts.googleapis.com/css2?family=Inter&display=swap".to_string()];
-        let html = assemble_html_page(
-            "",
-            "T",
-            "",
-            None,
-            &urls,
-            &[],
-            "",
-            diagnostic::Locale::English,
-        );
-        assert!(
-            html.contains("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">"),
-            "{}",
-            html
-        );
-        assert!(
-            html.contains(
-                "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>"
-            ),
-            "{}",
-            html
-        );
+        let html = assemble_html_page("", "T", "", None, &urls, &[], "", diagnostic::Locale::English);
+        assert!(html.contains("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">"), "{}", html);
+        assert!(html.contains("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>"), "{}", html);
         assert!(html.contains("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Inter&amp;display=swap\">"), "{}", html);
         let own = html.find("href=\"./style.css\"").unwrap();
         let font = html.find("fonts.googleapis.com/css2").unwrap();
@@ -852,14 +558,8 @@ mod tests {
 
     #[test]
     fn public_dir_is_next_to_the_source_file() {
-        assert_eq!(
-            public_dir_for(Path::new("app.vbao")),
-            PathBuf::from("./public")
-        );
-        assert_eq!(
-            public_dir_for(Path::new("site/app.vbao")),
-            PathBuf::from("site/public")
-        );
+        assert_eq!(public_dir_for(Path::new("app.vbao")), PathBuf::from("./public"));
+        assert_eq!(public_dir_for(Path::new("site/app.vbao")), PathBuf::from("site/public"));
     }
 
     #[test]

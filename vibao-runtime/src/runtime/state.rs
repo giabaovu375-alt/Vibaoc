@@ -258,11 +258,7 @@ impl State {
         }
     }
 
-    pub fn register_props(
-        &mut self,
-        id: &str,
-        getters: HashMap<String, Box<dyn Fn(&State) -> VbValue>>,
-    ) {
+    pub fn register_props(&mut self, id: &str, getters: HashMap<String, Box<dyn Fn(&State) -> VbValue>>) {
         self.component_props.insert(id.to_string(), getters);
     }
 
@@ -387,12 +383,7 @@ impl State {
     }
 
     pub fn inspect_state(&self) -> VbValue {
-        VbValue::Object(
-            self.state
-                .iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect(),
-        )
+        VbValue::Object(self.state.iter().map(|(k, v)| (k.clone(), v.clone())).collect())
     }
 
     pub fn subscriber_count(&self) -> usize {
@@ -664,7 +655,10 @@ mod tests {
         let mut state = State::new();
         state.set_state("ds", VbValue::Array(vec![VbValue::num(1.0)]));
         state.state_push("ds", VbValue::num(2.0));
-        assert_eq!(state.peek_state("ds").as_array().map(|a| a.len()), Some(2));
+        assert_eq!(
+            state.peek_state("ds").as_array().map(|a| a.len()),
+            Some(2)
+        );
 
         state.state_remove_by_index("ds", 0);
         let arr = state.peek_state("ds");
@@ -718,15 +712,9 @@ mod tests {
         state.push_component_scope("a");
         state.push_component_scope("b");
         state.pop_component_scope("a");
-        assert_eq!(
-            state.component_scope_stack.last().map(|s| s.as_str()),
-            Some("b")
-        );
+        assert_eq!(state.component_scope_stack.last().map(|s| s.as_str()), Some("b"));
         state.pop_component_scope("b");
-        assert_eq!(
-            state.component_scope_stack.last().map(|s| s.as_str()),
-            Some("a")
-        );
+        assert_eq!(state.component_scope_stack.last().map(|s| s.as_str()), Some("a"));
     }
 
     #[test]
@@ -747,17 +735,11 @@ mod tests {
         state.set_page_initial_states(vec![
             (
                 "/".to_string(),
-                vec![(
-                    "dem_home".to_string(),
-                    vibao_ast::Expr::literal_num(1.0, vibao_ast::Pos { line: 1, column: 1 }),
-                )],
+                vec![("dem_home".to_string(), vibao_ast::Expr::literal_num(1.0, vibao_ast::Pos { line: 1, column: 1 }))],
             ),
             (
                 "/about".to_string(),
-                vec![(
-                    "dem_about".to_string(),
-                    vibao_ast::Expr::literal_num(2.0, vibao_ast::Pos { line: 1, column: 1 }),
-                )],
+                vec![("dem_about".to_string(), vibao_ast::Expr::literal_num(2.0, vibao_ast::Pos { line: 1, column: 1 }))],
             ),
         ]);
 
@@ -773,20 +755,13 @@ mod tests {
     fn test_page_metadata_for_route() {
         let mut state = State::new();
         state.set_page_metadata(vec![
-            (
-                "/".to_string(),
-                Some("Trang chủ".to_string()),
-                Some("Giới thiệu bản thân".to_string()),
-            ),
+            ("/".to_string(), Some("Trang chủ".to_string()), Some("Giới thiệu bản thân".to_string())),
             ("/lien-he".to_string(), Some("Liên hệ".to_string()), None),
         ]);
 
         assert_eq!(
             state.page_metadata_for_route("/"),
-            Some((
-                Some("Trang chủ".to_string()),
-                Some("Giới thiệu bản thân".to_string())
-            ))
+            Some((Some("Trang chủ".to_string()), Some("Giới thiệu bản thân".to_string())))
         );
         assert_eq!(
             state.page_metadata_for_route("/lien-he"),
@@ -813,10 +788,7 @@ mod tests {
         initial.insert("c".to_string(), VbValue::Bool(true));
         state.init_global_vars(initial);
         assert_eq!(state.scope_resolve("a").as_num(), Some(1.0));
-        assert_eq!(
-            state.scope_resolve("b"),
-            VbValue::Str("xin chao".to_string())
-        );
+        assert_eq!(state.scope_resolve("b"), VbValue::Str("xin chao".to_string()));
         assert_eq!(state.scope_resolve("c"), VbValue::Bool(true));
     }
 
@@ -826,10 +798,7 @@ mod tests {
         let mut initial = HashMap::new();
         initial.insert("hang_so".to_string(), VbValue::num(42.0));
         state.init_global_vars(initial);
-        assert!(
-            state.state.is_empty(),
-            "global vars must not leak into reactive state"
-        );
+        assert!(state.state.is_empty(), "global vars must not leak into reactive state");
         assert_eq!(state.scope_resolve("hang_so").as_num(), Some(42.0));
     }
 

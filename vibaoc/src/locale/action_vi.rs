@@ -32,22 +32,11 @@ mod tests {
     use super::*;
 
     const ALL_ACTION_SURFACE_NAMES_VI: &[&str] = &[
-        "thong_bao",
-        "canh_bao",
-        "dieu_huong",
-        "mo_tab_moi",
-        "mo_modal",
-        "dong_modal",
-        "cuon_den",
-        "cuon_len_dau",
-        "luu_du_lieu",
-        "tai_du_lieu",
-        "sao_chep",
-        "dat_chu_de",
+        "thong_bao", "canh_bao", "dieu_huong", "mo_tab_moi",
+        "mo_modal", "dong_modal", "cuon_den", "cuon_len_dau",
+        "luu_du_lieu", "tai_du_lieu", "sao_chep", "dat_chu_de",
         "goi_api",
-        "them_vao_mang",
-        "xoa_theo_id",
-        "cap_nhat_theo_id",
+        "them_vao_mang", "xoa_theo_id", "cap_nhat_theo_id",
     ];
 
     #[test]
@@ -56,8 +45,7 @@ mod tests {
         for name in ALL_ACTION_SURFACE_NAMES_VI.iter().copied() {
             assert!(
                 action_name_vi(name).is_some(),
-                "'{}' must resolve to an ActionName",
-                name
+                "'{}' must resolve to an ActionName", name
             );
         }
     }
@@ -69,11 +57,7 @@ mod tests {
             .iter()
             .filter_map(|n| action_name_vi(n))
             .collect();
-        assert_eq!(
-            resolved.len(),
-            16,
-            "16 source names must resolve to 16 distinct ActionName values (no aliasing)"
-        );
+        assert_eq!(resolved.len(), 16, "16 source names must resolve to 16 distinct ActionName values (no aliasing)");
     }
 
     #[test]

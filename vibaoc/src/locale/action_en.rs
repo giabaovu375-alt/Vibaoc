@@ -28,22 +28,9 @@ mod tests {
     use std::collections::HashSet;
 
     const ALL: &[&str] = &[
-        "notify",
-        "alert",
-        "navigate",
-        "open_new_tab",
-        "open_modal",
-        "close_modal",
-        "scroll_to",
-        "scroll_to_top",
-        "save_data",
-        "load_data",
-        "copy_to_clipboard",
-        "api_call",
-        "array_push",
-        "array_remove_by_id",
-        "array_update_by_id",
-        "set_theme",
+        "notify", "alert", "navigate", "open_new_tab", "open_modal", "close_modal",
+        "scroll_to", "scroll_to_top", "save_data", "load_data", "copy_to_clipboard",
+        "api_call", "array_push", "array_remove_by_id", "array_update_by_id", "set_theme",
     ];
 
     #[test]

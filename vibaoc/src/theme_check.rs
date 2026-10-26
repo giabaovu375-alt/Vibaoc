@@ -14,10 +14,7 @@ fn head(name: &str) -> &str {
 }
 
 fn valid_theme_name(name: &str) -> bool {
-    !name.is_empty()
-        && name
-            .chars()
-            .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+    !name.is_empty() && name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-')
 }
 
 pub fn check(app: &App, errors: &mut Vec<ValidationError>) {
@@ -30,20 +27,12 @@ pub fn check(app: &App, errors: &mut Vec<ValidationError>) {
         .collect();
     let theme_names: Vec<String> = app.themes.iter().map(|theme| theme.name.clone()).collect();
 
-    let mut checker = Checker {
-        variables,
-        theme_names,
-        errors,
-    };
+    let mut checker = Checker { variables, theme_names, errors };
     checker.app(app);
 }
 
 fn error(errors: &mut Vec<ValidationError>, pos: &Pos, message: String) {
-    errors.push(ValidationError {
-        message,
-        line: pos.line,
-        column: pos.column,
-    });
+    errors.push(ValidationError { message, line: pos.line, column: pos.column });
 }
 
 fn check_declarations(themes: &[Theme], errors: &mut Vec<ValidationError>) {
@@ -55,25 +44,14 @@ fn check_declarations(themes: &[Theme], errors: &mut Vec<ValidationError>) {
             error(
                 errors,
                 &theme.pos,
-                format!(
-                    "Theme name \"{}\" may only contain letters, digits, '_' and '-'",
-                    theme.name
-                ),
+                format!("Theme name \"{}\" may only contain letters, digits, '_' and '-'", theme.name),
             );
         }
         if !seen_names.insert(theme.name.as_str()) {
-            error(
-                errors,
-                &theme.pos,
-                format!("Theme \"{}\" is declared more than once", theme.name),
-            );
+            error(errors, &theme.pos, format!("Theme \"{}\" is declared more than once", theme.name));
         }
         if theme.variables.is_empty() {
-            error(
-                errors,
-                &theme.pos,
-                format!("Theme \"{}\" declares no variables", theme.name),
-            );
+            error(errors, &theme.pos, format!("Theme \"{}\" declares no variables", theme.name));
         }
 
         let mut declared_here: HashSet<&str> = HashSet::new();
@@ -88,16 +66,8 @@ fn check_declarations(themes: &[Theme], errors: &mut Vec<ValidationError>) {
                     ),
                 );
             }
-            owner_of_variable
-                .entry(variable.name.as_str())
-                .or_insert(theme.name.as_str());
-            check_value(
-                theme,
-                &variable.name,
-                &variable.value,
-                &variable.pos,
-                errors,
-            );
+            owner_of_variable.entry(variable.name.as_str()).or_insert(theme.name.as_str());
+            check_value(theme, &variable.name, &variable.value, &variable.pos, errors);
         }
     }
 
@@ -122,13 +92,7 @@ fn check_declarations(themes: &[Theme], errors: &mut Vec<ValidationError>) {
     }
 }
 
-fn check_value(
-    theme: &Theme,
-    name: &str,
-    value: &Expr,
-    pos: &Pos,
-    errors: &mut Vec<ValidationError>,
-) {
+fn check_value(theme: &Theme, name: &str, value: &Expr, pos: &Pos, errors: &mut Vec<ValidationError>) {
     match value {
         Expr::Literal(LiteralValue::Str(text), _) => {
             if text.contains(&FORBIDDEN_VALUE_CHARS[..]) {
@@ -181,10 +145,7 @@ impl<'a> Checker<'a> {
             error(
                 self.errors,
                 pos,
-                format!(
-                    "The {} \"${}\" has the same name as a theme variable: rename one of them",
-                    kind, name
-                ),
+                format!("The {} \"${}\" has the same name as a theme variable: rename one of them", kind, name),
             );
         }
     }
@@ -247,20 +208,14 @@ impl<'a> Checker<'a> {
                 }
                 Child::Loop(node) => {
                     match &node.kind {
-                        LoopKind::Each {
-                            iterable,
-                            item_var,
-                            index_var,
-                        } => {
+                        LoopKind::Each { iterable, item_var, index_var } => {
                             self.expr(iterable);
                             self.clash("loop variable", item_var, &node.pos);
                             if let Some(index_var) = index_var {
                                 self.clash("loop variable", index_var, &node.pos);
                             }
                         }
-                        LoopKind::Range { var_name, .. } => {
-                            self.clash("loop variable", var_name, &node.pos)
-                        }
+                        LoopKind::Range { var_name, .. } => self.clash("loop variable", var_name, &node.pos),
                     }
                     self.children(&node.body);
                 }
@@ -335,14 +290,7 @@ impl<'a> Checker<'a> {
     fn actions(&mut self, actions: &[Action]) {
         for action in actions {
             match action {
-                Action::FunctionCall {
-                    name,
-                    args,
-                    opts,
-                    assign_to,
-                    pos,
-                    ..
-                } => {
+                Action::FunctionCall { name, args, opts, assign_to, pos, .. } => {
                     if name == "dat_chu_de" {
                         self.theme_action(args, pos);
                     }
@@ -360,16 +308,7 @@ impl<'a> Checker<'a> {
                     self.assignment(target, pos);
                     self.expr(value);
                 }
-                Action::ApiCall {
-                    endpoint,
-                    data,
-                    headers,
-                    assign_to,
-                    on_success,
-                    on_failure,
-                    pos,
-                    ..
-                } => {
+                Action::ApiCall { endpoint, data, headers, assign_to, on_success, on_failure, pos, .. } => {
                     self.expr(endpoint);
                     if let Some(data) = data {
                         self.expr(data);
@@ -387,12 +326,7 @@ impl<'a> Checker<'a> {
                         self.actions(body);
                     }
                 }
-                Action::IfAction {
-                    condition,
-                    consequent,
-                    alternate,
-                    ..
-                } => {
+                Action::IfAction { condition, consequent, alternate, .. } => {
                     self.expr(condition);
                     self.actions(consequent);
                     if let Some(alternate) = alternate {
@@ -405,11 +339,7 @@ impl<'a> Checker<'a> {
 
     fn theme_action(&mut self, args: &[Expr], pos: &Pos) {
         if self.theme_names.is_empty() {
-            error(
-                self.errors,
-                pos,
-                "The theme action is used but no theme is declared (chu_de / theme)".to_string(),
-            );
+            error(self.errors, pos, "The theme action is used but no theme is declared (chu_de / theme)".to_string());
             return;
         }
         match args {
@@ -437,10 +367,7 @@ impl<'a> Checker<'a> {
             error(
                 self.errors,
                 pos,
-                format!(
-                    "Theme variable \"${}\" is a constant and cannot be assigned",
-                    head(target)
-                ),
+                format!("Theme variable \"${}\" is a constant and cannot be assigned", head(target)),
             );
         }
     }
@@ -510,7 +437,10 @@ mod tests {
     use super::*;
 
     fn kiem_tra(thanh_phan: &str) -> Vec<String> {
-        let nguon = format!("lang = \"vi\";\nung_dung(\"Thử\") {{\n{}\n}}\n", thanh_phan);
+        let nguon = format!(
+            "lang = \"vi\";\nung_dung(\"Thử\") {{\n{}\n}}\n",
+            thanh_phan
+        );
         let tokens = crate::lexer::tokenize(&nguon).expect("lexer phải đọc được nguồn");
         let program = crate::parser::parse(tokens).expect("parser phải đọc được nguồn");
         let mut loi = Vec::new();
@@ -552,14 +482,8 @@ mod tests {
                 bien[i].value
             );
         }
-        assert!(matches!(
-            &bien[2].value,
-            Expr::Literal(LiteralValue::Str(_), _)
-        ));
-        assert!(matches!(
-            &bien[3].value,
-            Expr::Literal(LiteralValue::Num(_, _), _)
-        ));
+        assert!(matches!(&bien[2].value, Expr::Literal(LiteralValue::Str(_), _)));
+        assert!(matches!(&bien[3].value, Expr::Literal(LiteralValue::Num(_, _), _)));
     }
 
     #[test]
@@ -587,14 +511,7 @@ mod tests {
     #[test]
     fn dung_lam_noi_dung_la_loi() {
         let loi = kiem_tra(&voi_trang(r#"text($nen)"#));
-        assert!(
-            co_loi(
-                &loi,
-                "Theme variable \"$nen\" can only be used as the whole value of a style property"
-            ),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "Theme variable \"$nen\" can only be used as the whole value of a style property"), "{:?}", loi);
     }
 
     #[test]
@@ -617,9 +534,7 @@ mod tests {
 
     #[test]
     fn dung_trong_hanh_dong_la_loi() {
-        let loi = kiem_tra(&voi_trang(
-            r#"button("Bấm") { khi_nhan { thong_bao($chu) } }"#,
-        ));
+        let loi = kiem_tra(&voi_trang(r#"button("Bấm") { khi_nhan { thong_bao($chu) } }"#));
         assert!(co_loi(&loi, "\"$chu\" can only be used"), "{:?}", loi);
     }
 
@@ -654,57 +569,27 @@ mod tests {
     #[test]
     fn gan_gia_tri_cho_bien_theme_la_loi() {
         let loi = kiem_tra(&voi_trang(r#"button("Bấm") { khi_nhan { $nen = "do" } }"#));
-        assert!(
-            co_loi(
-                &loi,
-                "Theme variable \"$nen\" is a constant and cannot be assigned"
-            ),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "Theme variable \"$nen\" is a constant and cannot be assigned"), "{:?}", loi);
     }
 
     #[test]
     fn trung_ten_voi_state_la_loi() {
         let loi = kiem_tra(&voi_trang(r#"state $nen = 1"#));
-        assert!(
-            co_loi(
-                &loi,
-                "The state \"$nen\" has the same name as a theme variable"
-            ),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "The state \"$nen\" has the same name as a theme variable"), "{:?}", loi);
     }
 
     #[test]
     fn trung_ten_voi_bien_vong_lap_la_loi() {
-        let loi = kiem_tra(&voi_trang(
-            r#"state $ds = [1, 2]
-            vong_lap $nen trong $ds { text("x") }"#,
-        ));
-        assert!(
-            co_loi(
-                &loi,
-                "The loop variable \"$nen\" has the same name as a theme variable"
-            ),
-            "{:?}",
-            loi
-        );
+        let loi = kiem_tra(&voi_trang(r#"state $ds = [1, 2]
+            vong_lap $nen trong $ds { text("x") }"#));
+        assert!(co_loi(&loi, "The loop variable \"$nen\" has the same name as a theme variable"), "{:?}", loi);
     }
 
     #[test]
     fn trung_ten_voi_tham_so_component_la_loi() {
         let nguon = format!("@the TheThe(chu: chuoi) {{ text($chu) }}\n{}", HAI_THEME);
         let loi = kiem_tra(&nguon);
-        assert!(
-            co_loi(
-                &loi,
-                "The component parameter \"$chu\" has the same name as a theme variable"
-            ),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "The component parameter \"$chu\" has the same name as a theme variable"), "{:?}", loi);
     }
 
     #[test]
@@ -713,8 +598,7 @@ mod tests {
         assert!(loi.is_empty(), "{:?}", loi);
     }
 
-    const HAI_THEME_NGAN: &str =
-        r##"chu_de sang { $nen = trang }  chu_de toi { $nen = "#000000" }"##;
+    const HAI_THEME_NGAN: &str = r##"chu_de sang { $nen = trang }  chu_de toi { $nen = "#000000" }"##;
 
     #[test]
     fn dat_chu_de_hop_le_voi_ten_co_that_hoac_khong_doi_so() {
@@ -725,19 +609,9 @@ mod tests {
 
     #[test]
     fn dat_chu_de_voi_ten_khong_ton_tai_la_loi() {
-        let nguon = format!(
-            "{}\n trang(\"/\") {{ button(\"x\") {{ khi_nhan {{ dat_chu_de(\"xanh\") }} }} }}",
-            HAI_THEME_NGAN
-        );
+        let nguon = format!("{}\n trang(\"/\") {{ button(\"x\") {{ khi_nhan {{ dat_chu_de(\"xanh\") }} }} }}", HAI_THEME_NGAN);
         let loi = kiem_tra(&nguon);
-        assert!(
-            co_loi(
-                &loi,
-                "The theme \"xanh\" does not exist: declared themes are sang, toi"
-            ),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "The theme \"xanh\" does not exist: declared themes are sang, toi"), "{:?}", loi);
     }
 
     #[test]
@@ -748,16 +622,9 @@ mod tests {
 
     #[test]
     fn dat_chu_de_doi_so_khong_phai_chuoi_la_loi() {
-        let nguon = format!(
-            "{}\n trang(\"/\") {{ button(\"x\") {{ khi_nhan {{ dat_chu_de(1) }} }} }}",
-            HAI_THEME_NGAN
-        );
+        let nguon = format!("{}\n trang(\"/\") {{ button(\"x\") {{ khi_nhan {{ dat_chu_de(1) }} }} }}", HAI_THEME_NGAN);
         let loi = kiem_tra(&nguon);
-        assert!(
-            co_loi(&loi, "takes either no argument or one theme name"),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "takes either no argument or one theme name"), "{:?}", loi);
     }
 
     #[test]
@@ -769,9 +636,7 @@ mod tests {
         );
         assert_eq!(loi.len(), 1, "{:?}", loi);
         assert!(
-            loi[0].contains(
-                "Theme \"toi\" is missing variable \"$chu\" (declared in theme \"sang\")"
-            ),
+            loi[0].contains("Theme \"toi\" is missing variable \"$chu\" (declared in theme \"sang\")"),
             "{}",
             loi[0]
         );
@@ -780,76 +645,40 @@ mod tests {
     #[test]
     fn bien_khai_bao_hai_lan_trong_mot_theme_la_loi() {
         let loi = kiem_tra(r#"chu_de sang { $nen = trang  $nen = den }  trang("/") { text("x") }"#);
-        assert!(
-            co_loi(
-                &loi,
-                "Theme \"sang\": variable \"$nen\" is declared more than once"
-            ),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "Theme \"sang\": variable \"$nen\" is declared more than once"), "{:?}", loi);
     }
 
     #[test]
     fn theme_trung_ten_la_loi() {
-        let loi = kiem_tra(
-            r#"chu_de sang { $nen = trang }  chu_de sang { $nen = den }  trang("/") { text("x") }"#,
-        );
-        assert!(
-            co_loi(&loi, "Theme \"sang\" is declared more than once"),
-            "{:?}",
-            loi
-        );
+        let loi = kiem_tra(r#"chu_de sang { $nen = trang }  chu_de sang { $nen = den }  trang("/") { text("x") }"#);
+        assert!(co_loi(&loi, "Theme \"sang\" is declared more than once"), "{:?}", loi);
     }
 
     #[test]
     fn theme_khong_co_bien_la_loi() {
         let loi = kiem_tra(r#"chu_de sang { }  trang("/") { text("x") }"#);
-        assert!(
-            co_loi(&loi, "Theme \"sang\" declares no variables"),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "Theme \"sang\" declares no variables"), "{:?}", loi);
     }
 
     #[test]
     fn gia_tri_khong_phai_hang_so_la_loi() {
         let loi = kiem_tra(r#"chu_de sang { $nen = $khac }  trang("/") { text("x") }"#);
-        assert!(
-            co_loi(&loi, "the value of \"$nen\" must be a constant"),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "the value of \"$nen\" must be a constant"), "{:?}", loi);
     }
 
     #[test]
     fn chuoi_chua_ky_tu_nguy_hiem_la_loi() {
         for gia_tri in ["a;b", "a}b", "a{b", "a<b", "a>b"] {
-            let nguon = format!(
-                "chu_de sang {{ $nen = \"{}\" }}  trang(\"/\") {{ text(\"x\") }}",
-                gia_tri
-            );
+            let nguon = format!("chu_de sang {{ $nen = \"{}\" }}  trang(\"/\") {{ text(\"x\") }}", gia_tri);
             let loi = kiem_tra(&nguon);
-            assert!(
-                co_loi(&loi, "must not contain any of { } ; < >"),
-                "{} -> {:?}",
-                gia_tri,
-                loi
-            );
+            assert!(co_loi(&loi, "must not contain any of { } ; < >"), "{} -> {:?}", gia_tri, loi);
         }
     }
 
     #[test]
     fn ten_theme_khong_hop_le_la_loi() {
         let loi = kiem_tra(r#"chu_de "a b" { $nen = trang }  trang("/") { text("x") }"#);
-        assert!(
-            co_loi(
-                &loi,
-                "Theme name \"a b\" may only contain letters, digits, '_' and '-'"
-            ),
-            "{:?}",
-            loi
-        );
+        assert!(co_loi(&loi, "Theme name \"a b\" may only contain letters, digits, '_' and '-'"), "{:?}", loi);
     }
 
     #[test]

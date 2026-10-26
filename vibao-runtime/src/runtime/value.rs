@@ -41,6 +41,7 @@ impl fmt::Display for VbValue {
 }
 
 impl VbValue {
+
     pub fn str(s: impl Into<String>) -> Self {
         VbValue::Str(s.into())
     }
@@ -185,7 +186,9 @@ impl VbValue {
 
     pub fn partial_cmp_loose(&self, other: &VbValue) -> Ordering {
         match (self, other) {
-            (VbValue::Num(a), VbValue::Num(b)) => a.partial_cmp(b).unwrap_or(Ordering::Equal),
+            (VbValue::Num(a), VbValue::Num(b)) => {
+                a.partial_cmp(b).unwrap_or(Ordering::Equal)
+            }
             (VbValue::Str(a), VbValue::Str(b)) => a.cmp(b),
             _ => {
                 let a = self.to_num_or_zero();
@@ -252,7 +255,9 @@ impl VbValue {
             VbValue::Bool(b) => JsValue::from_bool(*b),
             VbValue::Num(n) => JsValue::from_f64(*n),
             VbValue::Str(s) => JsValue::from_str(s),
-            VbValue::Array(_) | VbValue::Object(_) => JsValue::from_str(&self.to_json_string()),
+            VbValue::Array(_) | VbValue::Object(_) => {
+                JsValue::from_str(&self.to_json_string())
+            }
         }
     }
 
@@ -283,11 +288,9 @@ impl From<serde_json::Value> for VbValue {
             serde_json::Value::Array(items) => {
                 VbValue::Array(items.into_iter().map(VbValue::from).collect())
             }
-            serde_json::Value::Object(map) => VbValue::Object(
-                map.into_iter()
-                    .map(|(k, v)| (k, VbValue::from(v)))
-                    .collect(),
-            ),
+            serde_json::Value::Object(map) => {
+                VbValue::Object(map.into_iter().map(|(k, v)| (k, VbValue::from(v))).collect())
+            }
         }
     }
 }

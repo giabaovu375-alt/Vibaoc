@@ -2,12 +2,7 @@ use std::path::Path;
 
 use crate::codegen::css::esc_attr;
 
-const OG_IMAGE_NAMES: [&str; 4] = [
-    "og-image.png",
-    "og-image.jpg",
-    "og-image.jpeg",
-    "og-image.webp",
-];
+const OG_IMAGE_NAMES: [&str; 4] = ["og-image.png", "og-image.jpg", "og-image.jpeg", "og-image.webp"];
 
 pub fn normalize_site_url(raw: &str) -> String {
     raw.trim().trim_end_matches('/').to_string()
@@ -22,14 +17,8 @@ pub fn find_og_image(public_dir: &Path) -> Option<String> {
 
 pub fn head_fragment(site_url: &str, og_image: Option<&str>) -> String {
     let mut out = String::new();
-    out.push_str(&format!(
-        "\n  <link rel=\"canonical\" href=\"{}/\">",
-        esc_attr(site_url)
-    ));
-    out.push_str(&format!(
-        "\n  <meta property=\"og:url\" content=\"{}/\">",
-        esc_attr(site_url)
-    ));
+    out.push_str(&format!("\n  <link rel=\"canonical\" href=\"{}/\">", esc_attr(site_url)));
+    out.push_str(&format!("\n  <meta property=\"og:url\" content=\"{}/\">", esc_attr(site_url)));
     match og_image {
         Some(name) => {
             out.push_str(&format!(
@@ -51,11 +40,7 @@ fn is_static_route(route: &str) -> bool {
 pub fn sitemap_xml(site_url: &str, routes: &[&String]) -> String {
     let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
     for route in routes.iter().filter(|r| is_static_route(r)) {
-        let loc = if route.as_str() == "/" {
-            format!("{}/", site_url)
-        } else {
-            format!("{}{}", site_url, route)
-        };
+        let loc = if route.as_str() == "/" { format!("{}/", site_url) } else { format!("{}{}", site_url, route) };
         out.push_str(&format!("  <url><loc>{}</loc></url>\n", xml_escape(&loc)));
     }
     out.push_str("</urlset>\n");
@@ -63,16 +48,11 @@ pub fn sitemap_xml(site_url: &str, routes: &[&String]) -> String {
 }
 
 pub fn robots_txt(site_url: &str) -> String {
-    format!(
-        "User-agent: *\nAllow: /\n\nSitemap: {}/sitemap.xml\n",
-        site_url
-    )
+    format!("User-agent: *\nAllow: /\n\nSitemap: {}/sitemap.xml\n", site_url)
 }
 
 fn xml_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }
 
 #[cfg(test)]
@@ -88,21 +68,9 @@ mod tests {
     #[test]
     fn head_co_canonical_og_url_va_the_twitter_theo_anh_og() {
         let co_anh = head_fragment("https://a.com", Some("og-image.png"));
-        assert!(
-            co_anh.contains("<link rel=\"canonical\" href=\"https://a.com/\">"),
-            "{}",
-            co_anh
-        );
-        assert!(
-            co_anh.contains("<meta property=\"og:url\" content=\"https://a.com/\">"),
-            "{}",
-            co_anh
-        );
-        assert!(
-            co_anh.contains("<meta property=\"og:image\" content=\"https://a.com/og-image.png\">"),
-            "{}",
-            co_anh
-        );
+        assert!(co_anh.contains("<link rel=\"canonical\" href=\"https://a.com/\">"), "{}", co_anh);
+        assert!(co_anh.contains("<meta property=\"og:url\" content=\"https://a.com/\">"), "{}", co_anh);
+        assert!(co_anh.contains("<meta property=\"og:image\" content=\"https://a.com/og-image.png\">"), "{}", co_anh);
         assert!(co_anh.contains("summary_large_image"), "{}", co_anh);
 
         let khong_anh = head_fragment("https://a.com", None);
@@ -124,9 +92,6 @@ mod tests {
 
     #[test]
     fn robots_tro_toi_sitemap() {
-        assert_eq!(
-            robots_txt("https://a.com"),
-            "User-agent: *\nAllow: /\n\nSitemap: https://a.com/sitemap.xml\n"
-        );
+        assert_eq!(robots_txt("https://a.com"), "User-agent: *\nAllow: /\n\nSitemap: https://a.com/sitemap.xml\n");
     }
 }

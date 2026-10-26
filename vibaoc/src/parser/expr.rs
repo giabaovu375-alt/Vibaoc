@@ -1,8 +1,9 @@
 use super::{ParseError, Parser};
-use crate::lexer::TokenKind;
 use vibao_ast::{BinaryOp, Expr, LiteralValue, Pos, TemplatePart, UnaryOp};
+use crate::lexer::TokenKind;
 
 impl Parser {
+
     pub(crate) fn parse_expr(&mut self, min_prec: u8) -> Result<Expr, ParseError> {
         let mut left = self.parse_primary()?;
 
@@ -196,11 +197,7 @@ impl Parser {
             }
             TokenKind::NumberLit(v, raw) => {
                 self.advance();
-                Ok(Expr::literal_num_with_unit(
-                    v,
-                    extract_unit_suffix(&raw),
-                    pos,
-                ))
+                Ok(Expr::literal_num_with_unit(v, extract_unit_suffix(&raw), pos))
             }
             TokenKind::BoolLit(b) => {
                 self.advance();
@@ -229,9 +226,8 @@ impl Parser {
     }
 
     fn parse_color_func(&mut self, name: &str, pos: Pos) -> Result<Expr, ParseError> {
-        let kind = crate::lexer::resolve_color_func_name(name).unwrap_or_else(|| {
-            unreachable!("already checked this is a valid color function name before calling")
-        });
+        let kind = crate::lexer::resolve_color_func_name(name)
+            .unwrap_or_else(|| unreachable!("already checked this is a valid color function name before calling"));
         self.advance();
         self.expect(&TokenKind::LParen)?;
         let color = self.parse_expr(0)?;
@@ -294,7 +290,10 @@ impl Parser {
                 self.advance();
                 Ok(s)
             }
-            other => Err(self.error(format!("Expected an identifier, received {}", other))),
+            other => Err(self.error(format!(
+                "Expected an identifier, received {}",
+                other
+            ))),
         }
     }
 }
@@ -332,7 +331,9 @@ fn parse_template_string(raw: &str, pos: Pos) -> Expr {
 
     while i < chars.len() {
         if chars[i] == '$' {
-            if i + 1 >= chars.len() || !(chars[i + 1].is_alphabetic() || chars[i + 1] == '_') {
+            if i + 1 >= chars.len()
+                || !(chars[i + 1].is_alphabetic() || chars[i + 1] == '_')
+            {
                 text_buf.push('$');
                 i += 1;
                 continue;
@@ -364,9 +365,7 @@ fn parse_template_string(raw: &str, pos: Pos) -> Expr {
             if path.len() > 1 {
                 parts.push(TemplatePart::Member(path));
             } else {
-                parts.push(TemplatePart::Variable(
-                    path.into_iter().next().unwrap_or_default(),
-                ));
+                parts.push(TemplatePart::Variable(path.into_iter().next().unwrap_or_default()));
             }
         } else {
             text_buf.push(chars[i]);
@@ -397,14 +396,8 @@ mod tests {
     fn test_simple_arithmetic_precedence() {
         let expr = parse_expr_from_source("1 + 2 * 3");
         match expr {
-            Expr::Binary {
-                op: BinaryOp::Add,
-                right,
-                ..
-            } => match *right {
-                Expr::Binary {
-                    op: BinaryOp::Mul, ..
-                } => {}
+            Expr::Binary { op: BinaryOp::Add, right, .. } => match *right {
+                Expr::Binary { op: BinaryOp::Mul, .. } => {}
                 _ => panic!("wrong precedence: * must be in the right branch of +"),
             },
             _ => panic!("result is not Binary Add"),
@@ -415,12 +408,7 @@ mod tests {
     fn test_variable_minus_number() {
         let expr = parse_expr_from_source("$n - 1");
         match expr {
-            Expr::Binary {
-                op: BinaryOp::Sub,
-                left,
-                right,
-                ..
-            } => {
+            Expr::Binary { op: BinaryOp::Sub, left, right, .. } => {
                 assert!(matches!(*left, Expr::Variable(ref s, _) if s == "n"));
                 assert!(matches!(*right, Expr::Literal(LiteralValue::Num(v, _), _) if v == 1.0));
             }
@@ -447,18 +435,12 @@ mod tests {
     fn test_literal_index_becomes_numeric_member_access() {
         let expr = parse_expr_from_source("$ph.choices[0].message");
         match expr {
-            Expr::MemberAccess {
-                object, property, ..
-            } => {
+            Expr::MemberAccess { object, property, .. } => {
                 assert_eq!(property, "message");
                 match *object {
-                    Expr::MemberAccess {
-                        object, property, ..
-                    } => {
+                    Expr::MemberAccess { object, property, .. } => {
                         assert_eq!(property, "0");
-                        assert!(
-                            matches!(*object, Expr::MemberAccess { ref property, .. } if property == "choices")
-                        );
+                        assert!(matches!(*object, Expr::MemberAccess { ref property, .. } if property == "choices"));
                     }
                     _ => panic!("chỉ số [0] phải thành MemberAccess \"0\""),
                 }
@@ -523,9 +505,7 @@ mod tests {
             Expr::TemplateString(parts, _) => {
                 assert_eq!(parts.len(), 4);
                 assert!(matches!(parts[1], TemplatePart::Variable(ref s) if s == "ten"));
-                assert!(
-                    matches!(parts[3], TemplatePart::Member(ref p) if p == &["duong_dan", "mo_ta"])
-                );
+                assert!(matches!(parts[3], TemplatePart::Member(ref p) if p == &["duong_dan", "mo_ta"]));
             }
             _ => panic!("phải tách thành TemplateString"),
         }
@@ -535,9 +515,7 @@ mod tests {
     fn test_logical_and_or_precedence() {
         let expr = parse_expr_from_source("$a > 1 && $b > 2 || $c");
         match expr {
-            Expr::Binary {
-                op: BinaryOp::Or, ..
-            } => {}
+            Expr::Binary { op: BinaryOp::Or, .. } => {}
             _ => panic!("the lowest-precedence operator (||) must be at the root of the tree"),
         }
     }
@@ -558,11 +536,7 @@ mod tests {
     fn test_logical_not_unary() {
         let expr = parse_expr_from_source("!$da_dang_nhap");
         match expr {
-            Expr::Unary {
-                op: UnaryOp::Not,
-                operand,
-                ..
-            } => {
+            Expr::Unary { op: UnaryOp::Not, operand, .. } => {
                 assert!(matches!(*operand, Expr::Variable(ref s, _) if s == "da_dang_nhap"));
             }
             _ => panic!("must parse as Unary Not"),
@@ -573,12 +547,7 @@ mod tests {
     fn test_modulo_operator() {
         let expr = parse_expr_from_source("$n % 2");
         match expr {
-            Expr::Binary {
-                op: BinaryOp::Mod,
-                left,
-                right,
-                ..
-            } => {
+            Expr::Binary { op: BinaryOp::Mod, left, right, .. } => {
                 assert!(matches!(*left, Expr::Variable(ref s, _) if s == "n"));
                 assert!(matches!(*right, Expr::Literal(LiteralValue::Num(v, _), _) if v == 2.0));
             }
@@ -614,14 +583,8 @@ mod tests {
     fn test_modulo_precedence_with_addition() {
         let expr = parse_expr_from_source("1 + 2 % 3");
         match expr {
-            Expr::Binary {
-                op: BinaryOp::Add,
-                right,
-                ..
-            } => match *right {
-                Expr::Binary {
-                    op: BinaryOp::Mod, ..
-                } => {}
+            Expr::Binary { op: BinaryOp::Add, right, .. } => match *right {
+                Expr::Binary { op: BinaryOp::Mod, .. } => {}
                 _ => panic!("% must be in the right branch of +"),
             },
             _ => panic!("result is not Binary Add"),
@@ -641,11 +604,7 @@ mod tests {
         let expr = parse_expr_from_source(r#"{ mau: "x", den: "y" }"#);
         match expr {
             Expr::Object(fields, _) => {
-                assert!(
-                    fields.iter().any(|(k, _)| k == "den"),
-                    "missing field 'den': {:?}",
-                    fields
-                );
+                assert!(fields.iter().any(|(k, _)| k == "den"), "missing field 'den': {:?}", fields);
             }
             _ => panic!("result must be an Object"),
         }
@@ -659,4 +618,5 @@ mod tests {
             other => panic!("expected Expr::Call, got {:?}", other),
         }
     }
+
 }

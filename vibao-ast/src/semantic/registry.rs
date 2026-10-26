@@ -59,11 +59,7 @@ pub fn tag_spec(tag: Tag) -> TagSpec {
         Tag::VongQuay => (Simple, "div"),
         Tag::ThanhTienTrinh => (Simple, "div"),
     };
-    TagSpec {
-        tag,
-        kind,
-        html_tag,
-    }
+    TagSpec { tag, kind, html_tag }
 }
 
 use super::prop::PropKey;
@@ -79,26 +75,22 @@ pub struct PropSpec {
 pub fn prop_spec(key: PropKey) -> PropSpec {
     use PropKey::*;
     let (applies_to_simple, applies_to_layout) = match key {
-        BackgroundColor | Width | Height | MaxWidth | Radius | Padding | Margin | Border
-        | Shadow | Overflow | ZIndex | FontSize | Direction | Gap | AlignItems | Wrap | Align
-        | HtmlId => (true, true),
+        BackgroundColor | Width | Height | MaxWidth | Radius | Padding
+        | Margin | Border | Shadow | Overflow | ZIndex | FontSize
+        | Direction | Gap | AlignItems | Wrap | Align | HtmlId => (true, true),
 
         Color | BorderColor | BorderStyle | Bold | Italic | Underline | PreserveLines
-        | LineHeight | LetterSpacing | TextTransform | FontFamily | Fit | Source | Alt
-        | LazyLoad | Type | Placeholder | Value | OptionValue | Required | Disabled
-        | ClassBinding | To | Target | Rel | Content | Animation | Duration | Delay | Repeat
-        | HoverAnimation | ScrollAnimation => (true, false),
+        | LineHeight | LetterSpacing | TextTransform | FontFamily
+        | Fit | Source | Alt | LazyLoad | Type | Placeholder | Value | OptionValue
+        | Required | Disabled | ClassBinding | To | Target | Rel | Content | Animation | Duration
+        | Delay | Repeat | HoverAnimation | ScrollAnimation => (true, false),
 
-        MinWidth | MaxHeight | MinHeight | RowGap | ColumnGap | Columns | Rows | TranslateX
-        | TranslateY | Position | Offset | Hidden => (false, true),
+        MinWidth | MaxHeight | MinHeight | RowGap | ColumnGap | Columns
+        | Rows | TranslateX | TranslateY | Position | Offset
+        | Hidden => (false, true),
     };
     let responsive_only = matches!(key, Hidden);
-    PropSpec {
-        key,
-        applies_to_simple,
-        applies_to_layout,
-        responsive_only,
-    }
+    PropSpec { key, applies_to_simple, applies_to_layout, responsive_only }
 }
 
 #[cfg(test)]
@@ -125,10 +117,7 @@ mod prop_tests {
             .iter()
             .filter(|k| prop_spec(**k).responsive_only)
             .count();
-        assert_eq!(
-            responsive_only_count, 1,
-            "currently exactly 1 prop should be responsive_only (Hidden)"
-        );
+        assert_eq!(responsive_only_count, 1, "currently exactly 1 prop should be responsive_only (Hidden)");
     }
 
     #[test]
@@ -172,68 +161,27 @@ mod prop_tests {
     }
 
     const ALL_PROP_KEYS_FOR_TEST: [PropKey; 62] = [
-        PropKey::BackgroundColor,
-        PropKey::Color,
-        PropKey::BorderColor,
-        PropKey::Width,
-        PropKey::Height,
-        PropKey::MaxWidth,
-        PropKey::MinWidth,
-        PropKey::MaxHeight,
-        PropKey::MinHeight,
-        PropKey::Radius,
-        PropKey::Padding,
-        PropKey::Margin,
-        PropKey::Border,
-        PropKey::BorderStyle,
-        PropKey::Shadow,
-        PropKey::Overflow,
-        PropKey::ZIndex,
-        PropKey::FontSize,
-        PropKey::Bold,
-        PropKey::Italic,
-        PropKey::Underline,
-        PropKey::PreserveLines,
-        PropKey::Align,
-        PropKey::LineHeight,
-        PropKey::LetterSpacing,
-        PropKey::TextTransform,
-        PropKey::FontFamily,
-        PropKey::Direction,
-        PropKey::Gap,
-        PropKey::RowGap,
-        PropKey::ColumnGap,
-        PropKey::AlignItems,
-        PropKey::Wrap,
-        PropKey::Columns,
-        PropKey::Rows,
-        PropKey::TranslateX,
-        PropKey::TranslateY,
-        PropKey::Position,
-        PropKey::Offset,
+        PropKey::BackgroundColor, PropKey::Color, PropKey::BorderColor,
+        PropKey::Width, PropKey::Height, PropKey::MaxWidth, PropKey::MinWidth,
+        PropKey::MaxHeight, PropKey::MinHeight,
+        PropKey::Radius, PropKey::Padding, PropKey::Margin, PropKey::Border,
+        PropKey::BorderStyle, PropKey::Shadow, PropKey::Overflow, PropKey::ZIndex,
+        PropKey::FontSize, PropKey::Bold, PropKey::Italic, PropKey::Underline,
+        PropKey::PreserveLines, PropKey::Align, PropKey::LineHeight, PropKey::LetterSpacing,
+        PropKey::TextTransform, PropKey::FontFamily,
+        PropKey::Direction, PropKey::Gap, PropKey::RowGap, PropKey::ColumnGap,
+        PropKey::AlignItems, PropKey::Wrap, PropKey::Columns, PropKey::Rows,
+        PropKey::TranslateX, PropKey::TranslateY, PropKey::Position, PropKey::Offset,
         PropKey::Hidden,
-        PropKey::Fit,
-        PropKey::Source,
-        PropKey::Alt,
-        PropKey::LazyLoad,
-        PropKey::Type,
-        PropKey::Placeholder,
-        PropKey::Value,
-        PropKey::OptionValue,
+        PropKey::Fit, PropKey::Source, PropKey::Alt, PropKey::LazyLoad,
+        PropKey::Type, PropKey::Placeholder, PropKey::Value, PropKey::OptionValue,
         PropKey::Required,
         PropKey::Disabled,
-        PropKey::ClassBinding,
-        PropKey::HtmlId,
-        PropKey::To,
-        PropKey::Target,
-        PropKey::Rel,
+        PropKey::ClassBinding, PropKey::HtmlId,
+        PropKey::To, PropKey::Target, PropKey::Rel,
         PropKey::Content,
-        PropKey::Animation,
-        PropKey::Duration,
-        PropKey::Delay,
-        PropKey::Repeat,
-        PropKey::HoverAnimation,
-        PropKey::ScrollAnimation,
+        PropKey::Animation, PropKey::Duration, PropKey::Delay, PropKey::Repeat,
+        PropKey::HoverAnimation, PropKey::ScrollAnimation,
     ];
 }
 
@@ -251,15 +199,8 @@ mod tests {
     #[test]
     fn test_layout_group_has_exactly_9_members() {
         let count = [
-            Tag::Flex,
-            Tag::Grid,
-            Tag::Stack,
-            Tag::Khoi,
-            Tag::Cuon,
-            Tag::CanGiua,
-            Tag::Lop,
-            Tag::DinhDau,
-            Tag::DinhManHinh,
+            Tag::Flex, Tag::Grid, Tag::Stack, Tag::Khoi, Tag::Cuon,
+            Tag::CanGiua, Tag::Lop, Tag::DinhDau, Tag::DinhManHinh,
         ]
         .iter()
         .filter(|t| tag_spec(**t).kind == TagKind::Layout)
@@ -270,25 +211,11 @@ mod tests {
     #[test]
     fn test_complex_group_matches_old_builtin_complex_exactly() {
         let complex_tags = [
-            Tag::Modal,
-            Tag::Tabs,
-            Tag::GapMo,
-            Tag::BangChuyen,
-            Tag::XuongTrang,
-            Tag::Bang,
-            Tag::BieuDo,
-            Tag::BanDo,
-            Tag::TrinhSoanThao,
+            Tag::Modal, Tag::Tabs, Tag::GapMo, Tag::BangChuyen,
+            Tag::XuongTrang, Tag::Bang, Tag::BieuDo, Tag::BanDo, Tag::TrinhSoanThao,
         ];
-        assert_eq!(
-            complex_tags.len(),
-            9,
-            "must match BUILTIN_COMPLEX's 9 elements exactly (form moved to Simple)"
-        );
-        let count = complex_tags
-            .iter()
-            .filter(|t| tag_spec(**t).kind == TagKind::Complex)
-            .count();
+        assert_eq!(complex_tags.len(), 9, "must match BUILTIN_COMPLEX's 9 elements exactly (form moved to Simple)");
+        let count = complex_tags.iter().filter(|t| tag_spec(**t).kind == TagKind::Complex).count();
         assert_eq!(count, complex_tags.len());
 
         assert_eq!(tag_spec(Tag::ThanhDieuHuong).kind, TagKind::Simple);

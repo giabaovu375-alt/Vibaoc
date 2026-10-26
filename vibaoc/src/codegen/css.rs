@@ -5,9 +5,7 @@ pub struct OrderedMap {
 
 impl OrderedMap {
     pub fn new() -> Self {
-        OrderedMap {
-            entries: Vec::new(),
-        }
+        OrderedMap { entries: Vec::new() }
     }
 
     pub fn insert(&mut self, key: String, value: String) {
@@ -22,7 +20,7 @@ impl OrderedMap {
         self.entries.iter().find(|(k, _)| k == key).map(|(_, v)| v)
     }
 
-    #[allow(dead_code)]
+#[allow(dead_code)]
     pub fn contains_key(&self, key: &str) -> bool {
         self.get(key).is_some()
     }
@@ -90,17 +88,12 @@ pub fn esc_attr(val: &str) -> String {
 }
 
 pub fn esc_html(val: &str) -> String {
-    val.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
+    val.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }
 
 pub fn indent(code: &str, spaces: usize) -> String {
     let pad = " ".repeat(spaces);
-    code.lines()
-        .map(|l| format!("{}{}", pad, l))
-        .collect::<Vec<_>>()
-        .join("\n")
+    code.lines().map(|l| format!("{}{}", pad, l)).collect::<Vec<_>>().join("\n")
 }
 
 pub fn indent2(code: &str) -> String {
@@ -197,11 +190,7 @@ mod tests {
         css.insert("width".to_string(), "__dynamic__".to_string());
         css.insert("height".to_string(), "40px".to_string());
         let result = layout_css_to_string_inline(&css);
-        assert!(
-            !result.contains("__dynamic__"),
-            "the sentinel must not leak into static CSS: {}",
-            result
-        );
+        assert!(!result.contains("__dynamic__"), "the sentinel must not leak into static CSS: {}", result);
         assert!(result.contains("height:40px"));
     }
 
@@ -210,11 +199,7 @@ mod tests {
         let mut css = crate::codegen::layout::LayoutCss::new();
         css.insert("width".to_string(), "__dynamic__".to_string());
         let result = layout_css_to_string("#vb-box-1", &css);
-        assert!(
-            !result.contains("__dynamic__"),
-            "the sentinel must not leak into a CSS rule: {}",
-            result
-        );
+        assert!(!result.contains("__dynamic__"), "the sentinel must not leak into a CSS rule: {}", result);
     }
 
     #[test]

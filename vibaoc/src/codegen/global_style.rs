@@ -133,11 +133,7 @@ mod tests {
         ];
         let out = build(&props);
         assert!(out.css.contains("body {"), "{}", out.css);
-        assert!(
-            out.css.contains("font-family: Inter, sans-serif"),
-            "{}",
-            out.css
-        );
+        assert!(out.css.contains("font-family: Inter, sans-serif"), "{}", out.css);
         assert!(out.css.contains("font-size: 16px"), "{}", out.css);
         assert!(out.warnings.is_empty(), "{:?}", out.warnings);
     }
@@ -146,24 +142,14 @@ mod tests {
     fn english_keys_work_too() {
         let props: PropsMap = vec![("font_family".to_string(), s("Georgia, serif"))];
         let out = build(&props);
-        assert!(
-            out.css.contains("font-family: Georgia, serif"),
-            "{}",
-            out.css
-        );
+        assert!(out.css.contains("font-family: Georgia, serif"), "{}", out.css);
     }
 
     #[test]
     fn stylesheet_url_is_collected_not_written_as_css() {
-        let props: PropsMap = vec![(
-            "tai_phong".to_string(),
-            s("https://fonts.googleapis.com/css2?family=Inter"),
-        )];
+        let props: PropsMap = vec![("tai_phong".to_string(), s("https://fonts.googleapis.com/css2?family=Inter"))];
         let out = build(&props);
-        assert_eq!(
-            out.stylesheets,
-            vec!["https://fonts.googleapis.com/css2?family=Inter".to_string()]
-        );
+        assert_eq!(out.stylesheets, vec!["https://fonts.googleapis.com/css2?family=Inter".to_string()]);
         assert!(out.css.is_empty(), "{}", out.css);
     }
 
@@ -174,12 +160,7 @@ mod tests {
             ("cuon_lui".to_string(), Expr::literal_num(72.0, p())),
         ];
         let out = build(&props);
-        assert!(
-            out.css
-                .contains("html { scroll-behavior: smooth; scroll-padding-top: 72px }"),
-            "{}",
-            out.css
-        );
+        assert!(out.css.contains("html { scroll-behavior: smooth; scroll-padding-top: 72px }"), "{}", out.css);
     }
 
     #[test]
@@ -198,21 +179,7 @@ mod tests {
 
     #[test]
     fn known_keys() {
-        for key in [
-            "phong_chu",
-            "font_family",
-            "co",
-            "mau",
-            "mau_nen",
-            "background_color",
-            "hang",
-            "tai_phong",
-            "font_url",
-            "cuon_muot",
-            "smooth_scroll",
-            "cuon_lui",
-            "scroll_offset",
-        ] {
+        for key in ["phong_chu", "font_family", "co", "mau", "mau_nen", "background_color", "hang", "tai_phong", "font_url", "cuon_muot", "smooth_scroll", "cuon_lui", "scroll_offset"] {
             assert!(is_known_key(key), "{}", key);
         }
         for key in ["rong", "dem", "ten_la", "huong"] {

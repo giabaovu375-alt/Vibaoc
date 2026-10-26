@@ -112,11 +112,7 @@ async fn activate_page(shared: &SharedState, route_match: &RouteMatch) {
         }
     }
 
-    let escaped = route_match
-        .route
-        .pattern
-        .replace('\\', "\\\\")
-        .replace('"', "\\\"");
+    let escaped = route_match.route.pattern.replace('\\', "\\\\").replace('"', "\\\"");
     let selector = format!(".vb-page[data-route=\"{}\"]", escaped);
 
     let target = match doc.query_selector(&selector).ok().flatten() {
@@ -162,12 +158,7 @@ async fn activate_page(shared: &SharedState, route_match: &RouteMatch) {
     }
 }
 
-async fn dispatch_lifecycle_action(
-    shared: &SharedState,
-    doc: &web_sys::Document,
-    pattern: &str,
-    attr_name: &str,
-) {
+async fn dispatch_lifecycle_action(shared: &SharedState, doc: &web_sys::Document, pattern: &str, attr_name: &str) {
     let escaped = pattern.replace('\\', "\\\\").replace('"', "\\\"");
     let selector = format!(".vb-page[data-route=\"{}\"]", escaped);
 
@@ -253,11 +244,7 @@ fn apply_page_metadata(doc: &web_sys::Document, shared: &SharedState, route: &st
     }
 
     if let Some(description) = description {
-        if let Some(existing) = doc
-            .query_selector("meta[name=\"description\"]")
-            .ok()
-            .flatten()
-        {
+        if let Some(existing) = doc.query_selector("meta[name=\"description\"]").ok().flatten() {
             let _ = existing.set_attribute("content", &description);
         } else if let Some(head) = doc.query_selector("head").ok().flatten() {
             if let Ok(meta) = doc.create_element("meta") {
@@ -302,25 +289,18 @@ fn setup_link_interception(shared: &SharedState) {
     let shared_clone = shared.clone();
     let closure = Closure::<dyn FnMut(Event)>::new(move |evt: Event| {
         if let Ok(mouse_evt) = evt.clone().dyn_into::<web_sys::MouseEvent>() {
-            if mouse_evt.ctrl_key()
-                || mouse_evt.meta_key()
-                || mouse_evt.shift_key()
-                || mouse_evt.button() == 1
-            {
+            if mouse_evt.ctrl_key() || mouse_evt.meta_key() || mouse_evt.shift_key() || mouse_evt.button() == 1 {
                 return;
             }
         }
 
         let Some(target) = evt.target() else { return };
-        let Ok(mut el) = target.dyn_into::<web_sys::Element>() else {
-            return;
-        };
+        let Ok(mut el) = target.dyn_into::<web_sys::Element>() else { return };
 
         loop {
             if el.tag_name().eq_ignore_ascii_case("a") {
                 if let Some(path) = el.get_attribute("data-vb-link") {
-                    if is_in_page_anchor(&path) || is_external_link(&path) || !path.starts_with('/')
-                    {
+                    if is_in_page_anchor(&path) || is_external_link(&path) || !path.starts_with('/') {
                         return;
                     }
                     evt.prevent_default();
@@ -463,11 +443,7 @@ mod tests {
 
     #[test]
     fn test_match_pattern_multi_param() {
-        let params = match_pattern(
-            "/danh-muc/:cat/san-pham/:id",
-            "/danh-muc/dien-tu/san-pham/7",
-        )
-        .unwrap();
+        let params = match_pattern("/danh-muc/:cat/san-pham/:id", "/danh-muc/dien-tu/san-pham/7").unwrap();
         assert_eq!(params.get("cat"), Some(&"dien-tu".to_string()));
         assert_eq!(params.get("id"), Some(&"7".to_string()));
     }

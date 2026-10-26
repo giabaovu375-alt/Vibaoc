@@ -1,20 +1,9 @@
-use super::{
-    eval_expr_id_tracked, parse_expr_id, ATTR_BIND_ATTR_PREFIX, ATTR_BIND_CLASS,
-    ATTR_BIND_STYLE_PREFIX, ATTR_BIND_TEXT,
-};
-use crate::runtime::{
-    state::{self, LoopFrame, SharedState},
-    value::VbValue,
-};
 use wasm_bindgen::prelude::*;
 use web_sys::{Element, HtmlElement};
+use crate::runtime::{state::{self, LoopFrame, SharedState}, value::VbValue};
+use super::{ATTR_BIND_ATTR_PREFIX, ATTR_BIND_CLASS, ATTR_BIND_STYLE_PREFIX, ATTR_BIND_TEXT, eval_expr_id_tracked, parse_expr_id};
 
-pub(super) fn bind_text(
-    shared: &SharedState,
-    el: &Element,
-    loop_frame: Option<&LoopFrame>,
-    component_id: Option<&str>,
-) {
+pub(super) fn bind_text(shared: &SharedState, el: &Element, loop_frame: Option<&LoopFrame>, component_id: Option<&str>) {
     let raw = match el.get_attribute(ATTR_BIND_TEXT) {
         Some(r) => r,
         None => return,
@@ -35,12 +24,7 @@ pub(super) fn bind_text(
     );
 }
 
-pub(super) fn bind_all_attrs(
-    shared: &SharedState,
-    el: &Element,
-    loop_frame: Option<&LoopFrame>,
-    component_id: Option<&str>,
-) {
+pub(super) fn bind_all_attrs(shared: &SharedState, el: &Element, loop_frame: Option<&LoopFrame>, component_id: Option<&str>) {
     let attr_names = list_attribute_names_with_prefix(el, ATTR_BIND_ATTR_PREFIX);
     for full_name in attr_names {
         let target_attr = &full_name[ATTR_BIND_ATTR_PREFIX.len()..];
@@ -72,19 +56,9 @@ pub(super) fn bind_all_attrs(
 }
 
 pub(super) const CSS_LENGTH_PROPS: [&str; 13] = [
-    "width",
-    "height",
-    "padding",
-    "border-radius",
-    "margin",
-    "gap",
-    "row-gap",
-    "column-gap",
-    "min-width",
-    "max-width",
-    "min-height",
-    "max-height",
-    "font-size",
+    "width", "height", "padding", "border-radius", "margin", "gap",
+    "row-gap", "column-gap", "min-width", "max-width", "min-height",
+    "max-height", "font-size",
 ];
 
 pub(super) fn css_style_value_string(css_prop: &str, v: &VbValue) -> String {
@@ -96,12 +70,7 @@ pub(super) fn css_style_value_string(css_prop: &str, v: &VbValue) -> String {
     }
 }
 
-pub(super) fn bind_all_styles(
-    shared: &SharedState,
-    el: &Element,
-    loop_frame: Option<&LoopFrame>,
-    component_id: Option<&str>,
-) {
+pub(super) fn bind_all_styles(shared: &SharedState, el: &Element, loop_frame: Option<&LoopFrame>, component_id: Option<&str>) {
     let attr_names = list_attribute_names_with_prefix(el, ATTR_BIND_STYLE_PREFIX);
     for full_name in attr_names {
         let css_prop = &full_name[ATTR_BIND_STYLE_PREFIX.len()..];
@@ -137,12 +106,7 @@ pub(super) fn bind_all_styles(
     }
 }
 
-pub(super) fn bind_class(
-    shared: &SharedState,
-    el: &Element,
-    loop_frame: Option<&LoopFrame>,
-    component_id: Option<&str>,
-) {
+pub(super) fn bind_class(shared: &SharedState, el: &Element, loop_frame: Option<&LoopFrame>, component_id: Option<&str>) {
     let raw = match el.get_attribute(ATTR_BIND_CLASS) {
         Some(r) => r,
         None => return,

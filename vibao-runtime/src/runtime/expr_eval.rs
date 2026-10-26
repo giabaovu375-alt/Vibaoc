@@ -29,23 +29,15 @@ pub fn eval_readonly(state: &State, expr: &Expr) -> VbValue {
     eval_readonly_with_frame(state, expr, None)
 }
 
-pub fn eval_readonly_with_frame(
-    state: &State,
-    expr: &Expr,
-    extra_frame: Option<&super::state::LoopFrame>,
-) -> VbValue {
+pub fn eval_readonly_with_frame(state: &State, expr: &Expr, extra_frame: Option<&super::state::LoopFrame>) -> VbValue {
     match expr {
         Expr::Literal(lit, _) => eval_literal(lit),
         Expr::Variable(name, _) => resolve_readonly_var(state, name, extra_frame),
-        Expr::MemberAccess {
-            object, property, ..
-        } => {
+        Expr::MemberAccess { object, property, .. } => {
             let obj = eval_readonly_with_frame(state, object, extra_frame);
             obj.get_field(property)
         }
-        Expr::Binary {
-            op, left, right, ..
-        } => {
+        Expr::Binary { op, left, right, .. } => {
             let l = eval_readonly_with_frame(state, left, extra_frame);
             let r = eval_readonly_with_frame(state, right, extra_frame);
             eval_binary(*op, &l, &r)
@@ -58,26 +50,15 @@ pub fn eval_readonly_with_frame(
             }
         }
         Expr::Call { callee, args, .. } => {
-            let arg_values: Vec<VbValue> = args
-                .iter()
-                .map(|a| eval_readonly_with_frame(state, a, extra_frame))
-                .collect();
+            let arg_values: Vec<VbValue> = args.iter().map(|a| eval_readonly_with_frame(state, a, extra_frame)).collect();
             eval_call(callee, &arg_values)
         }
-        Expr::ColorFunc {
-            func,
-            color,
-            amount,
-            ..
-        } => {
+        Expr::ColorFunc { func, color, amount, .. } => {
             let color_val = eval_readonly_with_frame(state, color, extra_frame);
             eval_color_func(*func, &color_val, *amount)
         }
         Expr::Array(items, _) => {
-            let values: Vec<VbValue> = items
-                .iter()
-                .map(|e| eval_readonly_with_frame(state, e, extra_frame))
-                .collect();
+            let values: Vec<VbValue> = items.iter().map(|e| eval_readonly_with_frame(state, e, extra_frame)).collect();
             VbValue::Array(values)
         }
         Expr::Object(fields, _) => {
@@ -91,11 +72,7 @@ pub fn eval_readonly_with_frame(
     }
 }
 
-fn resolve_readonly_var(
-    state: &State,
-    name: &str,
-    extra_frame: Option<&super::state::LoopFrame>,
-) -> VbValue {
+fn resolve_readonly_var(state: &State, name: &str, extra_frame: Option<&super::state::LoopFrame>) -> VbValue {
     if let Some(frame) = extra_frame {
         if frame.item_var == name {
             return frame.item_value.clone();
@@ -113,11 +90,7 @@ fn resolve_readonly_var(
     state.scope_resolve(name)
 }
 
-fn eval_template_readonly(
-    state: &State,
-    parts: &[TemplatePart],
-    extra_frame: Option<&super::state::LoopFrame>,
-) -> VbValue {
+fn eval_template_readonly(state: &State, parts: &[TemplatePart], extra_frame: Option<&super::state::LoopFrame>) -> VbValue {
     let mut out = String::new();
     for part in parts {
         match part {
@@ -145,16 +118,12 @@ fn eval_inner(state: &mut State, expr: &Expr, tracked: bool) -> VbValue {
             }
         }
 
-        Expr::MemberAccess {
-            object, property, ..
-        } => {
+        Expr::MemberAccess { object, property, .. } => {
             let obj = eval_inner(state, object, tracked);
             obj.get_field(property)
         }
 
-        Expr::Binary {
-            op, left, right, ..
-        } => {
+        Expr::Binary { op, left, right, .. } => {
             let l = eval_inner(state, left, tracked);
             let r = eval_inner(state, right, tracked);
             eval_binary(*op, &l, &r)
@@ -174,21 +143,14 @@ fn eval_inner(state: &mut State, expr: &Expr, tracked: bool) -> VbValue {
             eval_call(callee, &arg_values)
         }
 
-        Expr::ColorFunc {
-            func,
-            color,
-            amount,
-            ..
-        } => {
+        Expr::ColorFunc { func, color, amount, .. } => {
             let color_val = eval_inner(state, color, tracked);
             eval_color_func(*func, &color_val, *amount)
         }
 
         Expr::Array(items, _) => {
-            let values: Vec<VbValue> = items
-                .iter()
-                .map(|e| eval_inner(state, e, tracked))
-                .collect();
+            let values: Vec<VbValue> =
+                items.iter().map(|e| eval_inner(state, e, tracked)).collect();
             VbValue::Array(values)
         }
 
@@ -225,18 +187,12 @@ fn eval_binary(op: BinaryOp, l: &VbValue, r: &VbValue) -> VbValue {
         BinaryOp::Gt => VbValue::Bool(l.partial_cmp_loose(r) == std::cmp::Ordering::Greater),
         BinaryOp::Gte => VbValue::Bool(
             !l.is_nan_like(r)
-                && matches!(
-                    l.partial_cmp_loose(r),
-                    std::cmp::Ordering::Greater | std::cmp::Ordering::Equal
-                ),
+                && matches!(l.partial_cmp_loose(r), std::cmp::Ordering::Greater | std::cmp::Ordering::Equal),
         ),
         BinaryOp::Lt => VbValue::Bool(l.partial_cmp_loose(r) == std::cmp::Ordering::Less),
         BinaryOp::Lte => VbValue::Bool(
             !l.is_nan_like(r)
-                && matches!(
-                    l.partial_cmp_loose(r),
-                    std::cmp::Ordering::Less | std::cmp::Ordering::Equal
-                ),
+                && matches!(l.partial_cmp_loose(r), std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
         ),
         BinaryOp::And => VbValue::Bool(l.is_truthy() && r.is_truthy()),
         BinaryOp::Or => VbValue::Bool(l.is_truthy() || r.is_truthy()),
@@ -262,30 +218,18 @@ fn coerce_add_number(v: &VbValue) -> Option<f64> {
 
 fn eval_call(callee: &str, args: &[VbValue]) -> VbValue {
     match callee {
-        "lam_tron" => VbValue::Num(
-            args.first()
-                .map(|v| v.to_num_or_zero())
-                .unwrap_or(0.0)
-                .round(),
-        ),
+        "lam_tron" => VbValue::Num(args.first().map(|v| v.to_num_or_zero()).unwrap_or(0.0).round()),
         "phan_tram" => {
             let n = args.first().map(|v| v.to_num_or_zero()).unwrap_or(0.0);
             VbValue::Str(format!("{}%", format_number_trim(n)))
         }
         "hoa_chu" => {
-            let s = args
-                .first()
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .to_string();
+            let s = args.first().and_then(|v| v.as_str()).unwrap_or("").to_string();
             VbValue::Str(s.to_uppercase())
         }
         "rut_gon" => {
             let s = args.first().and_then(|v| v.as_str()).unwrap_or("");
-            let max_len = args
-                .get(1)
-                .map(|v| v.to_num_or_zero() as usize)
-                .unwrap_or(20);
+            let max_len = args.get(1).map(|v| v.to_num_or_zero() as usize).unwrap_or(20);
             if s.chars().count() > max_len {
                 let truncated: String = s.chars().take(max_len).collect();
                 VbValue::Str(format!("{}...", truncated))
@@ -593,10 +537,7 @@ mod tests {
         let shared = setup();
         let e = Expr::ColorFunc {
             func: ColorFuncKind::LamSang,
-            color: Box::new(Expr::Literal(
-                LiteralValue::Color("#000000".to_string()),
-                p(),
-            )),
+            color: Box::new(Expr::Literal(LiteralValue::Color("#000000".to_string()), p())),
             amount: 100.0,
             pos: p(),
         };
@@ -608,10 +549,7 @@ mod tests {
         let shared = setup();
         let e = Expr::ColorFunc {
             func: ColorFuncKind::TrongSuot,
-            color: Box::new(Expr::Literal(
-                LiteralValue::Color("#FF0000".to_string()),
-                p(),
-            )),
+            color: Box::new(Expr::Literal(LiteralValue::Color("#FF0000".to_string()), p())),
             amount: 50.0,
             pos: p(),
         };
@@ -697,9 +635,7 @@ mod tests {
         use super::super::state::LoopFrame;
 
         let shared = setup();
-        shared
-            .borrow_mut()
-            .set_state("item", VbValue::str("global"));
+        shared.borrow_mut().set_state("item", VbValue::str("global"));
         shared.borrow_mut().push_loop_scope(LoopFrame {
             item_var: "item".to_string(),
             item_value: VbValue::str("local"),
@@ -721,10 +657,7 @@ mod tests {
         let frame = LoopFrame {
             item_var: "bv".to_string(),
             item_value: VbValue::object(vec![
-                (
-                    "tieu_de".to_string(),
-                    VbValue::str("Học ViBao trong 1 tuần"),
-                ),
+                ("tieu_de".to_string(), VbValue::str("Học ViBao trong 1 tuần")),
                 ("luot_thich".to_string(), VbValue::num(24.0)),
             ]),
             index_var: None,
@@ -748,9 +681,7 @@ mod tests {
     #[test]
     fn test_eval_readonly_with_frame_falls_back_to_global_state_when_no_match() {
         let shared = setup();
-        shared
-            .borrow_mut()
-            .set_state("ten", VbValue::str("Toàn cục"));
+        shared.borrow_mut().set_state("ten", VbValue::str("Toàn cục"));
         let state_ref = shared.borrow();
 
         use super::super::state::LoopFrame;

@@ -131,47 +131,14 @@ mod tests {
     use vibao_ast::semantic::tag_spec;
 
     const ALL_TAG_NAMES_EN: &[&str] = &[
-        "text",
-        "h1",
-        "h2",
-        "h3",
-        "p",
-        "label",
-        "image",
-        "video",
-        "icon",
-        "button",
-        "input",
-        "textarea",
-        "link",
-        "flex",
-        "grid",
-        "stack",
-        "box",
-        "scroll",
-        "container",
-        "layer",
-        "sticky",
-        "fixed",
-        "spacer",
-        "divider",
-        "form",
-        "input_group",
-        "radio",
-        "checkbox",
-        "select",
-        "modal",
-        "tabs",
-        "accordion",
-        "carousel",
-        "pagination",
-        "spinner",
-        "progress",
-        "table",
-        "chart",
-        "map",
-        "nav",
-        "editor",
+        "text", "h1", "h2", "h3", "p", "label",
+        "image", "video", "icon",
+        "button", "input", "textarea", "link",
+        "flex", "grid", "stack", "box", "scroll", "container", "layer", "sticky", "fixed",
+        "spacer", "divider",
+        "form", "input_group", "radio", "checkbox", "select",
+        "modal", "tabs", "accordion", "carousel", "pagination", "spinner",
+        "progress", "table", "chart", "map", "nav", "editor",
     ];
 
     #[test]
@@ -184,8 +151,7 @@ mod tests {
         for name in ALL_TAG_NAMES_EN {
             assert!(
                 tag_name_en(name).is_some(),
-                "name '{}' does not resolve to any Tag",
-                name
+                "name '{}' does not resolve to any Tag", name
             );
         }
     }
@@ -194,12 +160,7 @@ mod tests {
     fn test_round_trip_name_to_tag_to_name() {
         for name in ALL_TAG_NAMES_EN {
             let tag = tag_name_en(name).unwrap();
-            assert_eq!(
-                tag_display_name_en(tag),
-                *name,
-                "round-trip mismatch for '{}'",
-                name
-            );
+            assert_eq!(tag_display_name_en(tag), *name, "round-trip mismatch for '{}'", name);
         }
     }
 
@@ -222,16 +183,11 @@ mod tests {
             let tag_en = tag_name_en(name).unwrap();
             let name_vi = super::super::vi::tag_display_name_vi(tag_en);
             let tag_vi = super::super::vi::tag_name_vi(name_vi).unwrap();
-            assert_eq!(
-                tag_en, tag_vi,
-                "Tag mismatch when round-tripping through both locales for '{}'",
-                name
-            );
+            assert_eq!(tag_en, tag_vi, "Tag mismatch when round-tripping through both locales for '{}'", name);
             assert_eq!(
                 tag_spec(tag_en).kind,
                 tag_spec(tag_vi).kind,
-                "TagKind mismatch between the two locales for the Tag of '{}'",
-                name
+                "TagKind mismatch between the two locales for the Tag of '{}'", name
             );
         }
     }
@@ -239,27 +195,10 @@ mod tests {
     #[test]
     fn test_keyword_name_en_covers_all_21() {
         for name in [
-            "page",
-            "app",
-            "theme",
-            "state",
-            "import",
-            "from",
-            "if",
-            "else",
-            "else_if",
-            "switch",
-            "default",
-            "loop",
-            "on_click",
-            "on_hover",
-            "on_blur",
-            "on_focus",
-            "on_change",
-            "on_submit",
-            "on_scroll",
-            "on_load",
-            "on_unload",
+            "page", "app", "theme", "state", "import", "from",
+            "if", "else", "else_if", "switch", "default", "loop",
+            "on_click", "on_hover", "on_blur", "on_focus", "on_change",
+            "on_submit", "on_scroll", "on_load", "on_unload",
         ] {
             assert!(keyword_name_en(name).is_some(), "'{}' must resolve", name);
         }
@@ -290,18 +229,13 @@ mod tests {
             ("on_tai", "on_load"),
             ("on_huy", "on_unload"),
         ];
-        assert_eq!(
-            pairs.len(),
-            21,
-            "total of 9 original keywords + 12 newly proposed keywords = 21"
-        );
+        assert_eq!(pairs.len(), 21, "total of 9 original keywords + 12 newly proposed keywords = 21");
         for (vi_name, en_name) in pairs {
             let from_vi = super::super::vi::keyword_name_vi(vi_name);
             let from_en = keyword_name_en(en_name);
             assert_eq!(
                 from_vi, from_en,
-                "TokenKind mismatch between locale vi ('{}') and en ('{}')",
-                vi_name, en_name
+                "TokenKind mismatch between locale vi ('{}') and en ('{}')", vi_name, en_name
             );
             assert!(from_vi.is_some(), "'{}' (vi) must resolve", vi_name);
         }

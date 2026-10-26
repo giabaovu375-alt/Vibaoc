@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use crate::diagnostic::Locale;
 use vibao_ast::{ComponentDef, ImportDecl, Page, Program};
+use crate::diagnostic::Locale;
 
 #[derive(Debug)]
 pub struct ResolverError {
@@ -21,14 +21,7 @@ impl std::fmt::Display for ResolverError {
 }
 impl std::error::Error for ResolverError {}
 
-fn err_at(
-    message: impl Into<String>,
-    path: &Path,
-    source: &str,
-    line: usize,
-    column: usize,
-    locale: Locale,
-) -> ResolverError {
+fn err_at(message: impl Into<String>, path: &Path, source: &str, line: usize, column: usize, locale: Locale) -> ResolverError {
     ResolverError {
         message: message.into(),
         path: path.display().to_string(),
@@ -44,11 +37,7 @@ pub fn resolve(program: Program, root_path: &Path) -> Result<Program, ResolverEr
     resolve_with_locale(program, root_path, Locale::English)
 }
 
-pub fn resolve_with_locale(
-    mut program: Program,
-    root_path: &Path,
-    root_locale: Locale,
-) -> Result<Program, ResolverError> {
+pub fn resolve_with_locale(mut program: Program, root_path: &Path, root_locale: Locale) -> Result<Program, ResolverError> {
     let mut visiting: HashSet<PathBuf> = HashSet::new();
     let mut merged: HashSet<PathBuf> = HashSet::new();
     let root_canonical = canonicalize_best_effort(root_path);
@@ -58,15 +47,7 @@ pub fn resolve_with_locale(
     let mut all_pages: Vec<Page> = std::mem::take(&mut program.app.pages);
 
     for import in &program.app.imports {
-        resolve_one_import(
-            import,
-            root_path,
-            root_locale,
-            &mut visiting,
-            &mut merged,
-            &mut all_components,
-            &mut all_pages,
-        )?;
+        resolve_one_import(import, root_path, root_locale, &mut visiting, &mut merged, &mut all_components, &mut all_pages)?;
     }
 
     program.app.components = all_components;
@@ -145,11 +126,8 @@ fn resolve_one_import(
         }
     };
 
-    let defined_names: HashSet<&str> = module_body
-        .components
-        .iter()
-        .map(|c| c.name.as_str())
-        .collect();
+    let defined_names: HashSet<&str> =
+        module_body.components.iter().map(|c| c.name.as_str()).collect();
     for wanted in &import.names {
         if !defined_names.contains(wanted.as_str()) {
             return Err(err_at(
@@ -157,11 +135,7 @@ fn resolve_one_import(
                     "Imported component \"{}\" was not found in \"{}\". Available components: {}",
                     wanted,
                     resolved_path.display(),
-                    if defined_names.is_empty() {
-                        "(none)".to_string()
-                    } else {
-                        defined_names.iter().copied().collect::<Vec<_>>().join(", ")
-                    }
+                    if defined_names.is_empty() { "(none)".to_string() } else { defined_names.iter().copied().collect::<Vec<_>>().join(", ") }
                 ),
                 importing_file,
                 &source,
@@ -174,15 +148,7 @@ fn resolve_one_import(
 
     visiting.insert(canonical.clone());
     for nested_import in &module_body.imports {
-        resolve_one_import(
-            nested_import,
-            &resolved_path,
-            parser.locale(),
-            visiting,
-            merged,
-            all_components,
-            all_pages,
-        )?;
+        resolve_one_import(nested_import, &resolved_path, parser.locale(), visiting, merged, all_components, all_pages)?;
     }
     visiting.remove(&canonical);
 
@@ -193,11 +159,7 @@ fn resolve_one_import(
     Ok(())
 }
 
-fn resolve_import_path(
-    importing_file: &Path,
-    import_path: &str,
-    locale: Locale,
-) -> Result<PathBuf, ResolverError> {
+fn resolve_import_path(importing_file: &Path, import_path: &str, locale: Locale) -> Result<PathBuf, ResolverError> {
     let base_dir = importing_file.parent().unwrap_or_else(|| Path::new("."));
     let candidate = base_dir.join(import_path);
 
@@ -205,8 +167,7 @@ fn resolve_import_path(
         return Err(err_at(
             format!(
                 "Imported file \"{}\" was not found (resolved from \"{}\").",
-                candidate.display(),
-                base_dir.display()
+                candidate.display(), base_dir.display()
             ),
             importing_file,
             "",
@@ -274,23 +235,17 @@ mod tests {
     #[test]
     fn test_resolve_single_import_merges_component() {
         let dir = write_temp_files(&[
-            (
-                "app.vbao",
-                r#"
+            ("app.vbao", r#"
                 ung_dung("Test") {
                     nhap nut_bam tu "./nut_bam.vbao"
                     trang("/") { }
                 }
-            "#,
-            ),
-            (
-                "nut_bam.vbao",
-                r#"
+            "#),
+            ("nut_bam.vbao", r#"
                 @the nut_bam(label) {
                     button(noi_dung: $label)
                 }
-            "#,
-            ),
+            "#),
         ]);
 
         let root_path = dir.path().join("app.vbao");
@@ -322,23 +277,17 @@ mod tests {
     #[test]
     fn test_resolve_with_bare_relative_path_like_real_cli_usage() {
         let dir = write_temp_files(&[
-            (
-                "app.vbao",
-                r#"
+            ("app.vbao", r#"
                 ung_dung("Test") {
                     nhap nut_bam tu "./nut_bam.vbao"
                     trang("/") { }
                 }
-            "#,
-            ),
-            (
-                "nut_bam.vbao",
-                r#"
+            "#),
+            ("nut_bam.vbao", r#"
                 @the nut_bam(label) {
                     button(noi_dung: $label)
                 }
-            "#,
-            ),
+            "#),
         ]);
 
         let _guard = CwdGuard::change_to(dir.path());
@@ -377,23 +326,17 @@ mod tests {
     #[test]
     fn test_resolve_unknown_name_in_target_file_errors_clearly() {
         let dir = write_temp_files(&[
-            (
-                "app.vbao",
-                r#"
+            ("app.vbao", r#"
                 ung_dung("Test") {
                     nhap ten_sai tu "./nut_bam.vbao"
                     trang("/") { }
                 }
-            "#,
-            ),
-            (
-                "nut_bam.vbao",
-                r#"
+            "#),
+            ("nut_bam.vbao", r#"
                 @the nut_bam(label) {
                     button(noi_dung: $label)
                 }
-            "#,
-            ),
+            "#),
         ]);
 
         let root_path = dir.path().join("app.vbao");
@@ -404,34 +347,24 @@ mod tests {
         assert!(result.is_err());
         let msg = result.unwrap_err().to_string();
         assert!(msg.contains("ten_sai"), "actual message: {}", msg);
-        assert!(
-            msg.contains("nut_bam"),
-            "message must suggest an available name: {}",
-            msg
-        );
+        assert!(msg.contains("nut_bam"), "message must suggest an available name: {}", msg);
     }
 
     #[test]
     fn test_resolve_direct_circular_import_errors_clearly() {
         let dir = write_temp_files(&[
-            (
-                "a.vbao",
-                r#"
+            ("a.vbao", r#"
                 ung_dung("Test") {
                     nhap comp_b tu "./b.vbao"
                     trang("/") { }
                 }
-            "#,
-            ),
-            (
-                "b.vbao",
-                r#"
+            "#),
+            ("b.vbao", r#"
                 nhap comp_a tu "./a.vbao"
                 @the comp_b(x) {
                     button(noi_dung: $x)
                 }
-            "#,
-            ),
+            "#),
         ]);
 
         let root_path = dir.path().join("a.vbao");
@@ -439,57 +372,41 @@ mod tests {
         let program = parse_root(&source);
 
         let result = resolve(program, &root_path);
-        assert!(
-            result.is_err(),
-            "a circular import must be detected and reported"
-        );
+        assert!(result.is_err(), "a circular import must be detected and reported");
         let msg = result.unwrap_err().to_string();
         assert!(
             msg.to_lowercase().contains("circular"),
-            "actual message (not a circular import error): {}",
-            msg
+            "actual message (not a circular import error): {}", msg
         );
     }
 
     #[test]
     fn test_resolve_diamond_import_is_not_falsely_flagged_as_circular() {
         let dir = write_temp_files(&[
-            (
-                "root.vbao",
-                r#"
+            ("root.vbao", r#"
                 ung_dung("Test") {
                     nhap comp_a tu "./a.vbao"
                     nhap comp_b tu "./b.vbao"
                     trang("/") { }
                 }
-            "#,
-            ),
-            (
-                "a.vbao",
-                r#"
+            "#),
+            ("a.vbao", r#"
                 nhap shared_thing tu "./shared.vbao"
                 @the comp_a(x) {
                     button(noi_dung: $x)
                 }
-            "#,
-            ),
-            (
-                "b.vbao",
-                r#"
+            "#),
+            ("b.vbao", r#"
                 nhap shared_thing tu "./shared.vbao"
                 @the comp_b(x) {
                     button(noi_dung: $x)
                 }
-            "#,
-            ),
-            (
-                "shared.vbao",
-                r#"
+            "#),
+            ("shared.vbao", r#"
                 @the shared_thing(x) {
                     text(noi_dung: $x)
                 }
-            "#,
-            ),
+            "#),
         ]);
 
         let root_path = dir.path().join("root.vbao");
@@ -497,12 +414,7 @@ mod tests {
         let program = parse_root(&source);
 
         let resolved = resolve(program, &root_path).unwrap();
-        let names: Vec<&str> = resolved
-            .app
-            .components
-            .iter()
-            .map(|c| c.name.as_str())
-            .collect();
+        let names: Vec<&str> = resolved.app.components.iter().map(|c| c.name.as_str()).collect();
         assert!(names.contains(&"comp_a"));
         assert!(names.contains(&"comp_b"));
         assert_eq!(names.iter().filter(|n| **n == "shared_thing").count(), 1);

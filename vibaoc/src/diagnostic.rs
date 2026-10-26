@@ -11,18 +11,14 @@ impl Locale {
     pub fn detect_from_source(source: &str) -> Self {
         for raw in source.lines().take(8) {
             let line = raw.trim();
-            if line.starts_with("//") || line.starts_with("/*") || line.is_empty() {
-                continue;
-            }
+            if line.starts_with("//") || line.starts_with("/*") || line.is_empty() { continue; }
             if let Some(rest) = line.strip_prefix("lang") {
                 let rest = rest.trim_start();
                 if let Some(rest) = rest.strip_prefix('=') {
                     let rest = rest.trim_start();
                     if let Some(rest) = rest.strip_prefix('"') {
                         if let Some(end) = rest.find('"') {
-                            if let Some(locale) = Self::from_code(&rest[..end]) {
-                                return locale;
-                            }
+                            if let Some(locale) = Self::from_code(&rest[..end]) { return locale; }
                         }
                     }
                 }
@@ -72,12 +68,7 @@ pub fn render(
 
     let _ = writeln!(out, "{level}[{code}] {stage}: {message}");
     let _ = writeln!(out, "  --> {}:{}:{}", path.display(), line, column);
-    let _ = writeln!(
-        out,
-        "   |\n{line:>width$} | {source_line}",
-        line = line,
-        width = width
-    );
+    let _ = writeln!(out, "   |\n{line:>width$} | {source_line}", line = line, width = width);
     let _ = writeln!(
         out,
         "{space:>width$} | ^",
@@ -86,22 +77,14 @@ pub fn render(
     );
     if let Some(help) = help {
         let help = localize_message(locale, help);
-        let label = if locale == Locale::Vietnamese {
-            "gợi ý"
-        } else {
-            "help"
-        };
+        let label = if locale == Locale::Vietnamese { "gợi ý" } else { "help" };
         let _ = writeln!(out, "   |\n   = {label}: {help}");
     }
     out
 }
 
 pub fn warning(locale: Locale, code: &str, message: &str) -> String {
-    let label = if locale == Locale::Vietnamese {
-        "cảnh báo"
-    } else {
-        "warning"
-    };
+    let label = if locale == Locale::Vietnamese { "cảnh báo" } else { "warning" };
     format!("{label}[{code}]: {}", localize_warning(locale, message))
 }
 
@@ -126,9 +109,7 @@ pub fn usage() -> &'static str {
 }
 
 fn localize_stage(locale: Locale, stage: &str) -> String {
-    if locale == Locale::English {
-        return stage.to_string();
-    }
+    if locale == Locale::English { return stage.to_string(); }
     match stage {
         "lexer" => "bộ phân tích từ vựng".into(),
         "parser" => "bộ phân tích cú pháp".into(),
@@ -152,9 +133,7 @@ fn localize_message(locale: Locale, message: &str) -> String {
             ("tên màu '", "color name '"),
             ("biến '$", "variable '$"),
             ("kết thúc file", "end of file"),
-        ] {
-            s = s.replace(from, to);
-        }
+        ] { s = s.replace(from, to); }
         return s;
     }
 
@@ -163,65 +142,34 @@ fn localize_message(locale: Locale, message: &str) -> String {
     }
 
     if let Some(rest) = message.strip_prefix("Expected an application name string, received ") {
-        return format!(
-            "Cần một chuỗi tên ứng dụng, nhận được {}",
-            localize_message(Locale::English, rest)
-        );
+        return format!("Cần một chuỗi tên ứng dụng, nhận được {}", localize_message(Locale::English, rest));
     }
     if let Some(rest) = message.strip_prefix("Expected a component name, received ") {
-        return format!(
-            "Cần tên component, nhận được {}",
-            localize_message(Locale::English, rest)
-        );
+        return format!("Cần tên component, nhận được {}", localize_message(Locale::English, rest));
     }
     if let Some(rest) = message.strip_prefix("Expected a theme identifier, received ") {
-        return format!(
-            "Cần tên định danh theme, nhận được {}",
-            localize_message(Locale::English, rest)
-        );
+        return format!("Cần tên định danh theme, nhận được {}", localize_message(Locale::English, rest));
     }
     if let Some(rest) = message.strip_prefix("Expected a route string, received ") {
-        return format!(
-            "Cần chuỗi route, nhận được {}",
-            localize_message(Locale::English, rest)
-        );
+        return format!("Cần chuỗi route, nhận được {}", localize_message(Locale::English, rest));
     }
     if let Some(rest) = message.strip_prefix("Expected an identifier, received ") {
-        return format!(
-            "Cần một định danh, nhận được {}",
-            localize_message(Locale::English, rest)
-        );
+        return format!("Cần một định danh, nhận được {}", localize_message(Locale::English, rest));
     }
-    if let Some(rest) = message.strip_prefix("Expected a variable name starting with $, received ")
-    {
-        return format!(
-            "Cần tên biến bắt đầu bằng $, nhận được {}",
-            localize_message(Locale::English, rest)
-        );
+    if let Some(rest) = message.strip_prefix("Expected a variable name starting with $, received ") {
+        return format!("Cần tên biến bắt đầu bằng $, nhận được {}", localize_message(Locale::English, rest));
     }
     if let Some(rest) = message.strip_prefix("Expected a valid range start, received ") {
-        return format!(
-            "Cần điểm đầu hợp lệ của khoảng, nhận được {}",
-            localize_message(Locale::English, rest)
-        );
+        return format!("Cần điểm đầu hợp lệ của khoảng, nhận được {}", localize_message(Locale::English, rest));
     }
     if let Some(rest) = message.strip_prefix("Expected a valid range end, received ") {
-        return format!(
-            "Cần điểm cuối hợp lệ của khoảng, nhận được {}",
-            localize_message(Locale::English, rest)
-        );
+        return format!("Cần điểm cuối hợp lệ của khoảng, nhận được {}", localize_message(Locale::English, rest));
     }
     if let Some(rest) = message.strip_prefix("Invalid declaration inside the application block: ") {
-        return format!(
-            "Khai báo không hợp lệ bên trong khối ứng dụng: {}",
-            localize_message(Locale::English, rest)
-        );
+        return format!("Khai báo không hợp lệ bên trong khối ứng dụng: {}", localize_message(Locale::English, rest));
     }
     if let Some(rest) = message.strip_prefix("Could not parse value: ") {
-        return format!(
-            "Không thể phân tích giá trị: {}",
-            localize_message(Locale::English, rest)
-        );
+        return format!("Không thể phân tích giá trị: {}", localize_message(Locale::English, rest));
     }
     if let Some(rest) = message.strip_prefix("Unrecognized character: ") {
         return format!("Ký tự không được nhận diện: {}", rest);
@@ -237,14 +185,8 @@ fn localize_message(locale: Locale, message: &str) -> String {
     }
     if message.starts_with("Unsupported source language '") {
         return message
-            .replace(
-                "Unsupported source language",
-                "Ngôn ngữ source chưa được hỗ trợ",
-            )
-            .replace(
-                "English is always available; supported diagnostic languages",
-                "English luôn được hỗ trợ; các ngôn ngữ diagnostics hiện có",
-            );
+            .replace("Unsupported source language", "Ngôn ngữ source chưa được hỗ trợ")
+            .replace("English is always available; supported diagnostic languages", "English luôn được hỗ trợ; các ngôn ngữ diagnostics hiện có");
     }
 
     let mut s = message.to_string();
@@ -267,9 +209,7 @@ fn localize_message(locale: Locale, message: &str) -> String {
         ("before ", "trước "),
         ("and ", "và "),
         ("or ", "hoặc "),
-    ] {
-        s = s.replace(from, to);
-    }
+    ] { s = s.replace(from, to); }
     let s = localize_message(Locale::English, &s);
     s.replace("identifier '", "định danh '")
         .replace("keyword '", "từ khóa '")
@@ -367,8 +307,7 @@ fn localize_theme_message(message: &str) -> Option<String> {
 
 fn localize_response_handler(message: &str) -> Option<String> {
     let rest = message.strip_prefix("Unknown response handler '")?;
-    let (name, rest) =
-        rest.split_once("': expected 'thanh_cong' (or 'success') or 'that_bai' (or 'failure')")?;
+    let (name, rest) = rest.split_once("': expected 'thanh_cong' (or 'success') or 'that_bai' (or 'failure')")?;
     if !rest.is_empty() {
         return None;
     }
@@ -412,25 +351,18 @@ fn localize_misplaced_prop(message: &str) -> Option<String> {
 fn localize_unusable_prop(message: &str) -> Option<String> {
     let rest = message.strip_prefix("Property '")?;
     let (key, rest) = rest.split_once("' cannot be used inside block @")?;
-    if let Some(block) =
-        rest.strip_suffix(": animation properties are written in '(...)' of the tag")
-    {
+    if let Some(block) = rest.strip_suffix(": animation properties are written in '(...)' of the tag") {
         return Some(format!(
             "Prop '{}' không dùng được trong khối @{}: prop animation viết trong '(...)' của tag",
             key, block
         ));
     }
-    Some(format!(
-        "Prop '{}' không dùng được trong khối @{}",
-        key, rest
-    ))
+    Some(format!("Prop '{}' không dùng được trong khối @{}", key, rest))
 }
 
 fn localize_duplicate_block(message: &str) -> Option<String> {
     let rest = message.strip_prefix("Block '@")?;
-    let (name, rest) = rest.split_once(
-        "' is already declared on this tag and cannot be repeated: merge it into a single '@",
-    )?;
+    let (name, rest) = rest.split_once("' is already declared on this tag and cannot be repeated: merge it into a single '@")?;
     rest.strip_suffix("' block")?;
     Some(format!(
         "Khối '@{}' đã được khai báo trên tag này và không thể lặp lại: gộp vào một khối '@{}' duy nhất",
@@ -541,9 +473,7 @@ const CODEGEN_WARNING_FRAGMENTS_EN: &[(&str, &str)] = &[
 ];
 
 fn localize_warning(locale: Locale, message: &str) -> String {
-    if locale == Locale::Vietnamese {
-        return message.to_string();
-    }
+    if locale == Locale::Vietnamese { return message.to_string(); }
 
     if let Some(rest) = message.strip_prefix("prop '") {
         if let Some((key, rest)) = rest.split_once("' trên thẻ layout '") {
@@ -572,31 +502,20 @@ fn localize_warning(locale: Locale, message: &str) -> String {
         ("thẻ '", "tag '"),
         ("trên thẻ '", "on tag '"),
         ("không được ViBao nhận diện", "is not recognized by ViBao"),
-        (
-            "có thể do gõ sai tên prop",
-            "the prop name may be misspelled",
-        ),
+        ("có thể do gõ sai tên prop", "the prop name may be misspelled"),
         ("không được hỗ trợ", "is not supported"),
         ("giá trị biểu thức động", "a dynamic expression value"),
         ("chưa được hỗ trợ", "is not supported yet"),
-        (
-            "Style sẽ KHÔNG được áp dụng",
-            "The style will NOT be applied",
-        ),
+        ("Style sẽ KHÔNG được áp dụng", "The style will NOT be applied"),
         ("Vẫn hoạt động đúng", "It still works correctly"),
-        (
-            "nên bọc trong 1 container",
-            "consider wrapping it in a container",
-        ),
+        ("nên bọc trong 1 container", "consider wrapping it in a container"),
         ("bị định nghĩa lại", "was redefined"),
         ("chưa được định nghĩa", "has not been defined"),
         ("dòng ", "line "),
         ("phần tử top-level", "top-level elements"),
         ("không được để trống", "must not be empty"),
         ("cần một object", "requires an object"),
-    ] {
-        s = s.replace(from, to);
-    }
+    ] { s = s.replace(from, to); }
     s
 }
 
@@ -646,18 +565,7 @@ mod tests {
     }
 
     fn render_message(locale: Locale, message: &str) -> String {
-        render(
-            locale,
-            "error",
-            "E2001",
-            "parser",
-            Path::new("app.vbao"),
-            "x",
-            1,
-            1,
-            message,
-            None,
-        )
+        render(locale, "error", "E2001", "parser", Path::new("app.vbao"), "x", 1, 1, message, None)
     }
 
     #[test]
@@ -674,81 +582,44 @@ mod tests {
 
         let message = "Tag 'khoi' requires block syntax for property 'abc': declare it inside an @block { ... } in the tag body instead of using '(...)'";
         let rendered = render_message(Locale::Vietnamese, message);
-        assert!(
-            rendered.contains("khai báo trong một khối @ten_khoi { ... }"),
-            "{}",
-            rendered
-        );
+        assert!(rendered.contains("khai báo trong một khối @ten_khoi { ... }"), "{}", rendered);
     }
 
     #[test]
     fn misplaced_prop_message_is_localized_to_vietnamese() {
         let message = "Property 'co' belongs to block @chu, not @mau: move it to @chu { co: ... }";
         let rendered = render_message(Locale::Vietnamese, message);
-        assert!(
-            rendered.contains(
-                "Prop 'co' thuộc khối @chu, không phải @mau: chuyển vào @chu { co: ... }"
-            ),
-            "{}",
-            rendered
-        );
+        assert!(rendered.contains("Prop 'co' thuộc khối @chu, không phải @mau: chuyển vào @chu { co: ... }"), "{}", rendered);
 
         let message = "Property 'an' cannot be used inside block @mau";
         let rendered = render_message(Locale::Vietnamese, message);
-        assert!(
-            rendered.contains("Prop 'an' không dùng được trong khối @mau"),
-            "{}",
-            rendered
-        );
+        assert!(rendered.contains("Prop 'an' không dùng được trong khối @mau"), "{}", rendered);
 
         let message = "Property 'hieu_ung_cuon' cannot be used inside block @mau: animation properties are written in '(...)' of the tag";
         let rendered = render_message(Locale::Vietnamese, message);
-        assert!(
-            rendered.contains("prop animation viết trong '(...)' của tag"),
-            "{}",
-            rendered
-        );
+        assert!(rendered.contains("prop animation viết trong '(...)' của tag"), "{}", rendered);
     }
 
     #[test]
     fn duplicate_identity_and_component_block_messages_are_localized_to_vietnamese() {
         let message = "Block '@mau' is already declared on this tag and cannot be repeated: merge it into a single '@mau' block";
         let rendered = render_message(Locale::Vietnamese, message);
-        assert!(
-            rendered.contains("Khối '@mau' đã được khai báo trên tag này"),
-            "{}",
-            rendered
-        );
+        assert!(rendered.contains("Khối '@mau' đã được khai báo trên tag này"), "{}", rendered);
 
         let message = "'x' is not valid in block @dinh_danh: only 'id' and 'lop' are accepted";
         let rendered = render_message(Locale::Vietnamese, message);
-        assert!(
-            rendered
-                .contains("'x' không hợp lệ trong khối @dinh_danh: chỉ chấp nhận 'id' và 'lop'"),
-            "{}",
-            rendered
-        );
+        assert!(rendered.contains("'x' không hợp lệ trong khối @dinh_danh: chỉ chấp nhận 'id' và 'lop'"), "{}", rendered);
 
         let message = "'@mau' is a semantic block of Element and does not apply to component calls: component parameters are free-named, write them directly in the '(...)' of The_Card(...)";
         let rendered = render_message(Locale::Vietnamese, message);
-        assert!(
-            rendered.contains(
-                "param của component đặt tên tự do, viết trực tiếp trong '(...)' của The_Card(...)"
-            ),
-            "{}",
-            rendered
-        );
+        assert!(rendered.contains("param của component đặt tên tự do, viết trực tiếp trong '(...)' của The_Card(...)"), "{}", rendered);
     }
 
     #[test]
     fn response_handler_message_is_localized_to_vietnamese() {
         let message = "Unknown response handler 'done': expected 'thanh_cong' (or 'success') or 'that_bai' (or 'failure')";
         let rendered = render_message(Locale::Vietnamese, message);
-        assert!(
-            rendered.contains("Khối xử lý phản hồi 'done' không hợp lệ"),
-            "{}",
-            rendered
-        );
+        assert!(rendered.contains("Khối xử lý phản hồi 'done' không hợp lệ"), "{}", rendered);
         assert!(render_message(Locale::English, message).contains(message));
     }
 
@@ -774,16 +645,8 @@ mod tests {
             );
         }
         let rendered = warning(Locale::English, "W0001", samples[2]);
-        assert!(
-            rendered.contains("has NO effect on layout tag 'khoi'"),
-            "{}",
-            rendered
-        );
-        assert!(
-            rendered.contains("only usable on: flex, cuon"),
-            "{}",
-            rendered
-        );
+        assert!(rendered.contains("has NO effect on layout tag 'khoi'"), "{}", rendered);
+        assert!(rendered.contains("only usable on: flex, cuon"), "{}", rendered);
         let rendered = warning(Locale::English, "W0001", samples[1]);
         assert!(rendered.contains("(group: typography)"), "{}", rendered);
     }
@@ -835,35 +698,19 @@ mod tests {
             Locale::Vietnamese,
             "Theme \"sang\": variable \"$nen\" is declared more than once",
         );
-        assert!(
-            ket_qua.contains("Theme \"sang\": biến \"$nen\" được khai báo nhiều lần"),
-            "{}",
-            ket_qua
-        );
+        assert!(ket_qua.contains("Theme \"sang\": biến \"$nen\" được khai báo nhiều lần"), "{}", ket_qua);
         assert!(!ket_qua.contains("variable"), "{}", ket_qua);
     }
 
     #[test]
     fn mau_dich_khong_khop_thi_tra_ve_none() {
+        assert_eq!(fill_pattern("Khác hẳn", "Theme \"{}\" declares no variables", "x {}"), None);
         assert_eq!(
-            fill_pattern("Khác hẳn", "Theme \"{}\" declares no variables", "x {}"),
+            fill_pattern("Theme \"a\" declares no variables thừa", "Theme \"{}\" declares no variables", "x {}"),
             None
         );
         assert_eq!(
-            fill_pattern(
-                "Theme \"a\" declares no variables thừa",
-                "Theme \"{}\" declares no variables",
-                "x {}"
-            ),
-            None
-        );
-        assert_eq!(
-            fill_pattern(
-                "Theme \"a\" declares no variables",
-                "Theme \"{}\" declares no variables",
-                "Theme \"{}\" trống"
-            )
-            .as_deref(),
+            fill_pattern("Theme \"a\" declares no variables", "Theme \"{}\" declares no variables", "Theme \"{}\" trống").as_deref(),
             Some("Theme \"a\" trống")
         );
     }

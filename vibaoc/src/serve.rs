@@ -70,11 +70,7 @@ pub fn resolve_target(root: &Path, target: &str) -> Target {
         if segment.is_empty() || segment == "." {
             continue;
         }
-        if segment == ".."
-            || segment.contains('\\')
-            || segment.contains(':')
-            || segment.contains('\0')
-        {
+        if segment == ".." || segment.contains('\\') || segment.contains(':') || segment.contains('\0') {
             return Target::Forbidden;
         }
         candidate.push(segment);
@@ -142,12 +138,7 @@ pub fn reply_for(root: &Path, request_line: &str) -> (Reply, bool) {
     let head_only = method == "HEAD";
     let reply = match resolve_target(root, &target) {
         Target::File(path) | Target::SpaFallback(path) => match fs::read(&path) {
-            Ok(body) => Reply {
-                status: 200,
-                reason: "OK",
-                content_type: mime_for(&path),
-                body,
-            },
+            Ok(body) => Reply { status: 200, reason: "OK", content_type: mime_for(&path), body },
             Err(_) => text_reply(500, "Internal Server Error"),
         },
         Target::Forbidden => text_reply(403, "Forbidden"),
@@ -194,10 +185,7 @@ fn newest_change(dir: &Path, skip: &Path, depth: usize) -> Option<SystemTime> {
             continue;
         }
         let path = entry.path();
-        if fs::canonicalize(&path)
-            .map(|canonical| canonical == skip)
-            .unwrap_or(false)
-        {
+        if fs::canonicalize(&path).map(|canonical| canonical == skip).unwrap_or(false) {
             continue;
         }
         let modified = if path.is_dir() {
@@ -245,9 +233,7 @@ fn watch(source: PathBuf, out_dir: PathBuf, locale: Locale) {
             (true, true) => println!("Đã build lại. Tải lại trang (Ctrl+Shift+R) để xem."),
             (true, false) => println!("Rebuilt. Reload the page (Ctrl+Shift+R) to see it."),
             (false, true) => println!("Build lỗi, giữ nguyên bản trước. Sửa lỗi rồi lưu lại."),
-            (false, false) => {
-                println!("Build failed, keeping the previous output. Fix the error and save again.")
-            }
+            (false, false) => println!("Build failed, keeping the previous output. Fix the error and save again."),
         }
     }
 }
@@ -258,39 +244,24 @@ pub fn run(options: ServeOptions) {
         Ok(listener) => listener,
         Err(e) => {
             if options.locale == Locale::Vietnamese {
-                eprintln!(
-                    "error: không mở được {} ({}). Thử đổi cổng bằng --port.",
-                    address, e
-                );
+                eprintln!("error: không mở được {} ({}). Thử đổi cổng bằng --port.", address, e);
             } else {
-                eprintln!(
-                    "error: cannot listen on {} ({}). Try another port with --port.",
-                    address, e
-                );
+                eprintln!("error: cannot listen on {} ({}). Try another port with --port.", address, e);
             }
             process::exit(1);
         }
     };
 
     if options.locale == Locale::Vietnamese {
-        println!(
-            "Đang chạy server tại http://{}:{}/ (Ctrl+C để dừng)",
-            options.host, options.port
-        );
+        println!("Đang chạy server tại http://{}:{}/ (Ctrl+C để dừng)", options.host, options.port);
         if options.host == "0.0.0.0" {
-            println!(
-                "Truy cập từ thiết bị khác trong cùng mạng bằng http://<IP máy này>:{}/",
-                options.port
-            );
+            println!("Truy cập từ thiết bị khác trong cùng mạng bằng http://<IP máy này>:{}/", options.port);
         }
         if options.watch {
             println!("Tự build lại khi file nguồn hoặc public/ thay đổi.");
         }
     } else {
-        println!(
-            "Serving at http://{}:{}/ (Ctrl+C to stop)",
-            options.host, options.port
-        );
+        println!("Serving at http://{}:{}/ (Ctrl+C to stop)", options.host, options.port);
         if options.host == "0.0.0.0" {
             println!("Open it from another device on the same network with http://<this machine's IP>:{}/", options.port);
         }
@@ -358,23 +329,14 @@ mod tests {
     #[test]
     fn trang_chu_tra_ve_index_html() {
         let root = dung_site("trang-chu");
-        assert_eq!(
-            resolve_target(&root, "/"),
-            Target::File(root.join("index.html"))
-        );
-        assert_eq!(
-            resolve_target(&root, "/?v=2"),
-            Target::File(root.join("index.html"))
-        );
+        assert_eq!(resolve_target(&root, "/"), Target::File(root.join("index.html")));
+        assert_eq!(resolve_target(&root, "/?v=2"), Target::File(root.join("index.html")));
     }
 
     #[test]
     fn file_tinh_va_file_trong_thu_muc_con_duoc_phuc_vu() {
         let root = dung_site("file-tinh");
-        assert_eq!(
-            resolve_target(&root, "/app.js"),
-            Target::File(root.join("app.js"))
-        );
+        assert_eq!(resolve_target(&root, "/app.js"), Target::File(root.join("app.js")));
         assert_eq!(
             resolve_target(&root, "/pkg/runtime_bg.wasm"),
             Target::File(root.join("pkg").join("runtime_bg.wasm"))
@@ -393,10 +355,7 @@ mod tests {
     #[test]
     fn duong_dan_khong_co_phan_mo_rong_quay_ve_index_html_cho_spa() {
         let root = dung_site("spa");
-        assert_eq!(
-            resolve_target(&root, "/du-an/3"),
-            Target::SpaFallback(root.join("index.html"))
-        );
+        assert_eq!(resolve_target(&root, "/du-an/3"), Target::SpaFallback(root.join("index.html")));
     }
 
     #[test]
@@ -408,39 +367,19 @@ mod tests {
     #[test]
     fn chan_thoat_ra_ngoai_thu_muc_goc() {
         let root = dung_site("chan-thoat");
-        for target in [
-            "/../Cargo.toml",
-            "/%2e%2e/etc/passwd",
-            "/a/../../b",
-            "/a\\b",
-            "/C:/windows",
-        ] {
-            assert_eq!(
-                resolve_target(&root, target),
-                Target::Forbidden,
-                "{}",
-                target
-            );
+        for target in ["/../Cargo.toml", "/%2e%2e/etc/passwd", "/a/../../b", "/a\\b", "/C:/windows"] {
+            assert_eq!(resolve_target(&root, target), Target::Forbidden, "{}", target);
         }
     }
 
     #[test]
     fn kieu_mime_cua_wasm_va_cac_file_pho_bien() {
         assert_eq!(mime_for(Path::new("a.wasm")), "application/wasm");
-        assert_eq!(
-            mime_for(Path::new("a.JS")),
-            "text/javascript; charset=utf-8"
-        );
+        assert_eq!(mime_for(Path::new("a.JS")), "text/javascript; charset=utf-8");
         assert_eq!(mime_for(Path::new("a.svg")), "image/svg+xml");
         assert_eq!(mime_for(Path::new("a.html")), "text/html; charset=utf-8");
-        assert_eq!(
-            mime_for(Path::new("a.khong_biet")),
-            "application/octet-stream"
-        );
-        assert_eq!(
-            mime_for(Path::new("khong-co-duoi")),
-            "application/octet-stream"
-        );
+        assert_eq!(mime_for(Path::new("a.khong_biet")), "application/octet-stream");
+        assert_eq!(mime_for(Path::new("khong-co-duoi")), "application/octet-stream");
     }
 
     #[test]
@@ -473,17 +412,9 @@ mod tests {
 
         thread::sleep(Duration::from_millis(1100));
         fs::write(out.join("index.html"), "đầu ra mới").unwrap();
-        assert_eq!(
-            newest_change(&root, &skip, 0),
-            truoc,
-            "thay đổi trong thư mục đầu ra phải bị bỏ qua"
-        );
+        assert_eq!(newest_change(&root, &skip, 0), truoc, "thay đổi trong thư mục đầu ra phải bị bỏ qua");
 
         fs::write(root.join("app.vbao"), "b").unwrap();
-        assert_ne!(
-            newest_change(&root, &skip, 0),
-            truoc,
-            "sửa file nguồn phải được phát hiện"
-        );
+        assert_ne!(newest_change(&root, &skip, 0), truoc, "sửa file nguồn phải được phát hiện");
     }
 }

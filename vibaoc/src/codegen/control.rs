@@ -1,6 +1,6 @@
+use vibao_ast::{Child, IfNode, LoopKind, LoopNode, SwitchNode};
 use crate::codegen::css::{esc_attr, indent, indent2};
 use crate::codegen::element::ElementCodegenHost;
-use vibao_ast::{Child, IfNode, LoopKind, LoopNode, SwitchNode};
 
 pub fn if_to_data_attr(expr_id: usize) -> String {
     format!("data-vb-if=\"{}\"", expr_id)
@@ -9,11 +9,7 @@ pub fn if_to_data_attr(expr_id: usize) -> String {
 pub fn gen_if(node: &IfNode, host: &mut dyn ElementCodegenHost) -> String {
     let condition_id = crate::codegen::expr::register_expr(node.condition.clone());
     let consequent_html = host.gen_children(&node.consequent);
-    let alternate_html = node
-        .alternate
-        .as_ref()
-        .map(|c| host.gen_children(c))
-        .unwrap_or_default();
+    let alternate_html = node.alternate.as_ref().map(|c| host.gen_children(c)).unwrap_or_default();
 
     let if_id = host.next_id("if");
     let else_id = host.next_id("else");
@@ -25,31 +21,23 @@ pub fn gen_if(node: &IfNode, host: &mut dyn ElementCodegenHost) -> String {
         indent2(&consequent_html)
     );
 
-    let else_block =
-        if !alternate_html.is_empty() {
-            format!(
+    let else_block = if !alternate_html.is_empty() {
+        format!(
             "<div id=\"{}\" data-vb-else data-vb-if-ref=\"{}\" style=\"display:none\">\n{}\n</div>",
             else_id, if_id, indent2(&alternate_html)
         )
-        } else {
-            String::new()
-        };
+    } else {
+        String::new()
+    };
 
-    [if_block, else_block]
-        .into_iter()
-        .filter(|s| !s.is_empty())
-        .collect::<Vec<_>>()
-        .join("\n")
+    [if_block, else_block].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("\n")
 }
 
 pub fn gen_switch(node: &SwitchNode, host: &mut dyn ElementCodegenHost) -> String {
     let subject_id = crate::codegen::expr::register_expr(node.subject.clone());
     let switch_id = host.next_id("switch");
 
-    let mut html = format!(
-        "<div id=\"{}\" data-vb-switch=\"{}\">\n",
-        switch_id, subject_id
-    );
+    let mut html = format!("<div id=\"{}\" data-vb-switch=\"{}\">\n", switch_id, subject_id);
 
     for case in &node.cases {
         let value_id = crate::codegen::expr::register_expr(case.value.clone());
@@ -85,20 +73,14 @@ pub struct CompiledLoop {
 
 pub fn compile_loop_node(node: &LoopNode) -> CompiledLoop {
     match &node.kind {
-        LoopKind::Each {
-            iterable,
-            item_var,
-            index_var,
-        } => CompiledLoop {
+        LoopKind::Each { iterable, item_var, index_var } => CompiledLoop {
             iterable_expr_id: crate::codegen::expr::register_expr(iterable.clone()),
             item_var: item_var.replace('$', ""),
             index_var: index_var.as_ref().map(|v| v.replace('$', "")),
         },
         LoopKind::Range { from, to, var_name } => {
             let items: Vec<vibao_ast::Expr> = (*from..=*to)
-                .map(|n| {
-                    vibao_ast::Expr::literal_num(n as f64, vibao_ast::Pos { line: 0, column: 0 })
-                })
+                .map(|n| vibao_ast::Expr::literal_num(n as f64, vibao_ast::Pos { line: 0, column: 0 }))
                 .collect();
             let array_expr = vibao_ast::Expr::Array(items, vibao_ast::Pos { line: 0, column: 0 });
             CompiledLoop {
@@ -165,11 +147,7 @@ pub fn gen_loop(node: &LoopNode, host: &mut dyn ElementCodegenHost) -> String {
         }
     }
 
-    let template = format!(
-        "<template id=\"{}\">\n{}\n</template>",
-        template_id,
-        indent2(&body_html)
-    );
+    let template = format!("<template id=\"{}\">\n{}\n</template>", template_id, indent2(&body_html));
     host.add_hoisted_template(template);
 
     let container = format!(
@@ -204,10 +182,7 @@ mod tests {
         }
         impl FakeHost {
             fn new() -> Self {
-                FakeHost {
-                    counter: 0,
-                    js_calls: vec![],
-                }
+                FakeHost { counter: 0, js_calls: vec![] }
             }
         }
         impl ElementCodegenHost for FakeHost {
@@ -244,11 +219,7 @@ mod tests {
             "gen_if must not generate any JS at all (the new architecture uses the expr registry, no JS binding) - actual: {:?}",
             host.js_calls
         );
-        assert!(
-            html.contains("data-vb-if=\""),
-            "the HTML must contain data-vb-if: {}",
-            html
-        );
+        assert!(html.contains("data-vb-if=\""), "the HTML must contain data-vb-if: {}", html);
         let start = html.find("data-vb-if=\"").unwrap() + "data-vb-if=\"".len();
         let end = html[start..].find('"').unwrap() + start;
         let id_str = &html[start..end];
@@ -261,25 +232,15 @@ mod tests {
 
     #[test]
     fn test_gen_if_with_alternate_generates_else_div_as_sibling() {
-        struct FakeHost {
-            counter: u32,
-        }
-        impl FakeHost {
-            fn new() -> Self {
-                FakeHost { counter: 0 }
-            }
-        }
+        struct FakeHost { counter: u32 }
+        impl FakeHost { fn new() -> Self { FakeHost { counter: 0 } } }
         impl ElementCodegenHost for FakeHost {
             fn next_id(&mut self, tag: &str) -> String {
                 self.counter += 1;
                 format!("vb-{}-{}", tag, self.counter)
             }
             fn gen_children(&mut self, children: &[Child]) -> String {
-                if children.is_empty() {
-                    String::new()
-                } else {
-                    "<span>alt</span>".to_string()
-                }
+                if children.is_empty() { String::new() } else { "<span>alt</span>".to_string() }
             }
             fn add_css(&mut self, _code: &str) {}
             fn add_media_query(&mut self, _code: &str) {}
@@ -301,19 +262,9 @@ mod tests {
         let html = gen_if(&node, &mut host);
 
         let if_pos = html.find("data-vb-if=\"").expect("must have an if div");
-        let else_pos = html
-            .find("data-vb-else")
-            .expect("must have an else div when alternate is present");
-        assert!(
-            if_pos < else_pos,
-            "the if div must appear BEFORE the else div in the HTML: {}",
-            html
-        );
-        assert!(
-            html.contains("style=\"display:none\""),
-            "else must be hidden by default: {}",
-            html
-        );
+        let else_pos = html.find("data-vb-else").expect("must have an else div when alternate is present");
+        assert!(if_pos < else_pos, "the if div must appear BEFORE the else div in the HTML: {}", html);
+        assert!(html.contains("style=\"display:none\""), "else must be hidden by default: {}", html);
     }
 
     #[test]
@@ -335,11 +286,7 @@ mod tests {
     #[test]
     fn test_compile_loop_range_desugars_with_i_as_item_var() {
         let node = LoopNode {
-            kind: LoopKind::Range {
-                from: 1,
-                to: 5,
-                var_name: "i".to_string(),
-            },
+            kind: LoopKind::Range { from: 1, to: 5, var_name: "i".to_string() },
             body: vec![],
             pos: p(),
         };
@@ -351,11 +298,7 @@ mod tests {
     #[test]
     fn test_compile_loop_range_uses_custom_counter_variable_name() {
         let node = LoopNode {
-            kind: LoopKind::Range {
-                from: 1,
-                to: 5,
-                var_name: "dem".to_string(),
-            },
+            kind: LoopKind::Range { from: 1, to: 5, var_name: "dem".to_string() },
             body: vec![],
             pos: p(),
         };
@@ -376,11 +319,7 @@ mod tests {
         };
         let compiled = compile_loop_node(&node);
         let attr = loop_to_data_attr(&compiled, "vb-tpl-1");
-        assert!(
-            attr.starts_with("data-vb-loop=\""),
-            "must use the correct data-vb-loop attribute name: {}",
-            attr
-        );
+        assert!(attr.starts_with("data-vb-loop=\""), "must use the correct data-vb-loop attribute name: {}", attr);
         let json_start = attr.find('"').unwrap() + 1;
         let json_raw = &attr[json_start..attr.len() - 1];
         let json_unescaped = json_raw.replace("&quot;", "\"");
@@ -393,11 +332,7 @@ mod tests {
     #[test]
     fn test_range_loop_desugars_to_each_with_correct_array() {
         let node = LoopNode {
-            kind: LoopKind::Range {
-                from: 1,
-                to: 3,
-                var_name: "i".to_string(),
-            },
+            kind: LoopKind::Range { from: 1, to: 3, var_name: "i".to_string() },
             body: vec![],
             pos: p(),
         };
@@ -407,11 +342,7 @@ mod tests {
 
         let attr = loop_to_data_attr(&compiled, "vb-tpl-2");
         let json_unescaped = attr.replace("&quot;", "\"");
-        assert!(
-            json_unescaped.contains("\"iterable_expr_id\":"),
-            "actual attr: {}",
-            attr
-        );
+        assert!(json_unescaped.contains("\"iterable_expr_id\":"), "actual attr: {}", attr);
     }
 
     struct FakeHost {
@@ -421,10 +352,7 @@ mod tests {
 
     impl FakeHost {
         fn new() -> Self {
-            FakeHost {
-                counter: 0,
-                warnings: vec![],
-            }
+            FakeHost { counter: 0, warnings: vec![] }
         }
     }
 
@@ -474,10 +402,7 @@ mod tests {
 
     #[test]
     fn test_count_dom_producing_children_counts_multiple_elements() {
-        let children = vec![
-            dummy_element_child(vibao_ast::Tag::Text),
-            dummy_element_child(vibao_ast::Tag::DuongKe),
-        ];
+        let children = vec![dummy_element_child(vibao_ast::Tag::Text), dummy_element_child(vibao_ast::Tag::DuongKe)];
         assert_eq!(count_dom_producing_children(&children), 2);
     }
 
@@ -489,10 +414,7 @@ mod tests {
                 item_var: "item".to_string(),
                 index_var: None,
             },
-            body: vec![
-                dummy_element_child(vibao_ast::Tag::Text),
-                dummy_element_child(vibao_ast::Tag::DuongKe),
-            ],
+            body: vec![dummy_element_child(vibao_ast::Tag::Text), dummy_element_child(vibao_ast::Tag::DuongKe)],
             pos: p(),
         };
         let mut host = FakeHost::new();
@@ -502,11 +424,7 @@ mod tests {
             1,
             "must produce exactly 1 warning when the loop body has 2 top-level elements"
         );
-        assert!(
-            host.warnings[0].contains("2 phần tử top-level"),
-            "warning content: {}",
-            host.warnings[0]
-        );
+        assert!(host.warnings[0].contains("2 phần tử top-level"), "warning content: {}", host.warnings[0]);
     }
 
     #[test]
@@ -609,12 +527,7 @@ mod tests {
         };
         let mut host = FakeHost::new();
         gen_loop(&node, &mut host);
-        assert_eq!(
-            host.warnings.len(),
-            3,
-            "actual warnings: {:?}",
-            host.warnings
-        );
+        assert_eq!(host.warnings.len(), 3, "actual warnings: {:?}", host.warnings);
         assert!(host.warnings.iter().any(|w| w.contains("TheA")));
         assert!(host.warnings.iter().any(|w| w.contains("TheB")));
     }

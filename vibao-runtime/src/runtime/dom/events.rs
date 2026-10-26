@@ -1,20 +1,15 @@
-use super::text_attr::list_attribute_names_with_prefix;
-use super::{parse_expr_id, ATTR_EVENT_PREFIX};
-use crate::runtime::state::{LoopFrame, SharedState};
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
 use web_sys::{Element, Event};
+use crate::runtime::{state::{LoopFrame, SharedState}};
+use super::{ATTR_EVENT_PREFIX, parse_expr_id};
+use super::text_attr::list_attribute_names_with_prefix;
 
 pub(super) fn event_needs_prevent_default(event_name: &str) -> bool {
     event_name == "submit"
 }
 
-pub(super) fn bind_events(
-    shared: &SharedState,
-    el: &Element,
-    loop_frame: Option<&LoopFrame>,
-    component_id: Option<&str>,
-) {
+pub(super) fn bind_events(shared: &SharedState, el: &Element, loop_frame: Option<&LoopFrame>, component_id: Option<&str>) {
     let attr_names = list_attribute_names_with_prefix(el, ATTR_EVENT_PREFIX);
     for full_name in attr_names {
         let bound_marker = format!("data-vb-bound-{}", &full_name[ATTR_EVENT_PREFIX.len()..]);
@@ -65,8 +60,7 @@ pub(super) fn bind_events(
                     &actions_for_task,
                     loop_frame_for_task.as_ref(),
                     component_id_for_task.as_deref(),
-                )
-                .await;
+                ).await;
             });
         });
 

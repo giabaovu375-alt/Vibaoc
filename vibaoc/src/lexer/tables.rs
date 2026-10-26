@@ -17,51 +17,17 @@ pub(crate) fn keyword_map() -> HashMap<&'static str, TokenKind> {
 }
 
 const ALL_KEYWORD_SURFACE_NAMES_VI: &[&str] = &[
-    "trang",
-    "ung_dung",
-    "chu_de",
-    "trang_thai",
-    "nhap",
-    "tu",
-    "neu",
-    "khong_thi",
-    "neu_nhieu",
-    "truong_hop",
-    "mac_dinh",
-    "vong_lap",
-    "khi_nhan",
-    "khi_di_chuot",
-    "khi_mat_focus",
-    "khi_focus",
-    "khi_doi",
-    "khi_gui",
-    "khi_cuon",
-    "on_tai",
-    "on_huy",
+    "trang", "ung_dung", "chu_de", "trang_thai", "nhap", "tu",
+    "neu", "khong_thi", "neu_nhieu", "truong_hop", "mac_dinh", "vong_lap",
+    "khi_nhan", "khi_di_chuot", "khi_mat_focus", "khi_focus", "khi_doi",
+    "khi_gui", "khi_cuon", "on_tai", "on_huy",
 ];
 
 const ALL_KEYWORD_SURFACE_NAMES_EN: &[&str] = &[
-    "page",
-    "app",
-    "theme",
-    "state",
-    "import",
-    "from",
-    "if",
-    "else",
-    "else_if",
-    "switch",
-    "default",
-    "loop",
-    "on_click",
-    "on_hover",
-    "on_blur",
-    "on_focus",
-    "on_change",
-    "on_submit",
-    "on_scroll",
-    "on_load",
-    "on_unload",
+    "page", "app", "theme", "state", "import", "from",
+    "if", "else", "else_if", "switch", "default", "loop",
+    "on_click", "on_hover", "on_blur", "on_focus", "on_change",
+    "on_submit", "on_scroll", "on_load", "on_unload",
 ];
 
 pub(crate) fn component_set() -> Vec<&'static str> {
@@ -76,20 +42,12 @@ pub(crate) fn component_set() -> Vec<&'static str> {
             v.push(name);
         }
     }
-    for name in ALL_ACTION_SURFACE_NAMES_VI
-        .iter()
-        .chain(ALL_ACTION_SURFACE_NAMES_EN.iter())
-        .copied()
-    {
+    for name in ALL_ACTION_SURFACE_NAMES_VI.iter().chain(ALL_ACTION_SURFACE_NAMES_EN.iter()).copied() {
         if crate::locale::resolve_action_name(name).is_some() {
             v.push(name);
         }
     }
-    for name in ALL_FUNCTION_SURFACE_NAMES_VI
-        .iter()
-        .chain(ALL_FUNCTION_SURFACE_NAMES_EN.iter())
-        .copied()
-    {
+    for name in ALL_FUNCTION_SURFACE_NAMES_VI.iter().chain(ALL_FUNCTION_SURFACE_NAMES_EN.iter()).copied() {
         if crate::locale::resolve_function_name(name).is_some() {
             v.push(name);
         }
@@ -98,148 +56,48 @@ pub(crate) fn component_set() -> Vec<&'static str> {
 }
 
 const ALL_ACTION_SURFACE_NAMES_VI: &[&str] = &[
-    "thong_bao",
-    "canh_bao",
-    "dieu_huong",
-    "mo_tab_moi",
-    "mo_modal",
-    "dong_modal",
-    "cuon_den",
-    "cuon_len_dau",
-    "luu_du_lieu",
-    "tai_du_lieu",
-    "sao_chep",
-    "goi_api",
-    "them_vao_mang",
-    "xoa_theo_id",
-    "cap_nhat_theo_id",
-    "dat_chu_de",
+    "thong_bao", "canh_bao", "dieu_huong", "mo_tab_moi",
+    "mo_modal", "dong_modal", "cuon_den", "cuon_len_dau",
+    "luu_du_lieu", "tai_du_lieu", "sao_chep", "goi_api",
+    "them_vao_mang", "xoa_theo_id", "cap_nhat_theo_id", "dat_chu_de",
 ];
 
 const ALL_FUNCTION_SURFACE_NAMES_VI: &[&str] = &[
-    "gia_tien",
-    "ngay",
-    "rut_gon",
-    "hoa_chu",
-    "phan_tram",
-    "lam_tron",
+    "gia_tien", "ngay", "rut_gon", "hoa_chu", "phan_tram", "lam_tron",
 ];
 
 const ALL_ACTION_SURFACE_NAMES_EN: &[&str] = &[
-    "notify",
-    "alert",
-    "navigate",
-    "open_new_tab",
-    "open_modal",
-    "close_modal",
-    "scroll_to",
-    "scroll_to_top",
-    "save_data",
-    "load_data",
-    "copy_to_clipboard",
-    "api_call",
-    "array_push",
-    "array_remove_by_id",
-    "array_update_by_id",
-    "set_theme",
+    "notify", "alert", "navigate", "open_new_tab", "open_modal", "close_modal",
+    "scroll_to", "scroll_to_top", "save_data", "load_data", "copy_to_clipboard",
+    "api_call", "array_push", "array_remove_by_id", "array_update_by_id", "set_theme",
 ];
 
 const ALL_FUNCTION_SURFACE_NAMES_EN: &[&str] = &[
-    "format_price",
-    "format_date",
-    "truncate",
-    "uppercase",
-    "format_percent",
-    "round",
+    "format_price", "format_date", "truncate", "uppercase", "format_percent", "round",
 ];
 
 const ALL_TAG_SURFACE_NAMES_VI: &[&str] = &[
-    "text",
-    "h1",
-    "h2",
-    "h3",
-    "p",
-    "nhan",
-    "image",
-    "video",
-    "icon",
-    "button",
-    "input",
-    "vung_van_ban",
-    "link",
-    "lien_ket",
-    "flex",
-    "grid",
-    "stack",
-    "khoi",
-    "cuon",
-    "can_giua",
-    "lop",
-    "dinh_dau",
-    "dinh_man_hinh",
-    "khoang_cach",
-    "duong_ke",
-    "form",
-    "nhom_input",
-    "chon_mot",
-    "hop_kiem",
-    "lua_chon",
-    "modal",
-    "tabs",
-    "gap_mo",
-    "bang_chuyen",
-    "xuong_trang",
-    "vong_quay",
-    "thanh_tien_trinh",
-    "bang",
-    "bieu_do",
-    "ban_do",
-    "thanh_dieu_huong",
-    "trinh_soan_thao",
+    "text", "h1", "h2", "h3", "p", "nhan",
+    "image", "video", "icon",
+    "button", "input", "vung_van_ban", "link", "lien_ket",
+    "flex", "grid", "stack", "khoi", "cuon", "can_giua", "lop",
+    "dinh_dau", "dinh_man_hinh",
+    "khoang_cach", "duong_ke",
+    "form", "nhom_input", "chon_mot", "hop_kiem", "lua_chon",
+    "modal", "tabs", "gap_mo", "bang_chuyen", "xuong_trang",
+    "vong_quay", "thanh_tien_trinh", "bang", "bieu_do", "ban_do",
+    "thanh_dieu_huong", "trinh_soan_thao",
 ];
 
 const ALL_TAG_SURFACE_NAMES_EN: &[&str] = &[
-    "text",
-    "h1",
-    "h2",
-    "h3",
-    "p",
-    "label",
-    "image",
-    "video",
-    "icon",
-    "button",
-    "input",
-    "textarea",
-    "link",
-    "flex",
-    "grid",
-    "stack",
-    "box",
-    "scroll",
-    "container",
-    "layer",
-    "sticky",
-    "fixed",
-    "spacer",
-    "divider",
-    "form",
-    "input_group",
-    "radio",
-    "checkbox",
-    "select",
-    "modal",
-    "tabs",
-    "accordion",
-    "carousel",
-    "pagination",
-    "spinner",
-    "progress",
-    "table",
-    "chart",
-    "map",
-    "nav",
-    "editor",
+    "text", "h1", "h2", "h3", "p", "label",
+    "image", "video", "icon",
+    "button", "input", "textarea", "link",
+    "flex", "grid", "stack", "box", "scroll", "container", "layer", "sticky", "fixed",
+    "spacer", "divider",
+    "form", "input_group", "radio", "checkbox", "select",
+    "modal", "tabs", "accordion", "carousel", "pagination", "spinner",
+    "progress", "table", "chart", "map", "nav", "editor",
 ];
 
 pub(crate) fn is_known_action_or_function_name(name: &str) -> bool {
@@ -276,10 +134,7 @@ pub(crate) fn color_func_map() -> [(vibao_ast::ColorFuncKind, &'static str); 3] 
 }
 
 pub(crate) fn resolve_color_func_name(name: &str) -> Option<vibao_ast::ColorFuncKind> {
-    color_func_map()
-        .iter()
-        .find(|(_, n)| *n == name)
-        .map(|(k, _)| *k)
+    color_func_map().iter().find(|(_, n)| *n == name).map(|(k, _)| *k)
 }
 
 pub fn color_func_name(func: vibao_ast::ColorFuncKind) -> &'static str {
@@ -328,9 +183,7 @@ mod tests {
                 is_tag != is_action,
                 "'{}' must belong to EXACTLY 1 of the 2 groups (Tag XOR action/function), \
                  currently: is_tag={}, is_action={}",
-                name,
-                is_tag,
-                is_action
+                name, is_tag, is_action
             );
         }
     }
@@ -344,34 +197,14 @@ mod tests {
     #[test]
     fn test_is_known_action_or_function_name_accepts_every_action() {
         for name in [
-            "thong_bao",
-            "canh_bao",
-            "dieu_huong",
-            "mo_tab_moi",
-            "mo_modal",
-            "dong_modal",
-            "cuon_den",
-            "cuon_len_dau",
-            "luu_du_lieu",
-            "tai_du_lieu",
-            "sao_chep",
-            "goi_api",
-            "them_vao_mang",
-            "xoa_theo_id",
-            "cap_nhat_theo_id",
-            "dat_chu_de",
-            "gia_tien",
-            "ngay",
-            "rut_gon",
-            "hoa_chu",
-            "phan_tram",
+            "thong_bao", "canh_bao", "dieu_huong", "mo_tab_moi",
+            "mo_modal", "dong_modal", "cuon_den", "cuon_len_dau",
+            "luu_du_lieu", "tai_du_lieu", "sao_chep", "goi_api",
+            "them_vao_mang", "xoa_theo_id", "cap_nhat_theo_id", "dat_chu_de",
+            "gia_tien", "ngay", "rut_gon", "hoa_chu", "phan_tram",
             "lam_tron",
         ] {
-            assert!(
-                is_known_action_or_function_name(name),
-                "'{}' must be recognized",
-                name
-            );
+            assert!(is_known_action_or_function_name(name), "'{}' must be recognized", name);
         }
     }
 
@@ -388,33 +221,16 @@ mod tests {
         all_others.extend(ALL_TAG_SURFACE_NAMES_EN.iter().copied());
         all_others.extend(ALL_KEYWORD_SURFACE_NAMES_VI.iter().copied());
         all_others.extend(ALL_KEYWORD_SURFACE_NAMES_EN.iter().copied());
-        for name in ALL_ACTION_SURFACE_NAMES_VI
-            .iter()
-            .chain(ALL_ACTION_SURFACE_NAMES_EN.iter())
-            .copied()
-        {
-            assert!(
-                !all_others.contains(name),
-                "'{}' (action) collides with an existing tag/keyword",
-                name
-            );
+        for name in ALL_ACTION_SURFACE_NAMES_VI.iter().chain(ALL_ACTION_SURFACE_NAMES_EN.iter()).copied() {
+            assert!(!all_others.contains(name), "'{}' (action) collides with an existing tag/keyword", name);
         }
-        for name in ALL_FUNCTION_SURFACE_NAMES_VI
-            .iter()
-            .chain(ALL_FUNCTION_SURFACE_NAMES_EN.iter())
-            .copied()
-        {
-            assert!(
-                !all_others.contains(name),
-                "'{}' (function) collides with an existing tag/keyword",
-                name
-            );
+        for name in ALL_FUNCTION_SURFACE_NAMES_VI.iter().chain(ALL_FUNCTION_SURFACE_NAMES_EN.iter()).copied() {
+            assert!(!all_others.contains(name), "'{}' (function) collides with an existing tag/keyword", name);
         }
         for name in ALL_ACTION_SURFACE_NAMES_VI.iter().copied() {
             assert!(
                 !ALL_FUNCTION_SURFACE_NAMES_VI.contains(&name),
-                "'{}' appears in BOTH action AND function — creates ambiguity",
-                name
+                "'{}' appears in BOTH action AND function — creates ambiguity", name
             );
         }
     }
@@ -456,34 +272,14 @@ mod tests {
         const ALL_ACTIONS: [vibao_ast::ActionName; 16] = {
             use vibao_ast::ActionName::*;
             [
-                Notify,
-                Alert,
-                Navigate,
-                OpenNewTab,
-                OpenModal,
-                CloseModal,
-                ScrollTo,
-                ScrollToTop,
-                SaveData,
-                LoadData,
-                CopyToClipboard,
-                SetTheme,
-                ApiCall,
-                ArrayPush,
-                ArrayRemoveById,
-                ArrayUpdateById,
+                Notify, Alert, Navigate, OpenNewTab, OpenModal, CloseModal,
+                ScrollTo, ScrollToTop, SaveData, LoadData, CopyToClipboard, SetTheme,
+                ApiCall, ArrayPush, ArrayRemoveById, ArrayUpdateById,
             ]
         };
         const ALL_FUNCTIONS: [vibao_ast::FunctionName; 6] = {
             use vibao_ast::FunctionName::*;
-            [
-                FormatPrice,
-                FormatDate,
-                Truncate,
-                Uppercase,
-                FormatPercent,
-                Round,
-            ]
+            [FormatPrice, FormatDate, Truncate, Uppercase, FormatPercent, Round]
         };
 
         let cs = component_set();
@@ -505,18 +301,10 @@ mod tests {
             );
         }
         for name in ALL_ACTION_SURFACE_NAMES_EN {
-            assert!(
-                cs.contains(name),
-                "English action '{}' MUST be present in component_set()",
-                name
-            );
+            assert!(cs.contains(name), "English action '{}' MUST be present in component_set()", name);
         }
         for name in ALL_FUNCTION_SURFACE_NAMES_EN {
-            assert!(
-                cs.contains(name),
-                "English function '{}' MUST be present in component_set()",
-                name
-            );
+            assert!(cs.contains(name), "English function '{}' MUST be present in component_set()", name);
         }
     }
 
@@ -524,74 +312,35 @@ mod tests {
     fn test_keyword_map_accepts_both_vi_and_en_for_every_keyword() {
         let km = keyword_map();
         let pairs = [
-            ("trang", "page"),
-            ("ung_dung", "app"),
-            ("chu_de", "theme"),
-            ("trang_thai", "state"),
-            ("nhap", "import"),
-            ("tu", "from"),
-            ("neu", "if"),
-            ("khong_thi", "else"),
-            ("neu_nhieu", "else_if"),
-            ("truong_hop", "switch"),
-            ("mac_dinh", "default"),
-            ("vong_lap", "loop"),
-            ("khi_nhan", "on_click"),
-            ("khi_di_chuot", "on_hover"),
-            ("khi_mat_focus", "on_blur"),
-            ("khi_focus", "on_focus"),
-            ("khi_doi", "on_change"),
-            ("khi_gui", "on_submit"),
-            ("khi_cuon", "on_scroll"),
-            ("on_tai", "on_load"),
-            ("on_huy", "on_unload"),
+            ("trang", "page"), ("ung_dung", "app"), ("chu_de", "theme"),
+            ("trang_thai", "state"), ("nhap", "import"), ("tu", "from"),
+            ("neu", "if"), ("khong_thi", "else"), ("neu_nhieu", "else_if"),
+            ("truong_hop", "switch"), ("mac_dinh", "default"), ("vong_lap", "loop"),
+            ("khi_nhan", "on_click"), ("khi_di_chuot", "on_hover"),
+            ("khi_mat_focus", "on_blur"), ("khi_focus", "on_focus"),
+            ("khi_doi", "on_change"), ("khi_gui", "on_submit"),
+            ("khi_cuon", "on_scroll"), ("on_tai", "on_load"), ("on_huy", "on_unload"),
         ];
         assert_eq!(pairs.len(), 21);
         for (vi_name, en_name) in pairs {
-            assert!(
-                km.contains_key(vi_name),
-                "keyword_map() is missing '{}' (vi)",
-                vi_name
-            );
-            assert!(
-                km.contains_key(en_name),
-                "keyword_map() is missing '{}' (en)",
-                en_name
-            );
+            assert!(km.contains_key(vi_name), "keyword_map() is missing '{}' (vi)", vi_name);
+            assert!(km.contains_key(en_name), "keyword_map() is missing '{}' (en)", en_name);
             assert_eq!(
-                km.get(vi_name),
-                km.get(en_name),
+                km.get(vi_name), km.get(en_name),
                 "'{}' (vi) and '{}' (en) must map to the same TokenKind in the real keyword_map()",
-                vi_name,
-                en_name
+                vi_name, en_name
             );
         }
-        assert_eq!(
-            km.len(),
-            42,
-            "keyword_map() must have exactly 21 (vi) + 21 (en) = 42 entries"
-        );
+        assert_eq!(km.len(), 42, "keyword_map() must have exactly 21 (vi) + 21 (en) = 42 entries");
     }
 
     #[test]
     fn test_component_set_accepts_both_vi_and_en_for_every_tag() {
         let cs = component_set();
-        assert!(
-            cs.contains(&"box"),
-            "component_set() must accept 'box' (en)"
-        );
-        assert!(
-            cs.contains(&"khoi"),
-            "component_set() must still accept 'khoi' (vi)"
-        );
-        assert!(
-            cs.contains(&"label"),
-            "component_set() must accept 'label' (en)"
-        );
-        assert!(
-            cs.contains(&"nhan"),
-            "component_set() must still accept 'nhan' (vi)"
-        );
+        assert!(cs.contains(&"box"), "component_set() must accept 'box' (en)");
+        assert!(cs.contains(&"khoi"), "component_set() must still accept 'khoi' (vi)");
+        assert!(cs.contains(&"label"), "component_set() must accept 'label' (en)");
+        assert!(cs.contains(&"nhan"), "component_set() must still accept 'nhan' (vi)");
         assert_eq!(cs.len(), 127, "component_set() must have exactly 42 (vi tag) + 41 (en tag) + 16 (vi action) + 16 (en action) + 6 (vi function) + 6 (en function) = 127 entries");
     }
 
@@ -600,8 +349,7 @@ mod tests {
         for vi_name in ALL_KEYWORD_SURFACE_NAMES_VI {
             assert!(
                 !ALL_KEYWORD_SURFACE_NAMES_EN.contains(vi_name),
-                "'{}' appears in BOTH the vi and en keyword tables — creates ambiguity",
-                vi_name
+                "'{}' appears in BOTH the vi and en keyword tables — creates ambiguity", vi_name
             );
         }
     }
@@ -609,11 +357,10 @@ mod tests {
     #[test]
     fn test_tag_vi_en_surface_names_overlap_only_on_intentional_english_loanwords() {
         let expected_overlap: std::collections::HashSet<&str> = [
-            "text", "h1", "h2", "h3", "p", "image", "video", "icon", "button", "input", "link",
-            "flex", "grid", "stack", "form", "modal", "tabs",
-        ]
-        .into_iter()
-        .collect();
+            "text", "h1", "h2", "h3", "p", "image", "video", "icon",
+            "button", "input", "link", "flex", "grid", "stack", "form",
+            "modal", "tabs",
+        ].into_iter().collect();
         let actual_overlap: std::collections::HashSet<&str> = ALL_TAG_SURFACE_NAMES_VI
             .iter()
             .copied()

@@ -4,10 +4,10 @@ mod control;
 mod element;
 mod expr;
 
+use vibao_ast::Pos;
 use crate::diagnostic::Locale;
 use crate::lexer::{Token, TokenKind};
 use std::fmt;
-use vibao_ast::Pos;
 
 #[derive(Debug)]
 pub struct ParseError {
@@ -36,14 +36,10 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Parser {
-            tokens,
-            pos: 0,
-            locale: Locale::English,
-        }
+        Parser { tokens, pos: 0, locale: Locale::English }
     }
 
-    #[allow(dead_code)]
+#[allow(dead_code)]
     pub fn parse(mut self) -> Result<vibao_ast::Program, ParseError> {
         self.parse_language_header()?;
         let app = self.parse_app()?;
@@ -58,36 +54,24 @@ impl Parser {
         Ok((vibao_ast::Program { app }, self.locale))
     }
 
-    pub(crate) fn locale(&self) -> Locale {
-        self.locale
-    }
+    pub(crate) fn locale(&self) -> Locale { self.locale }
 
     pub(crate) fn parse_language_header(&mut self) -> Result<(), ParseError> {
         let is_lang = matches!(&self.current().kind, TokenKind::Identifier(name) if name == "lang");
-        if !is_lang {
-            return Ok(());
-        }
+        if !is_lang { return Ok(()); }
 
         let lang_pos = self.current_pos();
         self.advance();
         self.consume(&TokenKind::Equals, "Expected '=' after 'lang'")?;
         let value = match self.advance().kind {
             TokenKind::StringLit(value) => value,
-            other => {
-                return Err(ParseError {
-                    message: format!(
-                        "Expected a language code string after 'lang =', received {}",
-                        other
-                    ),
-                    line: lang_pos.line,
-                    column: lang_pos.column,
-                })
-            }
+            other => return Err(ParseError {
+                message: format!("Expected a language code string after 'lang =', received {}", other),
+                line: lang_pos.line,
+                column: lang_pos.column,
+            }),
         };
-        self.consume(
-            &TokenKind::Semicolon,
-            "Expected ';' after the language declaration",
-        )?;
+        self.consume(&TokenKind::Semicolon, "Expected ';' after the language declaration")?;
 
         self.locale = Locale::from_code(&value).ok_or_else(|| ParseError {
             message: format!("Unsupported source language '{}'. English is always available; supported diagnostic languages: 'en', 'vi'", value),
@@ -96,6 +80,7 @@ impl Parser {
         })?;
         Ok(())
     }
+
 }
 
 impl Parser {
@@ -249,16 +234,8 @@ mod tests {
         let mut p = Parser::new(tokens);
         let err = p.expect(&TokenKind::LParen).unwrap_err();
         let msg = err.to_string();
-        assert!(
-            !msg.contains("StringLit("),
-            "message still leaks Debug syntax: {}",
-            msg
-        );
-        assert!(
-            msg.contains("chuỗi \"hello\""),
-            "message must describe the token naturally: {}",
-            msg
-        );
+        assert!(!msg.contains("StringLit("), "message still leaks Debug syntax: {}", msg);
+        assert!(msg.contains("chuỗi \"hello\""), "message must describe the token naturally: {}", msg);
     }
 
     #[test]

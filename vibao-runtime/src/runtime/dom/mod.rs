@@ -7,18 +7,14 @@ mod subtree;
 mod text_attr;
 mod ui;
 
-pub(crate) use subtree::bind_subtree;
 pub use ui::*;
+pub(crate) use subtree::bind_subtree;
 
-use crate::runtime::{
-    expr_eval, expr_registry,
-    state::{self, LoopFrame, SharedState},
-    value::VbValue,
-};
 use std::sync::atomic::{AtomicU64, Ordering};
-use vibao_ast::Expr;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, Window};
+use crate::runtime::{expr_eval, expr_registry, state::{self, LoopFrame, SharedState}, value::VbValue};
+use vibao_ast::Expr;
 
 const ATTR_BIND_TEXT: &str = "data-vb-text";
 const ATTR_BIND_ATTR_PREFIX: &str = "data-vb-attr-";
@@ -129,10 +125,7 @@ fn eval_expr_id_tracked(
     match expr_registry::get(id) {
         Some(expr) => expr_eval::eval_tracked(shared, &expr),
         None => {
-            crate::runtime::log::warn(&format!(
-                "[ViBao] expr id {} does not exist in the registry",
-                id
-            ));
+            crate::runtime::log::warn(&format!("[ViBao] expr id {} does not exist in the registry", id));
             VbValue::Null
         }
     }
@@ -201,10 +194,7 @@ impl VbRuntime {
         let opts: BootOpts = match serde_json::from_str(opts_json) {
             Ok(o) => o,
             Err(err) => {
-                crate::runtime::log::error(&format!(
-                    "[ViBao] boot() received invalid JSON: {}",
-                    err
-                ));
+                crate::runtime::log::error(&format!("[ViBao] boot() received invalid JSON: {}", err));
                 BootOpts {
                     expr_registry: Vec::new(),
                     action_registry: Vec::new(),
@@ -230,9 +220,7 @@ impl VbRuntime {
 
         initialize_global_vars(&shared, &opts.global_vars);
 
-        shared
-            .borrow_mut()
-            .set_page_initial_states(opts.page_initial_state);
+        shared.borrow_mut().set_page_initial_states(opts.page_initial_state);
         shared.borrow_mut().set_page_metadata(opts.page_metadata);
         crate::runtime::router::boot_router(&shared);
 
@@ -265,31 +253,22 @@ mod tests {
         assert!(!event_needs_prevent_default("input"));
     }
 
+    use super::*;
     use super::animation::hover_animation_class_name;
     use super::events::event_needs_prevent_default;
     use super::text_attr::css_style_value_string;
-    use super::*;
 
     #[test]
     fn global_vars_can_reference_earlier_global_vars() {
         let shared = state::new_shared_state();
         let globals = vec![
-            (
-                "phi".to_string(),
-                Expr::literal_num(10.0, vibao_ast::Pos { line: 1, column: 1 }),
-            ),
+            ("phi".to_string(), Expr::literal_num(10.0, vibao_ast::Pos { line: 1, column: 1 })),
             (
                 "tong".to_string(),
                 Expr::Binary {
                     op: vibao_ast::BinaryOp::Add,
-                    left: Box::new(Expr::Variable(
-                        "phi".to_string(),
-                        vibao_ast::Pos { line: 2, column: 1 },
-                    )),
-                    right: Box::new(Expr::literal_num(
-                        5.0,
-                        vibao_ast::Pos { line: 2, column: 8 },
-                    )),
+                    left: Box::new(Expr::Variable("phi".to_string(), vibao_ast::Pos { line: 2, column: 1 })),
+                    right: Box::new(Expr::literal_num(5.0, vibao_ast::Pos { line: 2, column: 8 })),
                     pos: vibao_ast::Pos { line: 2, column: 1 },
                 },
             ),
@@ -306,51 +285,27 @@ mod tests {
 
     #[test]
     fn test_css_length_prop_number_gets_px_suffix() {
-        assert_eq!(
-            css_style_value_string("width", &VbValue::Num(120.0)),
-            "120px"
-        );
-        assert_eq!(
-            css_style_value_string("padding", &VbValue::Num(16.0)),
-            "16px"
-        );
-        assert_eq!(
-            css_style_value_string("border-radius", &VbValue::Num(8.0)),
-            "8px"
-        );
-        assert_eq!(
-            css_style_value_string("font-size", &VbValue::Num(24.0)),
-            "24px"
-        );
+        assert_eq!(css_style_value_string("width", &VbValue::Num(120.0)), "120px");
+        assert_eq!(css_style_value_string("padding", &VbValue::Num(16.0)), "16px");
+        assert_eq!(css_style_value_string("border-radius", &VbValue::Num(8.0)), "8px");
+        assert_eq!(css_style_value_string("font-size", &VbValue::Num(24.0)), "24px");
     }
 
     #[test]
     fn test_css_length_prop_trims_trailing_zero() {
-        assert_eq!(
-            css_style_value_string("width", &VbValue::Num(120.0)),
-            "120px"
-        );
+        assert_eq!(css_style_value_string("width", &VbValue::Num(120.0)), "120px");
     }
 
     #[test]
     fn test_non_length_prop_not_affected() {
         assert_eq!(css_style_value_string("z-index", &VbValue::Num(5.0)), "5");
-        assert_eq!(
-            css_style_value_string("line-height", &VbValue::Num(1.5)),
-            "1.5"
-        );
+        assert_eq!(css_style_value_string("line-height", &VbValue::Num(1.5)), "1.5");
     }
 
     #[test]
     fn test_string_value_not_double_suffixed() {
-        assert_eq!(
-            css_style_value_string("width", &VbValue::Str("50%".to_string())),
-            "50%"
-        );
-        assert_eq!(
-            css_style_value_string("width", &VbValue::Str("calc(100% - 20px)".to_string())),
-            "calc(100% - 20px)"
-        );
+        assert_eq!(css_style_value_string("width", &VbValue::Str("50%".to_string())), "50%");
+        assert_eq!(css_style_value_string("width", &VbValue::Str("calc(100% - 20px)".to_string())), "calc(100% - 20px)");
     }
 
     #[test]

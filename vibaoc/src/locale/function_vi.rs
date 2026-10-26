@@ -17,12 +17,7 @@ mod tests {
     use super::*;
 
     const ALL_FUNCTION_SURFACE_NAMES_VI: &[&str] = &[
-        "gia_tien",
-        "ngay",
-        "rut_gon",
-        "hoa_chu",
-        "phan_tram",
-        "lam_tron",
+        "gia_tien", "ngay", "rut_gon", "hoa_chu", "phan_tram", "lam_tron",
     ];
 
     #[test]

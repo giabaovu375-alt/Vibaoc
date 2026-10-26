@@ -169,16 +169,8 @@ ung_dung("App") {
     );
     result.assert_ok();
     let html = result.html();
-    assert!(
-        html.contains("data-vb-if="),
-        "expected an if-binding attribute in HTML:\n{}",
-        html
-    );
-    assert!(
-        html.contains("data-vb-else"),
-        "expected an else-binding attribute in HTML:\n{}",
-        html
-    );
+    assert!(html.contains("data-vb-if="), "expected an if-binding attribute in HTML:\n{}", html);
+    assert!(html.contains("data-vb-else"), "expected an else-binding attribute in HTML:\n{}", html);
 }
 
 #[test]
@@ -322,11 +314,7 @@ ung_dung("App") {
     result.assert_ok();
     let html = result.html();
     let count = html.matches("data-vb-component=\"TheThe\"").count();
-    assert_eq!(
-        count, 3,
-        "expected 3 mounted TheThe instances, found {}. HTML:\n{}",
-        count, html
-    );
+    assert_eq!(count, 3, "expected 3 mounted TheThe instances, found {}. HTML:\n{}", count, html);
 }
 
 #[test]
@@ -354,11 +342,7 @@ ung_dung("App") {
     result.assert_ok();
     let html = result.html();
     let count = html.matches("data-vb-component=\"TheTieuDe\"").count();
-    assert_eq!(
-        count, 3,
-        "expected one mounted TheTieuDe per page, found {}",
-        count
-    );
+    assert_eq!(count, 3, "expected one mounted TheTieuDe per page, found {}", count);
 }
 
 #[test]
@@ -376,25 +360,11 @@ app("App") {
     result.assert_ok();
     let css = result.css();
     let js = result.js();
-    for dau_vet in [
-        "ViBao Base CSS",
-        "ViBao Animation classes",
-        "/* Tabs */",
-        "/* Toast */",
-    ] {
-        assert!(
-            !css.contains(dau_vet),
-            "css còn comment '{}':\n{}",
-            dau_vet,
-            css
-        );
+    for dau_vet in ["ViBao Base CSS", "ViBao Animation classes", "/* Tabs */", "/* Toast */"] {
+        assert!(!css.contains(dau_vet), "css còn comment '{}':\n{}", dau_vet, css);
     }
     for dau_vet in ["DO NOT EDIT", "App init", "WASM Bootstrap"] {
-        assert!(
-            !js.contains(dau_vet),
-            "js còn comment '{}':\n{}",
-            dau_vet,
-            js
-        );
+        assert!(!js.contains(dau_vet), "js còn comment '{}':\n{}", dau_vet, js);
     }
 }
+

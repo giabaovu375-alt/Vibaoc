@@ -16,22 +16,14 @@ pub struct ValidationError {
 
 impl std::fmt::Display for ValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "[semantic] {} ({}:{})",
-            self.message, self.line, self.column
-        )
+        write!(f, "[semantic] {} ({}:{})", self.message, self.line, self.column)
     }
 }
 
 fn is_color_prop(surface_name: &str) -> bool {
     matches!(
         crate::locale::resolve_prop_key(surface_name),
-        Some(
-            vibao_ast::PropKey::Color
-                | vibao_ast::PropKey::BorderColor
-                | vibao_ast::PropKey::BackgroundColor
-        )
+        Some(vibao_ast::PropKey::Color | vibao_ast::PropKey::BorderColor | vibao_ast::PropKey::BackgroundColor)
     )
 }
 
@@ -89,10 +81,7 @@ fn check_global_style(app: &App, errors: &mut Vec<ValidationError>) {
     }
 }
 
-fn check_duplicate_components(
-    components: &[ComponentDef],
-    errors: &mut Vec<ValidationError>,
-) -> HashSet<String> {
+fn check_duplicate_components(components: &[ComponentDef], errors: &mut Vec<ValidationError>) -> HashSet<String> {
     let mut seen: HashMap<&str, &ComponentDef> = HashMap::new();
     let mut names = HashSet::new();
 
@@ -112,11 +101,7 @@ fn check_duplicate_components(
     names
 }
 
-fn check_children(
-    children: &[Child],
-    component_names: &HashSet<String>,
-    errors: &mut Vec<ValidationError>,
-) {
+fn check_children(children: &[Child], component_names: &HashSet<String>, errors: &mut Vec<ValidationError>) {
     for child in children {
         match child {
             Child::Element(el) => check_element(el, component_names, errors),
@@ -131,11 +116,7 @@ fn check_children(
     }
 }
 
-fn check_element(
-    el: &Element,
-    component_names: &HashSet<String>,
-    errors: &mut Vec<ValidationError>,
-) {
+fn check_element(el: &Element, component_names: &HashSet<String>, errors: &mut Vec<ValidationError>) {
     let tag_name: &str = crate::locale::vi::tag_display_name_vi(el.tag);
     let flat_props = flatten_props_for_validation(el);
     check_color_props(tag_name, &flat_props, errors);
@@ -158,8 +139,8 @@ fn flatten_props_for_validation(el: &Element) -> PropsMap {
     }
     for block in &el.blocks {
         let map: &PropsMap = match block {
-            Mau(m) | KichThuoc(m) | KhoangCach(m) | Chu(m) | FlexBoCuc(m) | GridBoCuc(m)
-            | ViTri(m) | Media(m) | NhapLieu(m) | LienKet(m) => m,
+            Mau(m) | KichThuoc(m) | KhoangCach(m) | Chu(m) | FlexBoCuc(m)
+            | GridBoCuc(m) | ViTri(m) | Media(m) | NhapLieu(m) | LienKet(m) => m,
         };
         flat.extend(map.iter().cloned());
     }
@@ -173,11 +154,7 @@ fn check_props_map_exprs(props: &PropsMap, errors: &mut Vec<ValidationError>) {
     }
 }
 
-fn check_component_call(
-    call: &ComponentCall,
-    component_names: &HashSet<String>,
-    errors: &mut Vec<ValidationError>,
-) {
+fn check_component_call(call: &ComponentCall, component_names: &HashSet<String>, errors: &mut Vec<ValidationError>) {
     if !component_names.contains(&call.name) {
         errors.push(ValidationError {
             message: format!("Component \"{}\" was used but no \"@the {}\" definition was found. Check the spelling or import it with `nhap {} tu \"...\"`.", call.name, call.name, call.name),
@@ -190,11 +167,7 @@ fn check_component_call(
     check_children(&call.children, component_names, errors);
 }
 
-fn check_if(
-    if_node: &IfNode,
-    component_names: &HashSet<String>,
-    errors: &mut Vec<ValidationError>,
-) {
+fn check_if(if_node: &IfNode, component_names: &HashSet<String>, errors: &mut Vec<ValidationError>) {
     check_expr(&if_node.condition, errors);
     check_children(&if_node.consequent, component_names, errors);
     if let Some(alt) = &if_node.alternate {
@@ -202,11 +175,7 @@ fn check_if(
     }
 }
 
-fn check_switch(
-    switch_node: &SwitchNode,
-    component_names: &HashSet<String>,
-    errors: &mut Vec<ValidationError>,
-) {
+fn check_switch(switch_node: &SwitchNode, component_names: &HashSet<String>, errors: &mut Vec<ValidationError>) {
     check_expr(&switch_node.subject, errors);
     for case in &switch_node.cases {
         check_case(case, component_names, errors);
@@ -216,20 +185,12 @@ fn check_switch(
     }
 }
 
-fn check_case(
-    case: &CaseNode,
-    component_names: &HashSet<String>,
-    errors: &mut Vec<ValidationError>,
-) {
+fn check_case(case: &CaseNode, component_names: &HashSet<String>, errors: &mut Vec<ValidationError>) {
     check_expr(&case.value, errors);
     check_children(&case.body, component_names, errors);
 }
 
-fn check_loop(
-    loop_node: &LoopNode,
-    component_names: &HashSet<String>,
-    errors: &mut Vec<ValidationError>,
-) {
+fn check_loop(loop_node: &LoopNode, component_names: &HashSet<String>, errors: &mut Vec<ValidationError>) {
     match &loop_node.kind {
         LoopKind::Each { iterable, .. } => {
             check_expr(iterable, errors);
@@ -270,23 +231,14 @@ fn check_events(events: &[EventNode], errors: &mut Vec<ValidationError>) {
 fn check_actions(actions: &[Action], errors: &mut Vec<ValidationError>) {
     for action in actions {
         match action {
-            Action::FunctionCall {
-                name, args, pos, ..
-            } => {
+            Action::FunctionCall { name, args, pos, .. } => {
                 check_action_name(name, *pos, errors);
                 check_array_mutation_args(name, args, *pos, errors);
                 for arg in args {
                     check_expr(arg, errors);
                 }
             }
-            Action::ApiCall {
-                endpoint,
-                data,
-                headers,
-                on_success,
-                on_failure,
-                ..
-            } => {
+            Action::ApiCall { endpoint, data, headers, on_success, on_failure, .. } => {
                 check_expr(endpoint, errors);
                 if let Some(d) = data {
                     check_expr(d, errors);
@@ -301,12 +253,7 @@ fn check_actions(actions: &[Action], errors: &mut Vec<ValidationError>) {
                     check_actions(body, errors);
                 }
             }
-            Action::IfAction {
-                condition,
-                consequent,
-                alternate,
-                ..
-            } => {
+            Action::IfAction { condition, consequent, alternate, .. } => {
                 check_expr(condition, errors);
                 check_actions(consequent, errors);
                 if let Some(alt) = alternate {
@@ -380,21 +327,13 @@ fn check_action_name(name: &str, pos: vibao_ast::Pos, errors: &mut Vec<Validatio
         return;
     }
     errors.push(ValidationError {
-        message: format!(
-            "Unknown action \"{}\". Check the spelling or use an action supported by ViBao.",
-            name
-        ),
+        message: format!("Unknown action \"{}\". Check the spelling or use an action supported by ViBao.", name),
         line: pos.line,
         column: pos.column,
     });
 }
 
-fn check_array_mutation_args(
-    name: &str,
-    args: &[Expr],
-    pos: vibao_ast::Pos,
-    errors: &mut Vec<ValidationError>,
-) {
+fn check_array_mutation_args(name: &str, args: &[Expr], pos: vibao_ast::Pos, errors: &mut Vec<ValidationError>) {
     const ARRAY_MUTATION_ACTIONS: [&str; 3] = ["them_vao_mang", "xoa_theo_id", "cap_nhat_theo_id"];
     if !ARRAY_MUTATION_ACTIONS.contains(&name) {
         return;
@@ -438,10 +377,7 @@ mod tests {
             content: None,
             identity: Default::default(),
             blocks: vec![],
-            unknown_props: vec![(
-                key.to_string(),
-                Expr::Literal(LiteralValue::Str(value.to_string()), p()),
-            )],
+            unknown_props: vec![(key.to_string(), Expr::Literal(LiteralValue::Str(value.to_string()), p()))],
             children: vec![],
             events: vec![],
             responsive: vec![],
@@ -467,50 +403,30 @@ mod tests {
     fn test_english_color_prop_uses_same_validation() {
         let app = {
             let mut app = empty_app();
-            app.pages
-                .push(page_with(vec![Child::Element(element_with_color_prop(
-                    vibao_ast::Tag::Text,
-                    "background_color",
-                    "not_a_color",
-                ))]));
+            app.pages.push(page_with(vec![Child::Element(element_with_color_prop(
+                vibao_ast::Tag::Text,
+                "background_color",
+                "not_a_color",
+            ))]));
             app
         };
         let result = validate(&app);
-        assert!(
-            result.is_err(),
-            "an English color prop must go through the same color validator"
-        );
+        assert!(result.is_err(), "an English color prop must go through the same color validator");
         let errors = result.unwrap_err();
-        assert!(
-            errors
-                .iter()
-                .any(|e| e.message.contains("background_color")),
-            "errors: {:?}",
-            errors
-        );
+        assert!(errors.iter().any(|e| e.message.contains("background_color")), "errors: {:?}", errors);
     }
 
     #[test]
     fn test_valid_color_name_passes() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_color_prop(
-                vibao_ast::Tag::Text,
-                "mau",
-                "xanh",
-            ))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_color_prop(vibao_ast::Tag::Text, "mau", "xanh"))]));
         assert!(validate(&app).is_ok());
     }
 
     #[test]
     fn test_unknown_color_name_is_rejected() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_color_prop(
-                vibao_ast::Tag::Text,
-                "mau",
-                "xanh_duong",
-            ))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_color_prop(vibao_ast::Tag::Text, "mau", "xanh_duong"))]));
         let result = validate(&app);
         assert!(result.is_err());
         let errors = result.unwrap_err();
@@ -521,26 +437,20 @@ mod tests {
     #[test]
     fn test_non_color_prop_not_checked_as_color() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_color_prop(
-                vibao_ast::Tag::Khoi,
-                "huong",
-                "hang",
-            ))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_color_prop(vibao_ast::Tag::Khoi, "huong", "hang"))]));
         assert!(validate(&app).is_ok());
     }
 
     #[test]
     fn test_undefined_component_call_is_rejected() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::ComponentCall(ComponentCall {
-                name: "nut_bam".to_string(),
-                props: vec![],
-                identity: Default::default(),
-                children: vec![],
-                pos: p(),
-            })]));
+        app.pages.push(page_with(vec![Child::ComponentCall(ComponentCall {
+            name: "nut_bam".to_string(),
+            props: vec![],
+            identity: Default::default(),
+            children: vec![],
+            pos: p(),
+        })]));
         let result = validate(&app);
         assert!(result.is_err());
         let errors = result.unwrap_err();
@@ -550,90 +460,58 @@ mod tests {
     #[test]
     fn test_defined_component_call_passes() {
         let mut app = empty_app();
-        app.components.push(ComponentDef {
+        app.components.push(ComponentDef { name: "nut_bam".to_string(), params: vec![], children: vec![], pos: p() });
+        app.pages.push(page_with(vec![Child::ComponentCall(ComponentCall {
             name: "nut_bam".to_string(),
-            params: vec![],
+            props: vec![],
+            identity: Default::default(),
             children: vec![],
             pos: p(),
-        });
-        app.pages
-            .push(page_with(vec![Child::ComponentCall(ComponentCall {
-                name: "nut_bam".to_string(),
-                props: vec![],
-                identity: Default::default(),
-                children: vec![],
-                pos: p(),
-            })]));
+        })]));
         assert!(validate(&app).is_ok());
     }
 
     #[test]
     fn test_duplicate_component_definition_is_rejected() {
         let mut app = empty_app();
+        app.components.push(ComponentDef { name: "nut_bam".to_string(), params: vec![], children: vec![], pos: p() });
         app.components.push(ComponentDef {
             name: "nut_bam".to_string(),
             params: vec![],
             children: vec![],
-            pos: p(),
-        });
-        app.components.push(ComponentDef {
-            name: "nut_bam".to_string(),
-            params: vec![],
-            children: vec![],
-            pos: Pos {
-                line: 20,
-                column: 1,
-            },
+            pos: Pos { line: 20, column: 1 },
         });
         let result = validate(&app);
         assert!(result.is_err());
         let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|e| e.message.contains("defined more than once")));
+        assert!(errors.iter().any(|e| e.message.contains("defined more than once")));
     }
 
     #[test]
     fn test_color_error_found_deep_inside_if_switch_loop() {
-        let bad_element = Child::Element(element_with_color_prop(
-            vibao_ast::Tag::Text,
-            "mau",
-            "mau_khong_ton_tai",
-        ));
+        let bad_element = Child::Element(element_with_color_prop(vibao_ast::Tag::Text, "mau", "mau_khong_ton_tai"));
 
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Loop(Box::new(LoopNode {
-                kind: LoopKind::Range {
-                    from: 0,
-                    to: 3,
-                    var_name: "i".to_string(),
-                },
-                body: vec![Child::If(Box::new(IfNode {
-                    condition: Expr::Literal(LiteralValue::Bool(true), p()),
-                    consequent: vec![bad_element],
-                    alternate: None,
-                    pos: p(),
-                }))],
+        app.pages.push(page_with(vec![Child::Loop(Box::new(LoopNode {
+            kind: LoopKind::Range { from: 0, to: 3, var_name: "i".to_string() },
+            body: vec![Child::If(Box::new(IfNode {
+                condition: Expr::Literal(LiteralValue::Bool(true), p()),
+                consequent: vec![bad_element],
+                alternate: None,
                 pos: p(),
-            }))]));
+            }))],
+            pos: p(),
+        }))]));
 
         let result = validate(&app);
-        assert!(
-            result.is_err(),
-            "a color error nested deep inside a loop/if must still be detected"
-        );
+        assert!(result.is_err(), "a color error nested deep inside a loop/if must still be detected");
     }
 
     #[test]
     fn test_multiple_errors_all_collected_not_just_first() {
         let mut app = empty_app();
         app.pages.push(page_with(vec![
-            Child::Element(element_with_color_prop(
-                vibao_ast::Tag::Text,
-                "mau",
-                "mau_sai_1",
-            )),
+            Child::Element(element_with_color_prop(vibao_ast::Tag::Text, "mau", "mau_sai_1")),
             Child::ComponentCall(ComponentCall {
                 name: "component_chua_dinh_nghia".to_string(),
                 props: vec![],
@@ -646,11 +524,7 @@ mod tests {
         let result = validate(&app);
         assert!(result.is_err());
         let errors = result.unwrap_err();
-        assert_eq!(
-            errors.len(),
-            2,
-            "must collect both errors, not stop at the first one"
-        );
+        assert_eq!(errors.len(), 2, "must collect both errors, not stop at the first one");
     }
 
     fn function_call_action(name: &str) -> Action {
@@ -685,10 +559,9 @@ mod tests {
     #[test]
     fn test_valid_action_name_passes() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                function_call_action("thong_bao"),
-            ]))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            function_call_action("thong_bao"),
+        ]))]));
         assert!(validate(&app).is_ok());
     }
 
@@ -705,116 +578,88 @@ mod tests {
     #[test]
     fn test_all_14_function_call_action_names_pass() {
         let simple_names = [
-            "thong_bao",
-            "canh_bao",
-            "dieu_huong",
-            "mo_tab_moi",
-            "mo_modal",
-            "dong_modal",
-            "cuon_den",
-            "cuon_len_dau",
-            "luu_du_lieu",
-            "tai_du_lieu",
-            "sao_chep",
+            "thong_bao", "canh_bao", "dieu_huong", "mo_tab_moi",
+            "mo_modal", "dong_modal", "cuon_den", "cuon_len_dau",
+            "luu_du_lieu", "tai_du_lieu", "sao_chep",
         ];
         for name in simple_names {
             let mut app = empty_app();
-            app.pages
-                .push(page_with(vec![Child::Element(element_with_event(vec![
-                    function_call_action(name),
-                ]))]));
+            app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+                function_call_action(name),
+            ]))]));
             assert!(validate(&app).is_ok(), "'{}' must be valid", name);
         }
 
         let array_mutation_names = ["them_vao_mang", "xoa_theo_id", "cap_nhat_theo_id"];
         for name in array_mutation_names {
             let mut app = empty_app();
-            app.pages
-                .push(page_with(vec![Child::Element(element_with_event(vec![
-                    array_mutation_action(name, "tasks"),
-                ]))]));
-            assert!(
-                validate(&app).is_ok(),
-                "'{}' (with a correctly-shaped first argument) must be valid",
-                name
-            );
+            app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+                array_mutation_action(name, "tasks"),
+            ]))]));
+            assert!(validate(&app).is_ok(), "'{}' (with a correctly-shaped first argument) must be valid", name);
         }
     }
 
     #[test]
     fn test_goi_api_action_passes_validation() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                Action::ApiCall {
-                    method: "GET".to_string(),
-                    endpoint: Expr::literal_str("/api/x", p()),
-                    data: None,
-                    headers: None,
-                    background: false,
-                    assign_to: None,
-                    on_success: None,
-                    on_failure: None,
-                    pos: p(),
-                },
-            ]))]));
-        assert!(
-            validate(&app).is_ok(),
-            "'goi_api' (Action::ApiCall) must be valid"
-        );
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            Action::ApiCall {
+                method: "GET".to_string(),
+                endpoint: Expr::literal_str("/api/x", p()),
+                data: None,
+                headers: None,
+                background: false,
+                assign_to: None,
+                on_success: None,
+                on_failure: None,
+                pos: p(),
+            },
+        ]))]));
+        assert!(validate(&app).is_ok(), "'goi_api' (Action::ApiCall) must be valid");
     }
 
     #[test]
     fn test_array_mutation_action_with_wrong_first_arg_is_rejected() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                Action::FunctionCall {
-                    name: "them_vao_mang".to_string(),
-                    args: vec![Expr::literal_str("tasks", p())],
-                    opts: vec![],
-                    assign_to: None,
-                    pos: p(),
-                },
-            ]))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            Action::FunctionCall {
+                name: "them_vao_mang".to_string(),
+                args: vec![Expr::literal_str("tasks", p())],
+                opts: vec![],
+                assign_to: None,
+                pos: p(),
+            },
+        ]))]));
         let result = validate(&app);
-        assert!(
-            result.is_err(),
-            "a wrongly-shaped first argument (a string instead of a variable) must be rejected"
-        );
+        assert!(result.is_err(), "a wrongly-shaped first argument (a string instead of a variable) must be rejected");
         assert!(result.unwrap_err()[0].message.contains("them_vao_mang"));
     }
 
     #[test]
     fn test_array_mutation_action_with_no_args_is_rejected() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                function_call_action("xoa_theo_id"),
-            ]))]));
-        assert!(
-            validate(&app).is_err(),
-            "thiếu hoàn toàn đối số phải bị từ chối"
-        );
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            function_call_action("xoa_theo_id"),
+        ]))]));
+        assert!(validate(&app).is_err(), "thiếu hoàn toàn đối số phải bị từ chối");
     }
 
     #[test]
     fn test_non_array_mutation_action_not_checked_for_array_shape() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                function_call_action("thong_bao"),
-            ]))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            function_call_action("thong_bao"),
+        ]))]));
         assert!(validate(&app).is_ok());
     }
 
     #[test]
     fn test_typo_action_name_is_rejected_as_unknown() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                function_call_action("thongbao"),
-            ]))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            function_call_action("thongbao"),
+        ]))]));
         let result = validate(&app);
         assert!(result.is_err());
         let errors = result.unwrap_err();
@@ -827,10 +672,9 @@ mod tests {
     #[test]
     fn test_dang_xuat_is_rejected_with_distinct_message() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                function_call_action("dang_xuat"),
-            ]))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            function_call_action("dang_xuat"),
+        ]))]));
         let result = validate(&app);
         assert!(result.is_err());
         let errors = result.unwrap_err();
@@ -842,81 +686,61 @@ mod tests {
 
     #[test]
     fn test_dang_xuat_end_to_end_through_real_lexer_and_parser() {
-        let tokens = crate::lexer::tokenize("dang_xuat()")
-            .expect("tokenize must not error for 'dang_xuat()'");
+        let tokens = crate::lexer::tokenize("dang_xuat()").expect("tokenize must not error for 'dang_xuat()'");
         let mut parser = crate::parser::Parser::new(tokens);
-        let action = parser
-            .parse_action()
-            .expect("parse_action must not error for 'dang_xuat()'");
+        let action = parser.parse_action().expect("parse_action must not error for 'dang_xuat()'");
 
         let mut errors = Vec::new();
         check_actions(&[action], &mut errors);
-        assert_eq!(
-            errors.len(),
-            1,
-            "there must be exactly 1 validator error for 'dang_xuat'"
-        );
-        assert!(
-            errors[0].message.contains("not supported by ViBao"),
-            "message: {}",
-            errors[0].message
-        );
+        assert_eq!(errors.len(), 1, "there must be exactly 1 validator error for 'dang_xuat'");
+        assert!(errors[0].message.contains("not supported by ViBao"), "message: {}", errors[0].message);
     }
 
     #[test]
     fn test_action_name_nested_in_if_action_is_checked() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                Action::IfAction {
-                    condition: Expr::Literal(LiteralValue::Bool(true), p()),
-                    consequent: vec![function_call_action("thongbao_sai")],
-                    alternate: None,
-                    pos: p(),
-                },
-            ]))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            Action::IfAction {
+                condition: Expr::Literal(LiteralValue::Bool(true), p()),
+                consequent: vec![function_call_action("thongbao_sai")],
+                alternate: None,
+                pos: p(),
+            },
+        ]))]));
         let result = validate(&app);
-        assert!(
-            result.is_err(),
-            "an action nested inside IfAction must still be checked"
-        );
+        assert!(result.is_err(), "an action nested inside IfAction must still be checked");
     }
 
     #[test]
     fn test_action_name_nested_in_api_call_callback_is_checked() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                Action::ApiCall {
-                    method: "GET".to_string(),
-                    endpoint: Expr::literal_str("/api/x", p()),
-                    data: None,
-                    headers: None,
-                    background: false,
-                    assign_to: None,
-                    on_success: Some(vec![function_call_action("thongbao_sai")]),
-                    on_failure: None,
-                    pos: p(),
-                },
-            ]))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            Action::ApiCall {
+                method: "GET".to_string(),
+                endpoint: Expr::literal_str("/api/x", p()),
+                data: None,
+                headers: None,
+                background: false,
+                assign_to: None,
+                on_success: Some(vec![function_call_action("thongbao_sai")]),
+                on_failure: None,
+                pos: p(),
+            },
+        ]))]));
         let result = validate(&app);
-        assert!(
-            result.is_err(),
-            "an action nested inside ApiCall's on_success must still be checked"
-        );
+        assert!(result.is_err(), "an action nested inside ApiCall's on_success must still be checked");
     }
 
     #[test]
     fn test_assign_action_not_checked_as_action_name() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                Action::Assign {
-                    target: "bien_bat_ky".to_string(),
-                    value: Expr::literal_num(1.0, p()),
-                    pos: p(),
-                },
-            ]))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            Action::Assign {
+                target: "bien_bat_ky".to_string(),
+                value: Expr::literal_num(1.0, p()),
+                pos: p(),
+            },
+        ]))]));
         assert!(validate(&app).is_ok());
     }
 
@@ -931,10 +755,7 @@ mod tests {
         });
         app.pages.push(page);
         let result = validate(&app);
-        assert!(
-            result.is_err(),
-            "an unknown action in page.events (khi_tai) must be detected"
-        );
+        assert!(result.is_err(), "an unknown action in page.events (khi_tai) must be detected");
     }
 
     #[test]
@@ -951,11 +772,7 @@ mod tests {
     }
 
     fn call_expr(callee: &str, args: Vec<Expr>) -> Expr {
-        Expr::Call {
-            callee: callee.to_string(),
-            args,
-            pos: p(),
-        }
+        Expr::Call { callee: callee.to_string(), args, pos: p() }
     }
 
     #[test]
@@ -971,14 +788,7 @@ mod tests {
 
     #[test]
     fn test_all_6_function_names_pass_in_var_decl() {
-        let names = [
-            "gia_tien",
-            "ngay",
-            "rut_gon",
-            "hoa_chu",
-            "phan_tram",
-            "lam_tron",
-        ];
+        let names = ["gia_tien", "ngay", "rut_gon", "hoa_chu", "phan_tram", "lam_tron"];
         for name in names {
             let mut app = empty_app();
             app.variables.push(vibao_ast::VarDecl {
@@ -1017,10 +827,7 @@ mod tests {
             pos: p(),
         });
         let result = validate(&app);
-        assert!(
-            result.is_err(),
-            "Call sai lồng trong Binary phải bị phát hiện"
-        );
+        assert!(result.is_err(), "Call sai lồng trong Binary phải bị phát hiện");
     }
 
     #[test]
@@ -1031,10 +838,7 @@ mod tests {
             value: Expr::Array(vec![call_expr("gia_tien_sai", vec![])], p()),
             pos: p(),
         });
-        assert!(
-            validate(&app).is_err(),
-            "Call sai lồng trong Array phải bị phát hiện"
-        );
+        assert!(validate(&app).is_err(), "Call sai lồng trong Array phải bị phát hiện");
     }
 
     #[test]
@@ -1042,16 +846,10 @@ mod tests {
         let mut app = empty_app();
         app.variables.push(vibao_ast::VarDecl {
             name: "x".to_string(),
-            value: Expr::Object(
-                vec![("field".to_string(), call_expr("gia_tien_sai", vec![]))],
-                p(),
-            ),
+            value: Expr::Object(vec![("field".to_string(), call_expr("gia_tien_sai", vec![]))], p()),
             pos: p(),
         });
-        assert!(
-            validate(&app).is_err(),
-            "Call sai lồng trong Object phải bị phát hiện"
-        );
+        assert!(validate(&app).is_err(), "Call sai lồng trong Object phải bị phát hiện");
     }
 
     #[test]
@@ -1062,10 +860,7 @@ mod tests {
             value: call_expr("gia_tien", vec![call_expr("rut_gon_sai", vec![])]),
             pos: p(),
         });
-        assert!(
-            validate(&app).is_err(),
-            "Call sai lồng trong args của Call khác phải bị phát hiện"
-        );
+        assert!(validate(&app).is_err(), "Call sai lồng trong args của Call khác phải bị phát hiện");
     }
 
     #[test]
@@ -1078,10 +873,7 @@ mod tests {
             pos: p(),
         });
         app.pages.push(page);
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong page.states phải bị phát hiện"
-        );
+        assert!(validate(&app).is_err(), "Call sai trong page.states phải bị phát hiện");
     }
 
     #[test]
@@ -1098,10 +890,7 @@ mod tests {
             children: vec![],
             pos: p(),
         });
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong default_value của ParamDef phải bị phát hiện"
-        );
+        assert!(validate(&app).is_err(), "Call sai trong default_value của ParamDef phải bị phát hiện");
     }
 
     #[test]
@@ -1111,29 +900,22 @@ mod tests {
         el.content = Some(call_expr("gia_tien_sai", vec![]));
         let mut app = empty_app();
         app.pages.push(page_with(vec![Child::Element(el)]));
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong props Element phải bị phát hiện"
-        );
+        assert!(validate(&app).is_err(), "Call sai trong props Element phải bị phát hiện");
     }
 
     #[test]
     fn test_function_call_in_action_args_is_checked() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                Action::FunctionCall {
-                    name: "thong_bao".to_string(),
-                    args: vec![call_expr("gia_tien_sai", vec![])],
-                    opts: vec![],
-                    assign_to: None,
-                    pos: p(),
-                },
-            ]))]));
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong args của Action phải bị phát hiện"
-        );
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            Action::FunctionCall {
+                name: "thong_bao".to_string(),
+                args: vec![call_expr("gia_tien_sai", vec![])],
+                opts: vec![],
+                assign_to: None,
+                pos: p(),
+            },
+        ]))]));
+        assert!(validate(&app).is_err(), "Call sai trong args của Action phải bị phát hiện");
     }
 
     #[test]
@@ -1145,109 +927,85 @@ mod tests {
             alternate: None,
             pos: p(),
         }))]));
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong IfNode.condition phải bị phát hiện"
-        );
+        assert!(validate(&app).is_err(), "Call sai trong IfNode.condition phải bị phát hiện");
     }
 
     #[test]
     fn test_function_call_in_action_if_condition_is_checked() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                Action::IfAction {
-                    condition: call_expr("gia_tien_sai", vec![]),
-                    consequent: vec![],
-                    alternate: None,
-                    pos: p(),
-                },
-            ]))]));
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong Action::IfAction.condition phải bị phát hiện"
-        );
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            Action::IfAction {
+                condition: call_expr("gia_tien_sai", vec![]),
+                consequent: vec![],
+                alternate: None,
+                pos: p(),
+            },
+        ]))]));
+        assert!(validate(&app).is_err(), "Call sai trong Action::IfAction.condition phải bị phát hiện");
     }
 
     #[test]
     fn test_function_call_in_assign_value_is_checked() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                Action::Assign {
-                    target: "bien".to_string(),
-                    value: call_expr("gia_tien_sai", vec![]),
-                    pos: p(),
-                },
-            ]))]));
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong Action::Assign.value phải bị phát hiện"
-        );
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            Action::Assign {
+                target: "bien".to_string(),
+                value: call_expr("gia_tien_sai", vec![]),
+                pos: p(),
+            },
+        ]))]));
+        assert!(validate(&app).is_err(), "Call sai trong Action::Assign.value phải bị phát hiện");
     }
 
     #[test]
     fn test_function_call_in_api_call_endpoint_and_data_is_checked() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                Action::ApiCall {
-                    method: "GET".to_string(),
-                    endpoint: call_expr("gia_tien_sai", vec![]),
-                    data: None,
-                    headers: None,
-                    background: false,
-                    assign_to: None,
-                    on_success: None,
-                    on_failure: None,
-                    pos: p(),
-                },
-            ]))]));
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong ApiCall.endpoint phải bị phát hiện"
-        );
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            Action::ApiCall {
+                method: "GET".to_string(),
+                endpoint: call_expr("gia_tien_sai", vec![]),
+                data: None,
+                headers: None,
+                background: false,
+                assign_to: None,
+                on_success: None,
+                on_failure: None,
+                pos: p(),
+            },
+        ]))]));
+        assert!(validate(&app).is_err(), "Call sai trong ApiCall.endpoint phải bị phát hiện");
     }
 
     #[test]
     fn test_function_call_in_child_var_decl_is_checked() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::VarDecl(vibao_ast::VarDecl {
-                name: "y".to_string(),
-                value: call_expr("gia_tien_sai", vec![]),
-                pos: p(),
-            })]));
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong Child::VarDecl phải bị phát hiện"
-        );
+        app.pages.push(page_with(vec![Child::VarDecl(vibao_ast::VarDecl {
+            name: "y".to_string(),
+            value: call_expr("gia_tien_sai", vec![]),
+            pos: p(),
+        })]));
+        assert!(validate(&app).is_err(), "Call sai trong Child::VarDecl phải bị phát hiện");
     }
 
     #[test]
     fn test_function_call_in_child_state_decl_is_checked() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::StateDecl(vibao_ast::StateDecl {
-                name: "y".to_string(),
-                value: call_expr("gia_tien_sai", vec![]),
-                pos: p(),
-            })]));
-        assert!(
-            validate(&app).is_err(),
-            "Call sai trong Child::StateDecl phải bị phát hiện"
-        );
+        app.pages.push(page_with(vec![Child::StateDecl(vibao_ast::StateDecl {
+            name: "y".to_string(),
+            value: call_expr("gia_tien_sai", vec![]),
+            pos: p(),
+        })]));
+        assert!(validate(&app).is_err(), "Call sai trong Child::StateDecl phải bị phát hiện");
     }
 
     #[test]
     fn test_valid_function_call_in_child_var_decl_passes() {
         let mut app = empty_app();
-        app.pages
-            .push(page_with(vec![Child::VarDecl(vibao_ast::VarDecl {
-                name: "y".to_string(),
-                value: call_expr("gia_tien", vec![Expr::literal_num(1000.0, p())]),
-                pos: p(),
-            })]));
+        app.pages.push(page_with(vec![Child::VarDecl(vibao_ast::VarDecl {
+            name: "y".to_string(),
+            value: call_expr("gia_tien", vec![Expr::literal_num(1000.0, p())]),
+            pos: p(),
+        })]));
         assert!(validate(&app).is_ok());
     }
 
@@ -1296,16 +1054,8 @@ mod tests {
         app.global_style = vec![("phong_chuu".to_string(), Expr::literal_str("Inter", p()))];
         let errors = validate(&app).unwrap_err();
         assert_eq!(errors.len(), 1);
-        assert!(
-            errors[0].message.contains("phong_chuu"),
-            "{}",
-            errors[0].message
-        );
-        assert!(
-            errors[0].message.contains("global style"),
-            "{}",
-            errors[0].message
-        );
+        assert!(errors[0].message.contains("phong_chuu"), "{}", errors[0].message);
+        assert!(errors[0].message.contains("global style"), "{}", errors[0].message);
     }
 
     #[test]
@@ -1314,26 +1064,17 @@ mod tests {
         app.themes.push(theme_voi_bien("sang", &["nen"]));
         app.themes.push(theme_voi_bien("toi", &["chu"]));
         let errors = validate(&app).unwrap_err();
-        assert_eq!(
-            errors.len(),
-            2,
-            "mỗi theme thiếu một biến của theme kia, phải báo đủ cả hai"
-        );
+        assert_eq!(errors.len(), 2, "mỗi theme thiếu một biến của theme kia, phải báo đủ cả hai");
     }
 
     #[test]
     fn test_loi_theme_duoc_gom_cung_loi_khac() {
         let mut app = empty_app();
         app.themes.push(theme_voi_bien("sang", &[]));
-        app.pages
-            .push(page_with(vec![Child::Element(element_with_event(vec![
-                function_call_action("thongbao_sai"),
-            ]))]));
+        app.pages.push(page_with(vec![Child::Element(element_with_event(vec![
+            function_call_action("thongbao_sai"),
+        ]))]));
         let errors = validate(&app).unwrap_err();
-        assert_eq!(
-            errors.len(),
-            2,
-            "phải gom cả lỗi theme lẫn lỗi action, không dừng ở lỗi đầu"
-        );
+        assert_eq!(errors.len(), 2, "phải gom cả lỗi theme lẫn lỗi action, không dừng ở lỗi đầu");
     }
 }

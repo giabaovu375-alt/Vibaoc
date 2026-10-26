@@ -87,19 +87,9 @@ fn test_expr_binary_and_unary_roundtrip() {
 #[test]
 fn test_every_binary_op_variant_roundtrips() {
     let ops = [
-        BinaryOp::Add,
-        BinaryOp::Sub,
-        BinaryOp::Mul,
-        BinaryOp::Div,
-        BinaryOp::Mod,
-        BinaryOp::Eq,
-        BinaryOp::Neq,
-        BinaryOp::Gt,
-        BinaryOp::Gte,
-        BinaryOp::Lt,
-        BinaryOp::Lte,
-        BinaryOp::And,
-        BinaryOp::Or,
+        BinaryOp::Add, BinaryOp::Sub, BinaryOp::Mul, BinaryOp::Div, BinaryOp::Mod,
+        BinaryOp::Eq, BinaryOp::Neq, BinaryOp::Gt, BinaryOp::Gte, BinaryOp::Lt,
+        BinaryOp::Lte, BinaryOp::And, BinaryOp::Or,
     ];
     for op in ops {
         let e = Expr::Binary {
@@ -111,11 +101,7 @@ fn test_every_binary_op_variant_roundtrips() {
         let back = roundtrip(&e);
         match back {
             Expr::Binary { op: back_op, .. } => {
-                assert_eq!(
-                    back_op, op,
-                    "BinaryOp::{:?} did not round-trip correctly",
-                    op
-                );
+                assert_eq!(back_op, op, "BinaryOp::{:?} did not round-trip correctly", op);
             }
             other => panic!("expected Binary, got {:?}", other),
         }
@@ -143,10 +129,7 @@ fn test_expr_call_roundtrips() {
 fn test_expr_color_func_roundtrips() {
     let e = Expr::ColorFunc {
         func: ColorFuncKind::TrongSuot,
-        color: Box::new(Expr::Literal(
-            LiteralValue::Color("#000000".to_string()),
-            p(),
-        )),
+        color: Box::new(Expr::Literal(LiteralValue::Color("#000000".to_string()), p())),
         amount: 50.0,
         pos: p(),
     };
@@ -162,10 +145,7 @@ fn test_expr_color_func_roundtrips() {
 
 #[test]
 fn test_expr_array_and_object_roundtrip() {
-    let arr = Expr::Array(
-        vec![Expr::literal_num(1.0, p()), Expr::literal_num(2.0, p())],
-        p(),
-    );
+    let arr = Expr::Array(vec![Expr::literal_num(1.0, p()), Expr::literal_num(2.0, p())], p());
     let back = roundtrip(&arr);
     match back {
         Expr::Array(items, _) => assert_eq!(items.len(), 2),
@@ -173,10 +153,7 @@ fn test_expr_array_and_object_roundtrip() {
     }
 
     let obj = Expr::Object(
-        vec![(
-            "ten".to_string(),
-            Expr::literal_str("test".to_string(), p()),
-        )],
+        vec![("ten".to_string(), Expr::literal_str("test".to_string(), p()))],
         p(),
     );
     let back = roundtrip(&obj);
@@ -287,10 +264,7 @@ fn test_action_api_call_with_nested_callbacks_roundtrips() {
         endpoint: Expr::literal_str("/health".to_string(), p()),
         data: None,
         headers: Some(Expr::Object(
-            vec![(
-                "Authorization".to_string(),
-                Expr::literal_str("Bearer k".to_string(), p()),
-            )],
+            vec![("Authorization".to_string(), Expr::literal_str("Bearer k".to_string(), p()))],
             p(),
         )),
         background: true,
@@ -311,13 +285,7 @@ fn test_action_api_call_with_nested_callbacks_roundtrips() {
     };
     let back = roundtrip(&a);
     match back {
-        Action::ApiCall {
-            headers,
-            background,
-            on_success,
-            on_failure,
-            ..
-        } => {
+        Action::ApiCall { headers, background, on_success, on_failure, .. } => {
             assert!(headers.is_some(), "headers must survive round-trip");
             assert!(background, "background must survive round-trip");
             assert_eq!(
@@ -358,9 +326,5 @@ fn test_action_sequence_roundtrips_as_registered() {
     ];
     let json = serde_json::to_string(&actions).expect("serialization must succeed");
     let back: Vec<Action> = serde_json::from_str(&json).expect("deserialization must succeed");
-    assert_eq!(
-        back.len(),
-        2,
-        "the full action sequence must survive round-trip intact"
-    );
+    assert_eq!(back.len(), 2, "the full action sequence must survive round-trip intact");
 }

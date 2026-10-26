@@ -70,23 +70,13 @@ fn theme_hop_le_duoc_build_va_sinh_css_bien() {
     let (_dir, result) = build_source("theme-hop-le", NGUON_THEME_HOP_LE);
     result.assert_ok();
     let css = result.css();
-    assert!(
-        css.contains(":root { --nen: #FFFFFF; --chu: #2D3748; --vb-theme: sang }"),
-        "{}",
-        css
-    );
+    assert!(css.contains(":root { --nen: #FFFFFF; --chu: #2D3748; --vb-theme: sang }"), "{}", css);
     assert!(
         css.contains("@media (prefers-color-scheme: dark) {\n  :root:not([data-vb-theme]) { --nen: #1a202c; --chu: #e2e8f0; --vb-theme: toi }\n}"),
         "{}",
         css
     );
-    assert!(
-        css.contains(
-            ":root[data-vb-theme=\"toi\"] { --nen: #1a202c; --chu: #e2e8f0; --vb-theme: toi }"
-        ),
-        "{}",
-        css
-    );
+    assert!(css.contains(":root[data-vb-theme=\"toi\"] { --nen: #1a202c; --chu: #e2e8f0; --vb-theme: toi }"), "{}", css);
     assert!(css.contains("background-color: var(--nen)"), "{}", css);
     assert!(css.contains("color: var(--chu)"), "{}", css);
 }
@@ -107,9 +97,7 @@ fn bien_theme_dung_lam_noi_dung_la_loi_build() {
     let (_dir, result) = build_source("theme-noi-dung", &nguon);
     result.assert_err();
     assert!(
-        result.stderr.contains(
-            "Biến theme \"$chu\" chỉ dùng được làm toàn bộ giá trị của một prop kiểu dáng"
-        ),
+        result.stderr.contains("Biến theme \"$chu\" chỉ dùng được làm toàn bộ giá trị của một prop kiểu dáng"),
         "{}",
         result.stderr
     );
@@ -122,16 +110,8 @@ fn dat_chu_de_build_duoc_va_trang_khai_bao_danh_sach_theme() {
     let (_dir, result) = build_source("dat-chu-de", &nguon);
     result.assert_ok();
     let html = result.html();
-    assert!(
-        html.contains("<html lang=\"vi\" data-vb-themes=\"sang,toi\">"),
-        "{}",
-        html
-    );
-    assert!(
-        html.contains("localStorage.getItem(\"vb-theme\")"),
-        "{}",
-        html
-    );
+    assert!(html.contains("<html lang=\"vi\" data-vb-themes=\"sang,toi\">"), "{}", html);
+    assert!(html.contains("localStorage.getItem(\"vb-theme\")"), "{}", html);
     assert!(result.js().contains("dat_chu_de"), "{}", result.js());
 }
 
@@ -142,9 +122,7 @@ fn dat_chu_de_voi_theme_khong_ton_tai_la_loi_build() {
     let (_dir, result) = build_source("dat-chu-de-sai-ten", &nguon);
     result.assert_err();
     assert!(
-        result
-            .stderr
-            .contains("Theme \"xanh\" không tồn tại: các theme đã khai báo là sang, toi"),
+        result.stderr.contains("Theme \"xanh\" không tồn tại: các theme đã khai báo là sang, toi"),
         "{}",
         result.stderr
     );
@@ -163,9 +141,7 @@ lang = "vi";
     let (_dir, result) = build_source("dat-chu-de-khong-theme", nguon);
     result.assert_err();
     assert!(
-        result
-            .stderr
-            .contains("Action đổi theme được dùng nhưng chưa khai báo theme nào"),
+        result.stderr.contains("Action đổi theme được dùng nhưng chưa khai báo theme nào"),
         "{}",
         result.stderr
     );
@@ -173,16 +149,11 @@ lang = "vi";
 
 #[test]
 fn theme_thieu_bien_la_loi_build_va_duoc_dich_sang_tieng_viet() {
-    let nguon = NGUON_THEME_HOP_LE.replace(
-        "$nen = \"#1a202c\"  $chu = \"#e2e8f0\"",
-        "$nen = \"#1a202c\"",
-    );
+    let nguon = NGUON_THEME_HOP_LE.replace("$nen = \"#1a202c\"  $chu = \"#e2e8f0\"", "$nen = \"#1a202c\"");
     let (_dir, result) = build_source("theme-thieu-bien", &nguon);
     result.assert_err();
     assert!(
-        result
-            .stderr
-            .contains("Theme \"toi\" thiếu biến \"$chu\" (đã khai báo ở theme \"sang\")"),
+        result.stderr.contains("Theme \"toi\" thiếu biến \"$chu\" (đã khai báo ở theme \"sang\")"),
         "{}",
         result.stderr
     );
@@ -194,9 +165,7 @@ fn bien_theme_trung_ten_state_la_loi_build() {
     let (_dir, result) = build_source("theme-trung-state", &nguon);
     result.assert_err();
     assert!(
-        result
-            .stderr
-            .contains("State \"$nen\" trùng tên với một biến theme"),
+        result.stderr.contains("State \"$nen\" trùng tên với một biến theme"),
         "{}",
         result.stderr
     );
@@ -228,10 +197,7 @@ ung_dung("App") {
 "#,
     );
     result.assert_err();
-    assert!(
-        !result.stderr.is_empty(),
-        "a syntax error should produce a diagnostic message"
-    );
+    assert!(!result.stderr.is_empty(), "a syntax error should produce a diagnostic message");
 }
 
 #[test]
@@ -307,21 +273,9 @@ app("App") {
     );
     let (ok, stdout, stderr) = common::run_check_ast(&src);
     assert!(ok, "check --ast should succeed, stderr:\n{}", stderr);
-    assert!(
-        stdout.contains("\"kieu\""),
-        "AST should hold the canonical key kieu:\n{}",
-        stdout
-    );
-    assert!(
-        stdout.contains("\"thoi_gian\""),
-        "AST should hold the canonical key thoi_gian:\n{}",
-        stdout
-    );
-    assert!(
-        !stdout.contains("\"duration\""),
-        "English key must not survive into the AST:\n{}",
-        stdout
-    );
+    assert!(stdout.contains("\"kieu\""), "AST should hold the canonical key kieu:\n{}", stdout);
+    assert!(stdout.contains("\"thoi_gian\""), "AST should hold the canonical key thoi_gian:\n{}", stdout);
+    assert!(!stdout.contains("\"duration\""), "English key must not survive into the AST:\n{}", stdout);
 }
 
 #[test]
@@ -341,11 +295,7 @@ app("App") {
 "#;
     let (_dir, result) = build_source("bad-handler", src);
     result.assert_err();
-    assert!(
-        result.stderr.contains("Unknown response handler 'done'"),
-        "stderr:\n{}",
-        result.stderr
-    );
+    assert!(result.stderr.contains("Unknown response handler 'done'"), "stderr:\n{}", result.stderr);
 }
 
 #[test]
@@ -362,11 +312,7 @@ ung_dung("App") {
 "#,
     );
     let (ok, stdout, stderr) = common::run_check_ast(&src);
-    assert!(
-        ok,
-        "check --ast should succeed on valid source, stderr:\n{}",
-        stderr
-    );
+    assert!(ok, "check --ast should succeed on valid source, stderr:\n{}", stderr);
     assert!(stdout.contains("Parse succeeded"));
 }
 
@@ -381,8 +327,6 @@ fn check_ast_flag_reports_a_lexer_or_parser_error_for_invalid_source() {
 
 #[test]
 fn version_in_ra_dung_phien_ban_cua_goi() {
-    assert_eq!(
-        common::run_version(),
-        format!("vibaoc {}", env!("CARGO_PKG_VERSION"))
-    );
+    assert_eq!(common::run_version(), format!("vibaoc {}", env!("CARGO_PKG_VERSION")));
 }
+

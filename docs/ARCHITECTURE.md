@@ -20,6 +20,8 @@ flowchart TB
         Codegen --> HTML["index.html"]
         Codegen --> CSS["style.css"]
         Codegen --> JS["app.js (bootstrap nhỏ)"]
+        Codegen --> Deploy["deploy.rs (--site-url)"]
+        Deploy --> Seo["sitemap.xml, robots.txt, 404.html, thẻ canonical/og"]
     end
 
     subgraph RunTime["Run time (chạy trong trình duyệt người dùng)"]
@@ -56,6 +58,7 @@ flowchart LR
     Par --> Res["resolver.rs\n(gán scope cho $bien, kiểm tra tồn tại)"]
     Res --> Val["validator.rs\n(bắt lỗi ngữ nghĩa: sai tên hàm, prop sai kiểu...)"]
     Val --> Gen["codegen/\n(AST → HTML/CSS/JS string)"]
+    Gen --> Dep["deploy.rs\n(thẻ SEO, sitemap, robots, 404)"]
 
     Lex -.-> Loc["locale/\n(vi.rs, en.rs, prop_vi.rs, prop_en.rs...)"]
     Par -.-> Loc
@@ -81,12 +84,23 @@ flowchart LR
 - **`validator.rs`** — lớp bắt lỗi "biết rồi nhưng sai" (khác lỗi cú
   pháp bắt ở lexer/parser): gọi hàm không tồn tại, tên màu sai, prop
   dùng nhầm tag... Sinh ra danh sách lỗi/warning, không tự sửa.
+  `theme_check.rs` là một tầng con được `validator::validate` gọi: kiểm các
+  quy tắc riêng của `chủ_đề` (cùng tập biến ở mọi theme, biến theme chỉ
+  làm toàn bộ giá trị prop kiểu dáng, tên theme hợp lệ cho `đặt_chủ_đề`).
 - **`codegen/`** — phần lớn nhất (~7500 dòng). Dịch mỗi `Element`
   thành HTML string theo 3 nhánh: **Simple** (`element.rs`, hầu hết
   thẻ), **Layout** (`layout.rs`, các thẻ có CSS flex/grid), **Complex**
   (`component.rs`, các UI phức tạp còn là placeholder — modal/tabs/
   chart...). `props.rs` là nơi tập trung dịch named-option (`mau:`,
-  `dem:`...) sang CSS hoặc HTML attribute.
+  `dem:`...) sang CSS hoặc HTML attribute. `theme.rs` sinh CSS biến
+  (`:root`, `@media (prefers-color-scheme: dark)`, `[data-vb-theme]`, kèm
+  `--vb-theme: <tên>`), `global_style.rs` sinh rule `body`/`html` từ
+  `giao_dien`.
+- **`deploy.rs`** — chỉ chạy khi có `--site-url`: thẻ `canonical`/`og:url`/
+  `og:image`/`twitter:card` cho `<head>`, `sitemap.xml`, `robots.txt`. Còn
+  `404.html` (bản sao `index.html` khi có từ 2 route) do `main.rs` ghi.
+- **`serve.rs`** — máy chủ HTTP cục bộ cho `vibaoc serve`: build, phục vụ
+  `dist/` (route lạ trả về `index.html`), và build lại khi file nguồn đổi.
 
 ## Luồng dữ liệu run-time (`vibao-runtime`)
 
@@ -94,7 +108,7 @@ flowchart LR
 flowchart TB
     Boot["VbRuntime::new(optsJson)"] --> State["state.rs\nState { state, vars, subscribers, page_metadata... }"]
     Boot --> Router["router.rs\nboot_router() → match route → activate_page()"]
-    Router --> DomBind["dom.rs\nbind_subtree() — duyệt DOM, gắn event + reactive binding"]
+    Router --> DomBind["dom/\nbind_subtree() — duyệt DOM, gắn event + reactive binding"]
     DomBind --> Sub["state::subscribe()\n(mỗi vùng UI phụ thuộc state là 1 subscriber)"]
 
     Event["User click/type/submit"] --> ActionRs["action.rs\ndispatch_function_call()"]
@@ -113,11 +127,12 @@ flowchart TB
   những `state` key nào nó đã đọc (`current_tracking_deps`), để lần
   sau chỉ những subscriber thực sự phụ thuộc key vừa đổi mới bị chạy
   lại — không phải toàn bộ app.
-- **`dom.rs`** — cầu nối giữa `State` và DOM thật. `bind_subtree()`
-  duyệt toàn bộ cây DOM 1 lần lúc trang active, gắn: event listener
-  (`bind_events`), 2-way input binding (`bind_model`), conditional
-  render (`bind_if`), loop render (`bind_loop`), text/style/attr binding
-  động (`bind_all_attrs`, `bind_all_styles`).
+- **`dom/`** — cầu nối giữa `State` và DOM thật, tách theo trách nhiệm:
+  `subtree.rs` (`bind_subtree()` duyệt toàn bộ cây DOM 1 lần lúc trang
+  active), `events.rs` (event listener), `model.rs` (2-way input binding),
+  `conditional.rs` (`nếu`), `loop_render.rs` (`vòng_lặp`), `text_attr.rs`
+  (text/style/attr binding động), `animation.rs`, và `ui.rs` (toast, cuộn,
+  sao chép, `set_theme`).
 - **`router.rs`** — SPA router. Mỗi "trang" trong `.vbao` là 1 `<div>`
   ẩn/hiện bằng `display`, không phải tách file — toàn bộ app là 1
   `index.html` duy nhất. `activate_page()` chạy mỗi lần chuyển route:
@@ -130,7 +145,24 @@ flowchart TB
   vào `Expr` đã serialize sẵn vào `exprRegistry` lúc build.
 - **`action.rs`** — dispatch cho action block (`khi_nhan { ... }`).
   Nhận `Vec<Action>` (đã serialize vào `actionRegistry` lúc build),
-  chạy tuần tự, có unwind-safe cho `neu`/`ApiCall` lồng nhau.
+  chạy tuần tự, có unwind-safe cho `neu`/`ApiCall` lồng nhau. Một
+  `ApiCall` có `background: true` được `spawn_local` tách rời và trả về
+  ngay.
+- **`api.rs`** — `fetch` cho `gọi_api`: JSON, header do người viết khai
+  báo (ghi đè `Accept`/`Content-Type` mặc định), thông báo lỗi lấy từ
+  `message` hoặc `error.message`.
+
+### Chủ đề sáng/tối đi qua cả hai thế giới
+
+`chủ_đề` được parse thành `Theme` trong AST; `theme_check.rs` kiểm tra; `codegen/theme.rs` sinh CSS biến;
+`main.rs` ghi `data-vb-themes="sang,toi"` lên `<html>` và một script nhỏ trong `<head>` khôi phục
+`localStorage["vb-theme"]` trước khi vẽ trang. Lúc chạy, `đặt_chủ_đề` (`dom::set_theme`) đặt `data-vb-theme` và
+lưu lựa chọn; khi chưa chọn tay, theme hiện tại được suy ra từ biến CSS `--vb-theme`.
+
+### Vì sao `on_tải` cần `chạy_nền`
+
+`router::activate_page` chờ `on_tải` xong rồi mới `bind_subtree`. Một `gọi_api` thường trong `on_tải` do đó chặn việc gắn
+sự kiện của cả trang cho tới khi mạng trả về. `chạy_nền: true` cho phép `on_tải` kết thúc ngay.
 
 ## `vibao-ast::semantic` — trục xuyên suốt cả 2 thế giới
 
@@ -147,7 +179,7 @@ nghĩa là gì" đi qua đúng 1 con đường (`resolve_tag`/`resolve_prop_key`
 `resolve_action_name`/`resolve_function_name`), và mọi quyết định "khái
 niệm này áp dụng được ở đâu" đi qua đúng 1 bảng tra (`tag_spec`/
 `prop_spec`). Nhiều bug nghiêm trọng nhất tìm được trong quá trình đọc
-code (xem `BUGS.md`) đều thuộc dạng: 1 chỗ trong codegen **bỏ qua**
+code đều thuộc dạng: 1 chỗ trong codegen **bỏ qua**
 lớp semantic này, tự so sánh chuỗi thô trực tiếp — dẫn tới lệch âm
 thầm khi có 2 tên bề mặt cho cùng 1 khái niệm (song ngữ).
 
@@ -166,7 +198,6 @@ thầm khi có 2 tên bề mặt cho cùng 1 khái niệm (song ngữ).
 
 ## Điểm yếu / rủi ro kiến trúc (để tối ưu tiếp)
 
-Xem phân tích chi tiết theo từng module ở `ARCHITECTURE_MODULES.md`.
 Tóm tắt nhanh:
 
 1. **`codegen/props.rs`** là 1 hàm `expand_props()` rất dài

@@ -1,6 +1,6 @@
+use vibao_ast::{Breakpoint, PropKey, PropsMap, ResponsiveNode, Tag};
 use crate::codegen::css::OrderedMap;
 use crate::codegen::expr::get_static_value;
-use vibao_ast::{Breakpoint, PropKey, PropsMap, ResponsiveNode, Tag};
 
 pub fn is_layout_tag_semantic(tag: Tag) -> bool {
     vibao_ast::semantic::tag_spec(tag).kind == vibao_ast::semantic::TagKind::Layout
@@ -28,15 +28,7 @@ pub fn resolve_layout_css(tag: Tag, props: &PropsMap) -> LayoutCss {
 }
 
 const ALL_LAYOUT_TAGS: [Tag; 9] = [
-    Tag::Flex,
-    Tag::Grid,
-    Tag::Khoi,
-    Tag::Stack,
-    Tag::Cuon,
-    Tag::CanGiua,
-    Tag::Lop,
-    Tag::DinhDau,
-    Tag::DinhManHinh,
+    Tag::Flex, Tag::Grid, Tag::Khoi, Tag::Stack, Tag::Cuon, Tag::CanGiua, Tag::Lop, Tag::DinhDau, Tag::DinhManHinh,
 ];
 
 pub fn tags_where_layout_prop_applies(key: PropKey) -> Vec<Tag> {
@@ -58,54 +50,10 @@ pub fn tags_where_layout_prop_applies(key: PropKey) -> Vec<Tag> {
 
 fn known_layout_props(tag: Tag) -> &'static [PropKey] {
     match tag {
-        Tag::Flex => &[
-            PropKey::Direction,
-            PropKey::Gap,
-            PropKey::RowGap,
-            PropKey::ColumnGap,
-            PropKey::Align,
-            PropKey::AlignItems,
-            PropKey::Wrap,
-            PropKey::Width,
-            PropKey::Height,
-            PropKey::Padding,
-            PropKey::BackgroundColor,
-            PropKey::Radius,
-        ],
-        Tag::Grid => &[
-            PropKey::Columns,
-            PropKey::Rows,
-            PropKey::Gap,
-            PropKey::RowGap,
-            PropKey::ColumnGap,
-            PropKey::Width,
-            PropKey::Padding,
-            PropKey::BackgroundColor,
-        ],
-        Tag::Khoi => &[
-            PropKey::BackgroundColor,
-            PropKey::Width,
-            PropKey::Height,
-            PropKey::MinWidth,
-            PropKey::MaxWidth,
-            PropKey::MinHeight,
-            PropKey::MaxHeight,
-            PropKey::Radius,
-            PropKey::Padding,
-            PropKey::Margin,
-            PropKey::Border,
-            PropKey::Shadow,
-            PropKey::Overflow,
-            PropKey::TranslateX,
-            PropKey::TranslateY,
-            PropKey::ZIndex,
-        ],
-        Tag::Stack => &[
-            PropKey::Align,
-            PropKey::AlignItems,
-            PropKey::Width,
-            PropKey::Height,
-        ],
+        Tag::Flex => &[PropKey::Direction, PropKey::Gap, PropKey::RowGap, PropKey::ColumnGap, PropKey::Align, PropKey::AlignItems, PropKey::Wrap, PropKey::Width, PropKey::Height, PropKey::Padding, PropKey::BackgroundColor, PropKey::Radius],
+        Tag::Grid => &[PropKey::Columns, PropKey::Rows, PropKey::Gap, PropKey::RowGap, PropKey::ColumnGap, PropKey::Width, PropKey::Padding, PropKey::BackgroundColor],
+        Tag::Khoi => &[PropKey::BackgroundColor, PropKey::Width, PropKey::Height, PropKey::MinWidth, PropKey::MaxWidth, PropKey::MinHeight, PropKey::MaxHeight, PropKey::Radius, PropKey::Padding, PropKey::Margin, PropKey::Border, PropKey::Shadow, PropKey::Overflow, PropKey::TranslateX, PropKey::TranslateY, PropKey::ZIndex],
+        Tag::Stack => &[PropKey::Align, PropKey::AlignItems, PropKey::Width, PropKey::Height],
         Tag::Cuon => &[PropKey::Direction, PropKey::Height, PropKey::Width],
         Tag::CanGiua => &[PropKey::MaxWidth, PropKey::Padding],
         Tag::Lop => &[],
@@ -119,16 +67,14 @@ pub fn layout_unknown_keys(tag: Tag, props: &PropsMap) -> Vec<String> {
     let known = known_layout_props(tag);
     props
         .iter()
-        .filter(
-            |(key, _)| match crate::locale::resolve_prop_key(key.as_str()) {
+        .filter(|(key, _)| {
+            match crate::locale::resolve_prop_key(key.as_str()) {
                 Some(PropKey::HtmlId) => false,
-                Some(PropKey::BorderColor) | Some(PropKey::BorderStyle) if tag == Tag::Khoi => {
-                    false
-                }
+                Some(PropKey::BorderColor) | Some(PropKey::BorderStyle) if tag == Tag::Khoi => false,
                 Some(prop_key) => !known.contains(&prop_key),
                 None => true,
-            },
-        )
+            }
+        })
         .map(|(key, _)| key.clone())
         .collect()
 }
@@ -280,10 +226,7 @@ fn resolve_box(props: &PropsMap) -> LayoutCss {
     }
     match (translate_x, translate_y) {
         (Some(x), Some(y)) => {
-            css.insert(
-                "transform".to_string(),
-                format!("translateX({}) translateY({})", x, y),
-            );
+            css.insert("transform".to_string(), format!("translateX({}) translateY({})", x, y));
         }
         (Some(x), None) => {
             css.insert("transform".to_string(), format!("translateX({})", x));
@@ -333,19 +276,11 @@ fn resolve_scroll(props: &PropsMap) -> LayoutCss {
                 css.insert("overflow".to_string(), "hidden".to_string());
                 css.insert(
                     "overflowX".to_string(),
-                    if v == "ngang" {
-                        "auto".to_string()
-                    } else {
-                        "hidden".to_string()
-                    },
+                    if v == "ngang" { "auto".to_string() } else { "hidden".to_string() },
                 );
                 css.insert(
                     "overflowY".to_string(),
-                    if v == "doc" {
-                        "auto".to_string()
-                    } else {
-                        "hidden".to_string()
-                    },
+                    if v == "doc" { "auto".to_string() } else { "hidden".to_string() },
                 );
             }
             Some(PropKey::Height) => {
@@ -473,8 +408,7 @@ pub fn resolve_responsive_css(_tag: &str, responsive: &[ResponsiveNode]) -> Vec<
                         overrides.insert("grid-template-columns".to_string(), repeat_or_raw(&v));
                     }
                     Some(PropKey::Direction) => {
-                        overrides
-                            .insert("flex-direction".to_string(), map_direction(&v).to_string());
+                        overrides.insert("flex-direction".to_string(), map_direction(&v).to_string());
                     }
                     Some(PropKey::FontSize) => {
                         overrides.insert("font-size".to_string(), px(&v));
@@ -680,14 +614,10 @@ mod tests {
     fn assert_prop_has_effect(tag: Tag, key: &str, value: Expr) {
         let baseline = resolve_layout_css(tag, &vec![]);
         let with_prop = resolve_layout_css(tag, &vec![(key.to_string(), value)]);
-        let baseline_vec: Vec<(String, String)> = baseline
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-        let with_prop_vec: Vec<(String, String)> = with_prop
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
+        let baseline_vec: Vec<(String, String)> =
+            baseline.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+        let with_prop_vec: Vec<(String, String)> =
+            with_prop.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
         assert_ne!(
             baseline_vec, with_prop_vec,
             "prop '{}' được khai 'known' cho tag {:?} nhưng KHÔNG làm CSS thay đổi — \
@@ -764,16 +694,8 @@ mod tests {
         ];
         let css = resolve_box(&props);
         let transform = css.get("transform").expect("phải có key 'transform'");
-        assert!(
-            transform.contains("translateX(10px)"),
-            "thiếu translateX trong: {}",
-            transform
-        );
-        assert!(
-            transform.contains("translateY(20px)"),
-            "thiếu translateY trong: {}",
-            transform
-        );
+        assert!(transform.contains("translateX(10px)"), "thiếu translateX trong: {}", transform);
+        assert!(transform.contains("translateY(20px)"), "thiếu translateY trong: {}", transform);
     }
 
     #[test]
@@ -784,16 +706,8 @@ mod tests {
         ];
         let css = resolve_box(&props);
         let transform = css.get("transform").expect("phải có key 'transform'");
-        assert!(
-            transform.contains("translateX(10px)"),
-            "thiếu translateX trong: {}",
-            transform
-        );
-        assert!(
-            transform.contains("translateY(20px)"),
-            "thiếu translateY trong: {}",
-            transform
-        );
+        assert!(transform.contains("translateX(10px)"), "thiếu translateX trong: {}", transform);
+        assert!(transform.contains("translateY(20px)"), "thiếu translateY trong: {}", transform);
     }
 
     #[test]
@@ -850,16 +764,8 @@ mod tests {
         for tag in ALL_LAYOUT_TAGS {
             for key in known_layout_props(tag) {
                 let spec = vibao_ast::prop_spec(*key);
-                assert!(
-                    spec.applies_to_layout,
-                    "{:?} trong allowlist {:?} nhưng PropSpec không cho Layout",
-                    key, tag
-                );
-                assert!(
-                    !spec.responsive_only,
-                    "{:?} trong allowlist thường {:?} nhưng lại responsive_only",
-                    key, tag
-                );
+                assert!(spec.applies_to_layout, "{:?} trong allowlist {:?} nhưng PropSpec không cho Layout", key, tag);
+                assert!(!spec.responsive_only, "{:?} trong allowlist thường {:?} nhưng lại responsive_only", key, tag);
             }
         }
     }
@@ -902,51 +808,26 @@ mod tests {
         for tag in ALL_LAYOUT_TAGS {
             let known = known_layout_props(tag);
             for key in [
-                PropKey::BackgroundColor,
-                PropKey::Width,
-                PropKey::Height,
-                PropKey::MinWidth,
-                PropKey::MaxWidth,
-                PropKey::MinHeight,
-                PropKey::MaxHeight,
-                PropKey::Radius,
-                PropKey::Padding,
-                PropKey::Margin,
-                PropKey::Border,
-                PropKey::Shadow,
-                PropKey::Overflow,
-                PropKey::ZIndex,
-                PropKey::Direction,
-                PropKey::Gap,
-                PropKey::RowGap,
-                PropKey::ColumnGap,
-                PropKey::Align,
-                PropKey::AlignItems,
-                PropKey::Wrap,
-                PropKey::Columns,
-                PropKey::Rows,
-                PropKey::TranslateX,
-                PropKey::TranslateY,
-                PropKey::Position,
-                PropKey::Offset,
+                PropKey::BackgroundColor, PropKey::Width, PropKey::Height,
+                PropKey::MinWidth, PropKey::MaxWidth, PropKey::MinHeight, PropKey::MaxHeight,
+                PropKey::Radius, PropKey::Padding, PropKey::Margin, PropKey::Border,
+                PropKey::Shadow, PropKey::Overflow, PropKey::ZIndex,
+                PropKey::Direction, PropKey::Gap, PropKey::RowGap, PropKey::ColumnGap,
+                PropKey::Align, PropKey::AlignItems, PropKey::Wrap,
+                PropKey::Columns, PropKey::Rows,
+                PropKey::TranslateX, PropKey::TranslateY,
+                PropKey::Position, PropKey::Offset,
             ] {
                 if known.contains(&key) {
                     continue;
                 }
-                let Some(surface_name) = layout_capable_prop_surface_name(key) else {
-                    continue;
-                };
+                let Some(surface_name) = layout_capable_prop_surface_name(key) else { continue };
                 let baseline = resolve_layout_css(tag, &vec![]);
-                let with_prop =
-                    resolve_layout_css(tag, &vec![(surface_name.to_string(), str_val("8"))]);
-                let baseline_vec: Vec<(String, String)> = baseline
-                    .iter()
-                    .map(|(k, v)| (k.clone(), v.clone()))
-                    .collect();
-                let with_prop_vec: Vec<(String, String)> = with_prop
-                    .iter()
-                    .map(|(k, v)| (k.clone(), v.clone()))
-                    .collect();
+                let with_prop = resolve_layout_css(tag, &vec![(surface_name.to_string(), str_val("8"))]);
+                let baseline_vec: Vec<(String, String)> =
+                    baseline.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+                let with_prop_vec: Vec<(String, String)> =
+                    with_prop.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
                 assert_eq!(
                     baseline_vec, with_prop_vec,
                     "resolve_layout_css({:?}, ...) THAY ĐỔI CSS khi set '{}' ({:?}), \
@@ -977,10 +858,7 @@ mod tests {
     #[test]
     fn test_layout_unknown_keys_still_flags_unknown_english_prop() {
         let props: PropsMap = vec![("widht".to_string(), str_val("100"))];
-        assert_eq!(
-            layout_unknown_keys(Tag::Flex, &props),
-            vec!["widht".to_string()]
-        );
+        assert_eq!(layout_unknown_keys(Tag::Flex, &props), vec!["widht".to_string()]);
     }
 
     #[test]
@@ -996,28 +874,19 @@ mod tests {
     #[test]
     fn test_layout_unknown_keys_lop_flags_everything() {
         let props: PropsMap = vec![("rong".to_string(), str_val("100"))];
-        assert_eq!(
-            layout_unknown_keys(Tag::Lop, &props),
-            vec!["rong".to_string()]
-        );
+        assert_eq!(layout_unknown_keys(Tag::Lop, &props), vec!["rong".to_string()]);
     }
 
     #[test]
     fn test_grid_only_props_are_unknown_on_flex() {
         let props: PropsMap = vec![("cot".to_string(), str_val("2"))];
-        assert_eq!(
-            layout_unknown_keys(Tag::Flex, &props),
-            vec!["cot".to_string()]
-        );
+        assert_eq!(layout_unknown_keys(Tag::Flex, &props), vec!["cot".to_string()]);
     }
 
     #[test]
     fn test_flex_only_props_are_unknown_on_grid() {
         let props: PropsMap = vec![("boc".to_string(), str_val("true"))];
-        assert_eq!(
-            layout_unknown_keys(Tag::Grid, &props),
-            vec!["boc".to_string()]
-        );
+        assert_eq!(layout_unknown_keys(Tag::Grid, &props), vec!["boc".to_string()]);
     }
 
     #[test]
@@ -1025,18 +894,9 @@ mod tests {
         let props: PropsMap = vec![("mau_chu".to_string(), str_val("do"))];
         let baseline = resolve_grid(&vec![]);
         let with_prop = resolve_grid(&props);
-        let baseline_vec: Vec<(String, String)> = baseline
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-        let with_prop_vec: Vec<(String, String)> = with_prop
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-        assert_eq!(
-            baseline_vec, with_prop_vec,
-            "'mau_chu' không hợp lệ trên grid, CSS phải không đổi"
-        );
+        let baseline_vec: Vec<(String, String)> = baseline.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+        let with_prop_vec: Vec<(String, String)> = with_prop.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+        assert_eq!(baseline_vec, with_prop_vec, "'mau_chu' không hợp lệ trên grid, CSS phải không đổi");
     }
 
     #[test]
@@ -1093,10 +953,7 @@ mod tests {
             pos: vibao_ast::Pos { line: 1, column: 1 },
         }];
 
-        assert_eq!(
-            responsive_unknown_keys(&responsive),
-            vec!["widht".to_string()]
-        );
+        assert_eq!(responsive_unknown_keys(&responsive), vec!["widht".to_string()]);
     }
 
     #[test]
@@ -1172,10 +1029,7 @@ mod tests {
     fn test_grid_cot_numeric_becomes_repeat() {
         let props: PropsMap = vec![("cot".to_string(), Expr::literal_str("3", p()))];
         let css = resolve_grid(&props);
-        assert_eq!(
-            css.get("gridTemplateColumns"),
-            Some(&"repeat(3, 1fr)".to_string())
-        );
+        assert_eq!(css.get("gridTemplateColumns"), Some(&"repeat(3, 1fr)".to_string()));
     }
 
     #[test]
@@ -1190,10 +1044,7 @@ mod tests {
         let props: PropsMap = vec![
             ("vien".to_string(), Expr::literal_num(2.0, p())),
             ("kieu_vien".to_string(), Expr::literal_str("dashed", p())),
-            (
-                "mau_vien".to_string(),
-                Expr::Literal(vibao_ast::LiteralValue::Color("#FF0000".to_string()), p()),
-            ),
+            ("mau_vien".to_string(), Expr::Literal(vibao_ast::LiteralValue::Color("#FF0000".to_string()), p())),
         ];
         let css = resolve_box(&props);
         assert_eq!(css.get("border"), Some(&"2px dashed #FF0000".to_string()));
@@ -1204,10 +1055,7 @@ mod tests {
         let props: PropsMap = vec![
             ("vien".to_string(), Expr::literal_num(2.0, p())),
             ("border_style".to_string(), Expr::literal_str("dashed", p())),
-            (
-                "border_color".to_string(),
-                Expr::Literal(vibao_ast::LiteralValue::Color("#FF0000".to_string()), p()),
-            ),
+            ("border_color".to_string(), Expr::Literal(vibao_ast::LiteralValue::Color("#FF0000".to_string()), p())),
         ];
         let css = resolve_box(&props);
         assert_eq!(css.get("border"), Some(&"2px dashed #FF0000".to_string()));

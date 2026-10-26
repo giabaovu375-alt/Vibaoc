@@ -1,18 +1,10 @@
-use super::ATTR_MODEL;
-use crate::runtime::{
-    state::{self, LoopFrame, SharedState},
-    value::VbValue,
-};
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
 use web_sys::{Element, Event};
+use crate::runtime::{state::{self, LoopFrame, SharedState}, value::VbValue};
+use super::ATTR_MODEL;
 
-pub(super) fn bind_model(
-    shared: &SharedState,
-    el: &Element,
-    _loop_frame: Option<&LoopFrame>,
-    _component_id: Option<&str>,
-) {
+pub(super) fn bind_model(shared: &SharedState, el: &Element, _loop_frame: Option<&LoopFrame>, _component_id: Option<&str>) {
     let key = match el.get_attribute(ATTR_MODEL) {
         Some(k) => k,
         None => return,
@@ -42,8 +34,7 @@ pub(super) fn bind_model(
                 state::flush(&shared_clone);
             });
             let target: web_sys::EventTarget = input.into();
-            let _ =
-                target.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
+            let _ = target.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
             closure.forget();
             return;
         }
@@ -72,8 +63,7 @@ pub(super) fn bind_model(
                 }
             });
             let target: web_sys::EventTarget = input.into();
-            let _ =
-                target.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
+            let _ = target.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
             closure.forget();
             return;
         }

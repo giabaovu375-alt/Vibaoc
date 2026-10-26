@@ -1,6 +1,6 @@
 use super::{ParseError, Parser};
-use crate::lexer::TokenKind;
 use vibao_ast::{CaseNode, Child, IfNode, LoopKind, LoopNode, SwitchNode};
+use crate::lexer::TokenKind;
 
 impl Parser {
     pub(crate) fn parse_if_node(&mut self) -> Result<IfNode, ParseError> {
@@ -22,18 +22,12 @@ impl Parser {
                 let nested_if = self.parse_if_node()?;
                 alternate = Some(vec![Child::If(Box::new(nested_if))]);
             } else {
-                self.consume(
-                    &TokenKind::LBrace,
-                    "Expected '{' to start the 'khong_thi' block",
-                )?;
+                self.consume(&TokenKind::LBrace, "Expected '{' to start the 'khong_thi' block")?;
                 let mut alt_body = Vec::new();
                 while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
                     alt_body.push(self.parse_child()?);
                 }
-                self.consume(
-                    &TokenKind::RBrace,
-                    "Expected '}' to close the 'khong_thi' block",
-                )?;
+                self.consume(&TokenKind::RBrace, "Expected '}' to close the 'khong_thi' block")?;
                 alternate = Some(alt_body);
             }
         }
@@ -83,33 +77,21 @@ impl Parser {
                 self.advance();
                 let from_val = match self.advance().kind {
                     TokenKind::NumberLit(v, _) => v as i64,
-                    other => {
-                        return Err(
-                            self.error(format!("Expected a valid range start, received {}", other))
-                        )
-                    }
+                    other => return Err(self.error(format!("Expected a valid range start, received {}", other))),
                 };
                 if self.check_ident_or_color_name("den") {
                     self.advance();
                 }
                 let to_val = match self.advance().kind {
                     TokenKind::NumberLit(v, _) => v as i64,
-                    other => {
-                        return Err(
-                            self.error(format!("Expected a valid range end, received {}", other))
-                        )
-                    }
+                    other => return Err(self.error(format!("Expected a valid range end, received {}", other))),
                 };
                 if from_val > to_val {
                     return Err(self.error(
                         "Range 'tu N1 den N2' requires N1 <= N2; descending ranges are not supported".to_string(),
                     ));
                 }
-                LoopKind::Range {
-                    from: from_val,
-                    to: to_val,
-                    var_name: first_var.replace('$', ""),
-                }
+                LoopKind::Range { from: from_val, to: to_val, var_name: first_var.replace('$', "") }
             } else {
                 return Err(self.error(format!(
                     "After variable '${}' in 'vong_lap', expected 'trong' (iterate a list) or 'tu' (iterate a numeric range), received {}",
@@ -120,34 +102,21 @@ impl Parser {
             self.advance();
             let from_val = match self.advance().kind {
                 TokenKind::NumberLit(v, _) => v as i64,
-                other => {
-                    return Err(
-                        self.error(format!("Expected a valid range start, received {}", other))
-                    )
-                }
+                other => return Err(self.error(format!("Expected a valid range start, received {}", other))),
             };
             if self.check_ident_or_color_name("den") {
                 self.advance();
             }
             let to_val = match self.advance().kind {
                 TokenKind::NumberLit(v, _) => v as i64,
-                other => {
-                    return Err(
-                        self.error(format!("Expected a valid range end, received {}", other))
-                    )
-                }
+                other => return Err(self.error(format!("Expected a valid range end, received {}", other))),
             };
             if from_val > to_val {
                 return Err(self.error(
-                    "Range 'tu N1 den N2' requires N1 <= N2; descending ranges are not supported"
-                        .to_string(),
+                    "Range 'tu N1 den N2' requires N1 <= N2; descending ranges are not supported".to_string(),
                 ));
             }
-            LoopKind::Range {
-                from: from_val,
-                to: to_val,
-                var_name: "i".to_string(),
-            }
+            LoopKind::Range { from: from_val, to: to_val, var_name: "i".to_string() }
         } else {
             return Err(self.error("Unsupported or malformed loop syntax"));
         };
@@ -167,10 +136,7 @@ impl Parser {
         self.consume(&TokenKind::TruongHop, "Expected the 'truong_hop' keyword")?;
         let subject = self.parse_value()?;
 
-        self.consume(
-            &TokenKind::LBrace,
-            "Expected '{' to start the 'truong_hop' block",
-        )?;
+        self.consume(&TokenKind::LBrace, "Expected '{' to start the 'truong_hop' block")?;
 
         let mut cases = Vec::new();
         let mut default_case = None;
@@ -178,39 +144,27 @@ impl Parser {
         while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
             if self.check(&TokenKind::MacDinh) {
                 self.advance();
-                self.consume(
-                    &TokenKind::LBrace,
-                    "Expected '{' to start the 'mac_dinh' block",
-                )?;
+                self.consume(&TokenKind::LBrace, "Expected '{' to start the 'mac_dinh' block")?;
                 let mut body = Vec::new();
                 while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
                     body.push(self.parse_child()?);
                 }
-                self.consume(
-                    &TokenKind::RBrace,
-                    "Expected '}' to close the 'mac_dinh' block",
-                )?;
+                self.consume(&TokenKind::RBrace, "Expected '}' to close the 'mac_dinh' block")?;
                 if default_case.is_some() {
-                    return Err(
-                        self.error("Only one 'mac_dinh' block is allowed in a 'truong_hop'")
-                    );
+                    return Err(self.error(
+                        "Only one 'mac_dinh' block is allowed in a 'truong_hop'",
+                    ));
                 }
                 default_case = Some(body);
             } else {
                 let case_pos = self.current_pos();
                 let value = self.parse_value()?;
-                self.consume(
-                    &TokenKind::LBrace,
-                    "Expected '{' to start the case body in 'truong_hop'",
-                )?;
+                self.consume(&TokenKind::LBrace, "Expected '{' to start the case body in 'truong_hop'")?;
                 let mut body = Vec::new();
                 while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
                     body.push(self.parse_child()?);
                 }
-                self.consume(
-                    &TokenKind::RBrace,
-                    "Expected '}' to close the case body in 'truong_hop'",
-                )?;
+                self.consume(&TokenKind::RBrace, "Expected '}' to close the case body in 'truong_hop'")?;
                 cases.push(CaseNode {
                     value,
                     body,
@@ -219,10 +173,7 @@ impl Parser {
             }
         }
 
-        self.consume(
-            &TokenKind::RBrace,
-            "Expected '}' to close the 'truong_hop' block",
-        )?;
+        self.consume(&TokenKind::RBrace, "Expected '}' to close the 'truong_hop' block")?;
 
         Ok(SwitchNode {
             subject,
@@ -285,11 +236,7 @@ mod tests {
     fn test_each_loop_with_trong_keyword() {
         let node = parse_loop_from_source("vong_lap $item trong $ds { }");
         match node.kind {
-            LoopKind::Each {
-                item_var,
-                index_var,
-                ..
-            } => {
+            LoopKind::Each { item_var, index_var, .. } => {
                 assert_eq!(item_var, "item");
                 assert!(index_var.is_none());
             }
@@ -309,11 +256,7 @@ mod tests {
     fn test_each_loop_with_index_variable() {
         let node = parse_loop_from_source("vong_lap $task, $idx trong $tasks { }");
         match node.kind {
-            LoopKind::Each {
-                item_var,
-                index_var,
-                ..
-            } => {
+            LoopKind::Each { item_var, index_var, .. } => {
                 assert_eq!(item_var, "task");
                 assert_eq!(index_var, Some("idx".to_string()));
             }
@@ -335,10 +278,7 @@ mod tests {
         let tokens = tokenize("vong_lap $item, 5 trong $ds { }").unwrap();
         let mut p = Parser::new(tokens);
         let result = p.parse_loop_node();
-        assert!(
-            result.is_err(),
-            "must error when ',' is not followed by a valid variable"
-        );
+        assert!(result.is_err(), "must error when ',' is not followed by a valid variable");
     }
 
     #[test]
@@ -348,9 +288,7 @@ mod tests {
         let result = p.parse_loop_node();
         assert!(result.is_err());
         let err = result.unwrap_err();
-        assert!(err
-            .to_string()
-            .contains("descending ranges are not supported"));
+        assert!(err.to_string().contains("descending ranges are not supported"));
     }
 
     #[test]

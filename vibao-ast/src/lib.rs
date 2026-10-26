@@ -18,10 +18,7 @@ pub use decl::{ComponentDef, DataType, ParamDef, StateDecl, Theme, VarDecl};
 pub use event::{Action, EventName, EventNode};
 pub use expr::{BinaryOp, ColorFuncKind, Expr, LiteralValue, TemplatePart, UnaryOp};
 pub use program::{App, ImportDecl, Page, PageEvent, PageEventName, Program};
-pub use semantic::{
-    prop_spec, tag_spec, ActionName, FunctionName, PropCategory, PropKey, PropSpec, Tag, TagKind,
-    TagSpec,
-};
+pub use semantic::{prop_spec, tag_spec, ActionName, FunctionName, PropCategory, PropKey, PropSpec, Tag, TagKind, TagSpec};
 pub use style::{AnimationProps, Breakpoint, ColorValue, LapValue, ResponsiveNode};
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]

@@ -72,10 +72,7 @@ pub fn generate_css(themes: &[Theme]) -> String {
     }
 
     for theme in themes {
-        let selector = format!(
-            ":root[data-vb-theme=\"{}\"]",
-            escape_attribute_value(&theme.name)
-        );
+        let selector = format!(":root[data-vb-theme=\"{}\"]", escape_attribute_value(&theme.name));
         css.push_str(&rule(&selector, theme));
     }
     css
@@ -99,11 +96,7 @@ mod tests {
             name: name.to_string(),
             variables: variables
                 .into_iter()
-                .map(|(n, value)| VarDecl {
-                    name: n.to_string(),
-                    value,
-                    pos: p(),
-                })
+                .map(|(n, value)| VarDecl { name: n.to_string(), value, pos: p() })
                 .collect(),
             pos: p(),
         }
@@ -119,10 +112,7 @@ mod tests {
     fn kich_hoat_ghi_nho_bien_cua_moi_theme_va_xoa_bien_cu() {
         let themes = vec![
             theme("sang", vec![("nen", mau("#FFFFFF"))]),
-            theme(
-                "toi",
-                vec![("nen", mau("#000000")), ("phu", mau("#111111"))],
-            ),
+            theme("toi", vec![("nen", mau("#000000")), ("phu", mau("#111111"))]),
         ];
         activate(&themes);
         assert!(is_theme_variable("nen"));
@@ -146,15 +136,8 @@ mod tests {
 
     #[test]
     fn theme_dau_tien_la_mac_dinh_tren_root() {
-        let css = generate_css(&[theme(
-            "sang",
-            vec![("nen", mau("#FFFFFF")), ("chu", mau("#2D3748"))],
-        )]);
-        assert!(
-            css.contains(":root { --nen: #FFFFFF; --chu: #2D3748; --vb-theme: sang }"),
-            "{}",
-            css
-        );
+        let css = generate_css(&[theme("sang", vec![("nen", mau("#FFFFFF")), ("chu", mau("#2D3748"))])]);
+        assert!(css.contains(":root { --nen: #FFFFFF; --chu: #2D3748; --vb-theme: sang }"), "{}", css);
         assert!(!css.contains("prefers-color-scheme"), "{}", css);
     }
 
@@ -206,16 +189,8 @@ mod tests {
             theme("sang", vec![("nen", mau("#FFFFFF"))]),
             theme("toi", vec![("nen", mau("#1A202C"))]),
         ]);
-        assert!(
-            css.contains(":root[data-vb-theme=\"sang\"] { --nen: #FFFFFF; --vb-theme: sang }"),
-            "{}",
-            css
-        );
-        assert!(
-            css.contains(":root[data-vb-theme=\"toi\"] { --nen: #1A202C; --vb-theme: toi }"),
-            "{}",
-            css
-        );
+        assert!(css.contains(":root[data-vb-theme=\"sang\"] { --nen: #FFFFFF; --vb-theme: sang }"), "{}", css);
+        assert!(css.contains(":root[data-vb-theme=\"toi\"] { --nen: #1A202C; --vb-theme: toi }"), "{}", css);
     }
 
     #[test]

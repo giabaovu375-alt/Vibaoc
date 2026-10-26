@@ -20,8 +20,7 @@ ung_dung("App") {
     );
     result.assert_err();
     assert!(
-        result.stderr.to_lowercase().contains("không xác định")
-            || result.stderr.contains("lỗi ngữ nghĩa"),
+        result.stderr.to_lowercase().contains("không xác định") || result.stderr.contains("lỗi ngữ nghĩa"),
         "expected a Vietnamese diagnostic message, stderr:\n{}",
         result.stderr
     );
@@ -45,8 +44,7 @@ ung_dung("App") {
     );
     result.assert_err();
     assert!(
-        result.stderr.contains("Unknown action")
-            || result.stderr.to_lowercase().contains("unknown"),
+        result.stderr.contains("Unknown action") || result.stderr.to_lowercase().contains("unknown"),
         "expected an English diagnostic message by default, stderr:\n{}",
         result.stderr
     );

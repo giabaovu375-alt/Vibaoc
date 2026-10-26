@@ -11,12 +11,9 @@ mod tests;
 use std::collections::HashMap;
 
 pub use error::LexError;
-pub(crate) use tables::{
-    color_func_name, color_map, is_known_action_or_function_name, resolve_color_func_name,
-    resolve_color_name,
-};
-pub use token::{Token, TokenKind};
 pub(crate) use vietnamese::strip_diacritics_keep_case;
+pub(crate) use tables::{color_map, resolve_color_name, color_func_name, resolve_color_func_name, is_known_action_or_function_name};
+pub use token::{Token, TokenKind};
 
 use helpers::{is_ident_start, single_char_bracket, single_char_operator};
 use tables::{component_set, keyword_map};

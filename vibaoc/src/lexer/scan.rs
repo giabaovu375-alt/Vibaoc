@@ -126,8 +126,7 @@ impl Lexer {
 
         if raw.trim().is_empty() {
             return Err(LexError {
-                message: "Quoted identifier cannot be empty (for example, 'text color')"
-                    .to_string(),
+                message: "Quoted identifier cannot be empty (for example, 'text color')".to_string(),
                 line,
                 column: col,
             });
@@ -147,7 +146,10 @@ impl Lexer {
         }
         if ![4, 5, 7, 9].contains(&hex.len()) {
             return Err(LexError {
-                message: format!("Invalid hex color: {} — expected #RGB or #RRGGBB", hex),
+                message: format!(
+                    "Invalid hex color: {} — expected #RGB or #RRGGBB",
+                    hex
+                ),
                 line,
                 column: col,
             });
@@ -232,13 +234,7 @@ impl Lexer {
         self.classify_identifier(raw, lookup, line, col)
     }
 
-    pub(crate) fn classify_identifier(
-        &mut self,
-        raw: String,
-        lookup: String,
-        line: usize,
-        col: usize,
-    ) -> Token {
+    pub(crate) fn classify_identifier(&mut self, raw: String, lookup: String, line: usize, col: usize) -> Token {
         if lookup == "true" {
             return Token::new(TokenKind::BoolLit(true), line, col);
         }
@@ -246,8 +242,10 @@ impl Lexer {
             return Token::new(TokenKind::BoolLit(false), line, col);
         }
 
-        let is_prop_value_position =
-            matches!(self.tokens.last().map(|t| &t.kind), Some(TokenKind::Colon));
+        let is_prop_value_position = matches!(
+            self.tokens.last().map(|t| &t.kind),
+            Some(TokenKind::Colon)
+        );
 
         if is_prop_value_position && self.colors.contains_key(lookup.as_str()) {
             return Token::new(TokenKind::ColorName(raw), line, col);

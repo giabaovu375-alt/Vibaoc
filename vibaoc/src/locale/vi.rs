@@ -130,47 +130,14 @@ mod tests {
     use vibao_ast::semantic::tag_spec;
 
     const OLD_COMPONENT_SET_TAG_GROUP: &[&str] = &[
-        "text",
-        "h1",
-        "h2",
-        "h3",
-        "p",
-        "nhan",
-        "image",
-        "video",
-        "icon",
-        "button",
-        "input",
-        "link",
-        "lien_ket",
-        "flex",
-        "grid",
-        "stack",
-        "khoi",
-        "cuon",
-        "can_giua",
-        "lop",
-        "dinh_dau",
-        "dinh_man_hinh",
-        "khoang_cach",
-        "duong_ke",
-        "form",
-        "nhom_input",
-        "chon_mot",
-        "hop_kiem",
-        "lua_chon",
-        "modal",
-        "tabs",
-        "gap_mo",
-        "bang_chuyen",
-        "xuong_trang",
-        "vong_quay",
-        "thanh_tien_trinh",
-        "bang",
-        "bieu_do",
-        "ban_do",
-        "thanh_dieu_huong",
-        "trinh_soan_thao",
+        "text", "h1", "h2", "h3", "p", "nhan",
+        "image", "video", "icon",
+        "button", "input", "link", "lien_ket",
+        "flex", "grid", "stack", "khoi", "cuon", "can_giua", "lop", "dinh_dau", "dinh_man_hinh",
+        "khoang_cach", "duong_ke",
+        "form", "nhom_input", "chon_mot", "hop_kiem", "lua_chon",
+        "modal", "tabs", "gap_mo", "bang_chuyen", "xuong_trang", "vong_quay",
+        "thanh_tien_trinh", "bang", "bieu_do", "ban_do", "thanh_dieu_huong", "trinh_soan_thao",
     ];
 
     #[test]
@@ -197,12 +164,7 @@ mod tests {
                 continue;
             }
             let tag = tag_name_vi(name).unwrap();
-            assert_eq!(
-                tag_display_name_vi(tag),
-                *name,
-                "round-trip mismatch for '{}'",
-                name
-            );
+            assert_eq!(tag_display_name_vi(tag), *name, "round-trip mismatch for '{}'", name);
         }
     }
 

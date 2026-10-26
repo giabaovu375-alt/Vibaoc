@@ -58,10 +58,7 @@ trait NfdNormalizeVi {
 
 impl NfdNormalizeVi for String {
     fn nfd_normalize(&self) -> String {
-        self.chars()
-            .map(decompose_vietnamese_char)
-            .collect::<Vec<String>>()
-            .join("")
+        self.chars().map(decompose_vietnamese_char).collect::<Vec<String>>().join("")
     }
 }
 
@@ -151,12 +148,7 @@ mod tests {
     #[test]
     fn test_all_five_tone_marks_on_same_vowel() {
         for (input, expected) in [
-            ("ba", "ba"),
-            ("bà", "ba"),
-            ("bá", "ba"),
-            ("bả", "ba"),
-            ("bã", "ba"),
-            ("bạ", "ba"),
+            ("ba", "ba"), ("bà", "ba"), ("bá", "ba"), ("bả", "ba"), ("bã", "ba"), ("bạ", "ba"),
         ] {
             assert_eq!(normalize_vietnamese(input), expected, "input: {}", input);
         }

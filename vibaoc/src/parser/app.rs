@@ -1,8 +1,6 @@
 use super::{ParseError, Parser};
+use vibao_ast::{App, ComponentDef, Page, Theme, VarDecl, StateDecl, ParamDef, DataType, Child, ColorValue};
 use crate::lexer::TokenKind;
-use vibao_ast::{
-    App, Child, ColorValue, ComponentDef, DataType, Page, ParamDef, StateDecl, Theme, VarDecl,
-};
 
 pub(crate) struct ModuleBody {
     pub imports: Vec<vibao_ast::ImportDecl>,
@@ -24,36 +22,19 @@ impl Parser {
     pub(crate) fn parse_app(&mut self) -> Result<App, ParseError> {
         let pos = self.current_pos();
         self.consume(&TokenKind::UngDung, "Expected the 'ung_dung' keyword")?;
-        self.consume(
-            &TokenKind::LParen,
-            "Expected '(' after the 'ung_dung' keyword",
-        )?;
+        self.consume(&TokenKind::LParen, "Expected '(' after the 'ung_dung' keyword")?;
 
         let name = match self.advance().kind {
             TokenKind::StringLit(s) => s,
-            other => {
-                return Err(self.error(format!(
-                    "Expected an application name string, received {}",
-                    other
-                )))
-            }
+            other => return Err(self.error(format!("Expected an application name string, received {}", other))),
         };
 
-        self.consume(
-            &TokenKind::RParen,
-            "Expected ')' after the application name",
-        )?;
-        self.consume(
-            &TokenKind::LBrace,
-            "Expected '{' to start the application body",
-        )?;
+        self.consume(&TokenKind::RParen, "Expected ')' after the application name")?;
+        self.consume(&TokenKind::LBrace, "Expected '{' to start the application body")?;
 
         let body = self.parse_module_body(&TokenKind::RBrace)?;
 
-        self.consume(
-            &TokenKind::RBrace,
-            "Expected '}' to close the application body",
-        )?;
+        self.consume(&TokenKind::RBrace, "Expected '}' to close the application body")?;
 
         Ok(App {
             name,
@@ -68,10 +49,7 @@ impl Parser {
         })
     }
 
-    pub(crate) fn parse_module_body(
-        &mut self,
-        stop_at: &TokenKind,
-    ) -> Result<ModuleBody, ParseError> {
+    pub(crate) fn parse_module_body(&mut self, stop_at: &TokenKind) -> Result<ModuleBody, ParseError> {
         let mut imports = Vec::new();
         let mut variables = Vec::new();
         let mut themes = Vec::new();
@@ -105,21 +83,11 @@ impl Parser {
             } else if let TokenKind::Variable(_) = &self.current().kind {
                 variables.push(self.parse_var_decl()?);
             } else {
-                return Err(self.error(format!(
-                    "Invalid declaration inside the application block: {}",
-                    self.current().kind
-                )));
+                return Err(self.error(format!("Invalid declaration inside the application block: {}", self.current().kind)));
             }
         }
 
-        Ok(ModuleBody {
-            imports,
-            variables,
-            themes,
-            global_style,
-            components,
-            pages,
-        })
+        Ok(ModuleBody { imports, variables, themes, global_style, components, pages })
     }
 
     fn parse_import(&mut self) -> Result<vibao_ast::ImportDecl, ParseError> {
@@ -138,28 +106,19 @@ impl Parser {
                 }
                 break;
             }
-            self.consume(
-                &TokenKind::RBrace,
-                "Expected '}' to close the import name list",
-            )?;
+            self.consume(&TokenKind::RBrace, "Expected '}' to close the import name list")?;
         } else {
             let name = self.expect_identifier_like()?;
             names.push(name);
         }
 
-        self.consume(
-            &TokenKind::Tu,
-            "Expected the 'tu' keyword after the import name list",
-        )?;
+        self.consume(&TokenKind::Tu, "Expected the 'tu' keyword after the import name list")?;
 
         let path = match self.advance().kind {
             TokenKind::StringLit(s) => s,
-            other => {
-                return Err(self.error(format!(
-                    "Expected an import path string after 'tu', received {}",
-                    other
-                )))
-            }
+            other => return Err(self.error(format!(
+                "Expected an import path string after 'tu', received {}", other
+            ))),
         };
 
         Ok(vibao_ast::ImportDecl { names, path, pos })
@@ -178,9 +137,7 @@ impl Parser {
 
         let name = match self.advance().kind {
             TokenKind::Identifier(s) | TokenKind::StringLit(s) => s,
-            other => {
-                return Err(self.error(format!("Expected a theme identifier, received {}", other)))
-            }
+            other => return Err(self.error(format!("Expected a theme identifier, received {}", other))),
         };
 
         self.consume(&TokenKind::LBrace, "Expected '{' after the theme name")?;
@@ -190,23 +147,14 @@ impl Parser {
         }
         self.consume(&TokenKind::RBrace, "Expected '}' to close the theme")?;
 
-        Ok(Theme {
-            name,
-            variables,
-            pos,
-        })
+        Ok(Theme { name, variables, pos })
     }
 
     fn parse_theme_var(&mut self) -> Result<VarDecl, ParseError> {
         let pos = self.current_pos();
         let name = match self.advance().kind {
             TokenKind::Variable(n) => n,
-            other => {
-                return Err(self.error(format!(
-                    "Expected a theme variable name starting with $, received {}",
-                    other
-                )))
-            }
+            other => return Err(self.error(format!("Expected a theme variable name starting with $, received {}", other))),
         };
 
         if self.check(&TokenKind::Equals) || self.check(&TokenKind::Colon) {
@@ -241,12 +189,7 @@ impl Parser {
 
         let name = match self.advance().kind {
             TokenKind::Variable(n) => n,
-            other => {
-                return Err(self.error(format!(
-                    "Expected a variable name starting with $, received {}",
-                    other
-                )))
-            }
+            other => return Err(self.error(format!("Expected a variable name starting with $, received {}", other))),
         };
 
         self.consume(&TokenKind::Equals, "Expected '=' after the variable name")?;
@@ -301,12 +244,7 @@ impl Parser {
                         self.advance();
                         description = match self.advance().kind {
                             TokenKind::StringLit(s) => Some(s),
-                            other => {
-                                return Err(self.error(format!(
-                                    "Expected a string after \"mo_ta:\", received {}",
-                                    other
-                                )))
-                            }
+                            other => return Err(self.error(format!("Expected a string after \"mo_ta:\", received {}", other))),
                         };
                         continue;
                     }
@@ -317,18 +255,11 @@ impl Parser {
             }
             name = match self.advance().kind {
                 TokenKind::StringLit(s) | TokenKind::Identifier(s) => Some(s),
-                other => {
-                    return Err(
-                        self.error(format!("Expected a valid page name, received {}", other))
-                    )
-                }
+                other => return Err(self.error(format!("Expected a valid page name, received {}", other))),
             };
         }
 
-        self.consume(
-            &TokenKind::RParen,
-            "Expected ')' after the page declaration",
-        )?;
+        self.consume(&TokenKind::RParen, "Expected ')' after the page declaration")?;
         self.consume(&TokenKind::LBrace, "Expected '{' to start the page body")?;
 
         let mut states = Vec::new();
@@ -391,9 +322,7 @@ impl Parser {
         let name = match self.advance().kind {
             TokenKind::Identifier(s) | TokenKind::Component(s) => s,
             TokenKind::ColorName(s) => s,
-            other => {
-                return Err(self.error(format!("Expected a component name, received {}", other)))
-            }
+            other => return Err(self.error(format!("Expected a component name, received {}", other))),
         };
 
         let mut params = Vec::new();
@@ -442,24 +371,15 @@ impl Parser {
                 });
                 self.skip_comma();
             }
-            self.consume(
-                &TokenKind::RParen,
-                "Expected ')' to close the parameter list",
-            )?;
+            self.consume(&TokenKind::RParen, "Expected ')' to close the parameter list")?;
         }
 
-        self.consume(
-            &TokenKind::LBrace,
-            "Expected '{' to start the component body",
-        )?;
+        self.consume(&TokenKind::LBrace, "Expected '{' to start the component body")?;
         let mut children = Vec::new();
         while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
             children.push(self.parse_child()?);
         }
-        self.consume(
-            &TokenKind::RBrace,
-            "Expected '}' to close the component body",
-        )?;
+        self.consume(&TokenKind::RBrace, "Expected '}' to close the component body")?;
 
         Ok(ComponentDef {
             name,
@@ -479,11 +399,7 @@ impl Parser {
             Ok(Child::Switch(Box::new(self.parse_switch_node()?)))
         } else if self.check(&TokenKind::State) {
             let var = self.parse_var_decl()?;
-            Ok(Child::StateDecl(StateDecl {
-                name: var.name,
-                value: var.value,
-                pos: var.pos,
-            }))
+            Ok(Child::StateDecl(StateDecl { name: var.name, value: var.value, pos: var.pos }))
         } else if let TokenKind::Variable(_) = &self.current().kind {
             let var = self.parse_var_decl()?;
             Ok(Child::VarDecl(var))
@@ -518,10 +434,7 @@ impl Parser {
             } else if let TokenKind::Identifier(name) = &self.current().kind {
                 let name = name.clone();
                 self.advance();
-                if self.check(&TokenKind::LParen)
-                    || self.check(&TokenKind::LBrace)
-                    || self.check(&TokenKind::Colon)
-                {
+                if self.check(&TokenKind::LParen) || self.check(&TokenKind::LBrace) || self.check(&TokenKind::Colon) {
                     let call = self.parse_component_call_rest(name, pos)?;
                     Ok(Child::ComponentCall(call))
                 } else {
@@ -531,10 +444,7 @@ impl Parser {
                     )))
                 }
             } else {
-                Err(self.error(format!(
-                    "Invalid UI tree structure: {}",
-                    self.current().kind
-                )))
+                Err(self.error(format!("Invalid UI tree structure: {}", self.current().kind)))
             }
         }
     }
@@ -574,10 +484,7 @@ mod tests {
         let tokens = tokenize(r#"nhap { nut_bam, the_card } tu "./components/ui.vbao""#).unwrap();
         let mut p = Parser::new(tokens);
         let import = p.parse_import().unwrap();
-        assert_eq!(
-            import.names,
-            vec!["nut_bam".to_string(), "the_card".to_string()]
-        );
+        assert_eq!(import.names, vec!["nut_bam".to_string(), "the_card".to_string()]);
         assert_eq!(import.path, "./components/ui.vbao");
     }
 
@@ -669,10 +576,7 @@ mod tests {
         let tokens = tokenize(r#"trang("/", mau_nen) { }"#).unwrap();
         let mut p = Parser::new(tokens);
         let result = p.parse_page();
-        assert!(
-            result.is_err(),
-            "expected a parse error when 'mau_nen' is missing its ':', but parsing succeeded"
-        );
+        assert!(result.is_err(), "expected a parse error when 'mau_nen' is missing its ':', but parsing succeeded");
     }
 
     #[test]
@@ -697,8 +601,7 @@ mod tests {
 
     #[test]
     fn test_parse_page_with_mo_ta() {
-        let page =
-            parse_page_from_source(r#"trang("/", "Trang chủ", mo_ta: "Giới thiệu bản thân") { }"#);
+        let page = parse_page_from_source(r#"trang("/", "Trang chủ", mo_ta: "Giới thiệu bản thân") { }"#);
         assert_eq!(page.name, Some("Trang chủ".to_string()));
         assert_eq!(page.description, Some("Giới thiệu bản thân".to_string()));
     }
@@ -717,8 +620,7 @@ mod tests {
 
     #[test]
     fn test_parse_page_mo_ta_order_independent_from_mau_nen() {
-        let page =
-            parse_page_from_source(r#"trang("/", mo_ta: "Mo ta", mau_nen: xanh, "Trang chủ") { }"#);
+        let page = parse_page_from_source(r#"trang("/", mo_ta: "Mo ta", mau_nen: xanh, "Trang chủ") { }"#);
         assert_eq!(page.name, Some("Trang chủ".to_string()));
         assert_eq!(page.description, Some("Mo ta".to_string()));
         assert!(page.mau_nen.is_some());
@@ -736,10 +638,7 @@ mod tests {
         let tokens = tokenize(r#"trang("/", mo_ta) { }"#).unwrap();
         let mut p = Parser::new(tokens);
         let result = p.parse_page();
-        assert!(
-            result.is_err(),
-            "expected a parse error when 'mo_ta' is missing its ':'"
-        );
+        assert!(result.is_err(), "expected a parse error when 'mo_ta' is missing its ':'");
     }
 
     #[test]
@@ -747,10 +646,7 @@ mod tests {
         let tokens = tokenize(r#"trang("/", mo_ta: 123) { }"#).unwrap();
         let mut p = Parser::new(tokens);
         let result = p.parse_page();
-        assert!(
-            result.is_err(),
-            "expected a parse error when 'mo_ta' value isn't a string literal"
-        );
+        assert!(result.is_err(), "expected a parse error when 'mo_ta' value isn't a string literal");
     }
 
     fn parse_component_def_from_source(src: &str) -> ComponentDef {
@@ -813,10 +709,7 @@ mod tests {
         let tokens = tokenize("@the TheBao(ten: choui) { }").unwrap();
         let mut p = Parser::new(tokens);
         let result = p.parse_component_def();
-        assert!(
-            result.is_err(),
-            "a typo'd data type must produce a parse error, not silently become Any"
-        );
+        assert!(result.is_err(), "a typo'd data type must produce a parse error, not silently become Any");
     }
 
     #[test]
@@ -840,11 +733,7 @@ mod tests {
         ] {
             let src = format!("@the TheBao(ten: {}) {{ }}", src_type);
             let def = parse_component_def_from_source(&src);
-            assert_eq!(
-                def.params[0].data_type, expected,
-                "type '{}' must parse correctly",
-                src_type
-            );
+            assert_eq!(def.params[0].data_type, expected, "type '{}' must parse correctly", src_type);
         }
     }
 

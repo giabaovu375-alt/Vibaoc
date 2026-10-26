@@ -32,8 +32,6 @@
 - Thêm test cho tính năng 0.1.5 (theme, API có header và chạy nền, chỉ số `[n]`, `giữ_dòng`, `--site-url`, phiên bản).
 - Thông báo lỗi về range giảm dần không còn nhắc số phiên bản.
 
-Chi tiết từng thay đổi nhỏ: [`BUGS.md`](BUGS.md).
-
 ## 0.1.0
 
 Bản public đầu tiên.

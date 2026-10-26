@@ -86,69 +86,19 @@ mod tests {
     use super::*;
 
     const ALL_PROP_SURFACE_NAMES_VI: &[&str] = &[
-        "mau_nen",
-        "mau",
-        "mau_chu",
-        "mau_vien",
-        "rong",
-        "cao",
-        "max_rong",
-        "min_rong",
-        "max_cao",
-        "min_cao",
-        "radius",
-        "dem",
-        "le",
-        "vien",
-        "kieu_vien",
-        "bong",
-        "cuon_tran",
-        "tang_z",
-        "co",
-        "dam",
-        "nghieng",
-        "gach_chan",
-        "giu_dong",
-        "can",
-        "hang",
-        "khoang_chu",
-        "bien_doi",
-        "phong_chu",
-        "huong",
-        "gap",
-        "gap_doc",
-        "gap_ngang",
-        "doc",
-        "boc",
-        "cot",
-        "hang_luoi",
-        "tran_x",
-        "tran_y",
-        "vi_tri",
-        "offset",
+        "mau_nen", "mau", "mau_chu", "mau_vien",
+        "rong", "cao", "max_rong", "min_rong", "max_cao", "min_cao",
+        "radius", "dem", "le", "vien", "kieu_vien", "bong", "cuon_tran", "tang_z",
+        "co", "dam", "nghieng", "gach_chan", "giu_dong", "can", "hang", "khoang_chu",
+        "bien_doi", "phong_chu",
+        "huong", "gap", "gap_doc", "gap_ngang", "doc", "boc", "cot", "hang_luoi",
+        "tran_x", "tran_y", "vi_tri", "offset",
         "an",
-        "khop",
-        "nguon",
-        "mo_ta_anh",
-        "tai_cham",
-        "loai",
-        "chu_tro",
-        "gia_tri",
-        "chon",
-        "bat_buoc",
-        "vo_hieu",
-        "lop",
-        "id",
-        "den",
-        "muc_tieu",
-        "quan_he",
+        "khop", "nguon", "mo_ta_anh", "tai_cham",
+        "loai", "chu_tro", "gia_tri", "chon", "bat_buoc", "vo_hieu", "lop", "id",
+        "den", "muc_tieu", "quan_he",
         "noi_dung",
-        "hieu_ung",
-        "thoi_gian",
-        "tre",
-        "lap",
-        "hieu_ung_hover",
-        "hieu_ung_cuon",
+        "hieu_ung", "thoi_gian", "tre", "lap", "hieu_ung_hover", "hieu_ung_cuon",
     ];
 
     #[test]
@@ -157,8 +107,7 @@ mod tests {
         for name in ALL_PROP_SURFACE_NAMES_VI.iter().copied() {
             assert!(
                 prop_name_vi(name).is_some(),
-                "'{}' must resolve to a PropKey",
-                name
+                "'{}' must resolve to a PropKey", name
             );
         }
     }
@@ -181,10 +130,6 @@ mod tests {
             .iter()
             .filter_map(|n| prop_name_vi(n))
             .collect();
-        assert_eq!(
-            resolved.len(),
-            62,
-            "63 source names must resolve to exactly 62 PropKeys (mau/mau_chu merge into 1)"
-        );
+        assert_eq!(resolved.len(), 62, "63 source names must resolve to exactly 62 PropKeys (mau/mau_chu merge into 1)");
     }
 }

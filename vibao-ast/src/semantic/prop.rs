@@ -117,71 +117,39 @@ impl PropKey {
         match self {
             PropKey::BackgroundColor | PropKey::Color | PropKey::BorderColor => PropCategory::Color,
 
-            PropKey::Width
-            | PropKey::Height
-            | PropKey::MaxWidth
-            | PropKey::MinWidth
-            | PropKey::MaxHeight
-            | PropKey::MinHeight => PropCategory::Size,
+            PropKey::Width | PropKey::Height | PropKey::MaxWidth
+            | PropKey::MinWidth | PropKey::MaxHeight | PropKey::MinHeight => PropCategory::Size,
 
-            PropKey::Radius
-            | PropKey::Padding
-            | PropKey::Margin
-            | PropKey::Border
-            | PropKey::BorderStyle
-            | PropKey::Shadow
-            | PropKey::Overflow
+            PropKey::Radius | PropKey::Padding | PropKey::Margin | PropKey::Border
+            | PropKey::BorderStyle | PropKey::Shadow | PropKey::Overflow
             | PropKey::ZIndex => PropCategory::SpacingBorderEffects,
 
-            PropKey::FontSize
-            | PropKey::Bold
-            | PropKey::Italic
-            | PropKey::Underline
-            | PropKey::PreserveLines
-            | PropKey::Align
-            | PropKey::LineHeight
-            | PropKey::LetterSpacing
-            | PropKey::TextTransform
-            | PropKey::FontFamily => PropCategory::Typography,
+            PropKey::FontSize | PropKey::Bold | PropKey::Italic | PropKey::Underline
+            | PropKey::PreserveLines | PropKey::Align | PropKey::LineHeight | PropKey::LetterSpacing
+            | PropKey::TextTransform | PropKey::FontFamily => PropCategory::Typography,
 
-            PropKey::Direction
-            | PropKey::Gap
-            | PropKey::RowGap
-            | PropKey::ColumnGap
-            | PropKey::AlignItems
-            | PropKey::Wrap
-            | PropKey::Columns
+            PropKey::Direction | PropKey::Gap | PropKey::RowGap | PropKey::ColumnGap
+            | PropKey::AlignItems | PropKey::Wrap | PropKey::Columns
             | PropKey::Rows => PropCategory::FlexGridLayout,
 
-            PropKey::TranslateX | PropKey::TranslateY | PropKey::Position | PropKey::Offset => {
-                PropCategory::PositionTransform
-            }
+            PropKey::TranslateX | PropKey::TranslateY | PropKey::Position
+            | PropKey::Offset => PropCategory::PositionTransform,
 
             PropKey::Hidden => PropCategory::ResponsiveOnly,
 
-            PropKey::Fit | PropKey::Source | PropKey::Alt | PropKey::LazyLoad => {
-                PropCategory::MediaObject
-            }
+            PropKey::Fit | PropKey::Source | PropKey::Alt
+            | PropKey::LazyLoad => PropCategory::MediaObject,
 
-            PropKey::Type
-            | PropKey::Placeholder
-            | PropKey::Value
-            | PropKey::OptionValue
-            | PropKey::Required
-            | PropKey::Disabled
-            | PropKey::ClassBinding
+            PropKey::Type | PropKey::Placeholder | PropKey::Value | PropKey::OptionValue
+            | PropKey::Required | PropKey::Disabled | PropKey::ClassBinding
             | PropKey::HtmlId => PropCategory::FormInput,
 
             PropKey::To | PropKey::Target | PropKey::Rel => PropCategory::Link,
 
             PropKey::Content => PropCategory::Content,
 
-            PropKey::Animation
-            | PropKey::Duration
-            | PropKey::Delay
-            | PropKey::Repeat
-            | PropKey::HoverAnimation
-            | PropKey::ScrollAnimation => PropCategory::Animation,
+            PropKey::Animation | PropKey::Duration | PropKey::Delay | PropKey::Repeat
+            | PropKey::HoverAnimation | PropKey::ScrollAnimation => PropCategory::Animation,
         }
     }
 }

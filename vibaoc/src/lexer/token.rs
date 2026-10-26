@@ -34,7 +34,7 @@ pub enum TokenKind {
     ColorHex(String),
     ColorName(String),
 
-    Identifier(String),
+Identifier(String),
     Variable(String),
 
     Plus,
@@ -162,10 +162,7 @@ mod tests {
     fn test_display_identifier_is_human_readable() {
         let s = format!("{}", TokenKind::Identifier("abc".to_string()));
         assert_eq!(s, "định danh 'abc'");
-        assert!(
-            !s.contains("Identifier("),
-            "Display must not leak the raw enum Debug syntax"
-        );
+        assert!(!s.contains("Identifier("), "Display must not leak the raw enum Debug syntax");
     }
 
     #[test]

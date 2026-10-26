@@ -1,9 +1,9 @@
+use vibao_ast::{ComponentDef, ComponentCall};
 use crate::codegen::css::{esc_attr, indent2};
-use crate::codegen::element::ElementCodegenHost;
-use crate::codegen::expr::{json_string, register_expr};
 use crate::codegen::expr::{resolve_value, ResolvedValue};
+use crate::codegen::element::ElementCodegenHost;
+use crate::codegen::expr::{register_expr, json_string};
 use std::collections::HashMap;
-use vibao_ast::{ComponentCall, ComponentDef};
 
 #[derive(Debug, Clone, Default)]
 pub struct ComponentRegistry {
@@ -18,10 +18,7 @@ impl ComponentRegistry {
 
     pub fn register(&mut self, def: ComponentDef) {
         if self.defs.contains_key(&def.name) {
-            self.warnings.push(format!(
-                "[ViBao] Component \"@the {}\" is being redefined",
-                def.name
-            ));
+            self.warnings.push(format!("[ViBao] Component \"@the {}\" is being redefined", def.name));
         }
         self.defs.insert(def.name.clone(), def);
     }
@@ -30,22 +27,17 @@ impl ComponentRegistry {
         self.defs.get(name)
     }
 
-    #[allow(dead_code)]
+#[allow(dead_code)]
     pub fn has(&self, name: &str) -> bool {
         self.defs.contains_key(name)
     }
+
 }
 
-pub fn resolve_component_def(
-    node: &ComponentCall,
-    registry: &ComponentRegistry,
-) -> Result<ComponentDef, String> {
+pub fn resolve_component_def(node: &ComponentCall, registry: &ComponentRegistry) -> Result<ComponentDef, String> {
     match registry.get(&node.name) {
         Some(d) => Ok(d.clone()),
-        None => Err(format!(
-            "[ViBao] Component \"{}\" has not been defined with @the",
-            node.name
-        )),
+        None => Err(format!("[ViBao] Component \"{}\" has not been defined with @the", node.name)),
     }
 }
 
@@ -92,17 +84,13 @@ fn build_props_json(props: &vibao_ast::PropsMap) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use vibao_ast::{Child, DataType, Expr, ParamDef, Pos};
+    use vibao_ast::{Child, Expr, ParamDef, DataType, Pos};
 
     fn p() -> Pos {
         Pos { line: 1, column: 1 }
     }
 
-    fn gen_html(
-        node: &ComponentCall,
-        registry: &ComponentRegistry,
-        host: &mut dyn ElementCodegenHost,
-    ) -> String {
+    fn gen_html(node: &ComponentCall, registry: &ComponentRegistry, host: &mut dyn ElementCodegenHost) -> String {
         let def = resolve_component_def(node, registry).expect("component phải được đăng ký");
         gen_component_call_with_def(node, &def, host)
     }
@@ -114,10 +102,7 @@ mod tests {
 
     impl FakeHost {
         fn new() -> Self {
-            FakeHost {
-                counter: 0,
-                js: vec![],
-            }
+            FakeHost { counter: 0, js: vec![] }
         }
     }
 
@@ -143,12 +128,7 @@ mod tests {
     #[test]
     fn test_register_and_get() {
         let mut registry = ComponentRegistry::new();
-        let def = ComponentDef {
-            name: "The_Card".to_string(),
-            params: vec![],
-            children: vec![],
-            pos: p(),
-        };
+        let def = ComponentDef { name: "The_Card".to_string(), params: vec![], children: vec![], pos: p() };
         registry.register(def);
         assert!(registry.has("The_Card"));
         assert!(registry.get("The_Card").is_some());
@@ -157,20 +137,10 @@ mod tests {
     #[test]
     fn test_register_duplicate_warns_but_overwrites() {
         let mut registry = ComponentRegistry::new();
+        registry.register(ComponentDef { name: "X".to_string(), params: vec![], children: vec![], pos: p() });
         registry.register(ComponentDef {
             name: "X".to_string(),
-            params: vec![],
-            children: vec![],
-            pos: p(),
-        });
-        registry.register(ComponentDef {
-            name: "X".to_string(),
-            params: vec![ParamDef {
-                name: "a".to_string(),
-                data_type: DataType::Chuoi,
-                default_value: None,
-                pos: p(),
-            }],
+            params: vec![ParamDef { name: "a".to_string(), data_type: DataType::Chuoi, default_value: None, pos: p() }],
             children: vec![],
             pos: p(),
         });
@@ -181,13 +151,7 @@ mod tests {
     #[test]
     fn test_resolve_component_def_unknown_returns_error() {
         let registry = ComponentRegistry::new();
-        let call = ComponentCall {
-            name: "KhongTonTai".to_string(),
-            props: vec![],
-            identity: Default::default(),
-            children: vec![],
-            pos: p(),
-        };
+        let call = ComponentCall { name: "KhongTonTai".to_string(), props: vec![], identity: Default::default(), children: vec![], pos: p() };
         let error = resolve_component_def(&call, &registry).unwrap_err();
         assert!(error.contains("KhongTonTai"), "{}", error);
     }
@@ -196,12 +160,7 @@ mod tests {
     fn test_gen_component_call_known_generates_props_expr_id_no_dead_js() {
         crate::codegen::expr::take_expr_registry();
         let mut registry = ComponentRegistry::new();
-        registry.register(ComponentDef {
-            name: "The_Card".to_string(),
-            params: vec![],
-            children: vec![],
-            pos: p(),
-        });
+        registry.register(ComponentDef { name: "The_Card".to_string(), params: vec![], children: vec![], pos: p() });
         let mut host = FakeHost::new();
         let call = ComponentCall {
             name: "The_Card".to_string(),
@@ -212,11 +171,7 @@ mod tests {
         };
         let html = gen_html(&call, &registry, &mut host);
         assert!(html.contains("data-vb-component=\"The_Card\""));
-        assert!(
-            host.js.is_empty(),
-            "gen_component_call_with_def must not generate any JS, got: {:?}",
-            host.js
-        );
+        assert!(host.js.is_empty(), "gen_component_call_with_def must not generate any JS, got: {:?}", host.js);
         assert!(
             html.contains("data-vb-props=\"{&quot;tieu_de&quot;:0}\""),
             "data-vb-props must contain {{\"tieu_de\": <numeric exprId>}}, actual HTML:\n{}",
@@ -224,66 +179,38 @@ mod tests {
         );
         let registry_snapshot = crate::codegen::expr::take_expr_registry();
         assert_eq!(registry_snapshot.len(), 1);
-        assert!(
-            matches!(&registry_snapshot[0], Expr::Literal(vibao_ast::LiteralValue::Str(s), _) if s == "Xin chào")
-        );
+        assert!(matches!(&registry_snapshot[0], Expr::Literal(vibao_ast::LiteralValue::Str(s), _) if s == "Xin chào"));
     }
 
     #[test]
     fn test_component_call_id_prop_overrides_auto_generated_id() {
         crate::codegen::expr::take_expr_registry();
         let mut registry = ComponentRegistry::new();
-        registry.register(ComponentDef {
-            name: "The_Card".to_string(),
-            params: vec![],
-            children: vec![],
-            pos: p(),
-        });
+        registry.register(ComponentDef { name: "The_Card".to_string(), params: vec![], children: vec![], pos: p() });
         let mut host = FakeHost::new();
         let call = ComponentCall {
             name: "The_Card".to_string(),
             props: vec![],
-            identity: vibao_ast::IdentityProps {
-                id: Some(Expr::literal_str("gioi-thieu", p())),
-                class_binding: None,
-                html_tag: None,
-            },
+            identity: vibao_ast::IdentityProps { id: Some(Expr::literal_str("gioi-thieu", p())), class_binding: None, html_tag: None },
             children: vec![],
             pos: p(),
         };
         let html = gen_html(&call, &registry, &mut host);
         assert!(html.contains("id=\"gioi-thieu\""));
-        assert_eq!(
-            html.matches("id=\"").count(),
-            1,
-            "không được có 2 id trùng nhau"
-        );
-        assert!(
-            !html.contains("&quot;id&quot;"),
-            "id không được xuất hiện trong data-vb-props: {}",
-            html
-        );
+        assert_eq!(html.matches("id=\"").count(), 1, "không được có 2 id trùng nhau");
+        assert!(!html.contains("&quot;id&quot;"), "id không được xuất hiện trong data-vb-props: {}", html);
     }
 
     #[test]
     fn test_component_call_id_prop_is_attribute_escaped() {
         crate::codegen::expr::take_expr_registry();
         let mut registry = ComponentRegistry::new();
-        registry.register(ComponentDef {
-            name: "The_Card".to_string(),
-            params: vec![],
-            children: vec![],
-            pos: p(),
-        });
+        registry.register(ComponentDef { name: "The_Card".to_string(), params: vec![], children: vec![], pos: p() });
         let mut host = FakeHost::new();
         let call = ComponentCall {
             name: "The_Card".to_string(),
             props: vec![],
-            identity: vibao_ast::IdentityProps {
-                id: Some(Expr::literal_str("a\"b&c", p())),
-                class_binding: None,
-                html_tag: None,
-            },
+            identity: vibao_ast::IdentityProps { id: Some(Expr::literal_str("a\"b&c", p())), class_binding: None, html_tag: None },
             children: vec![],
             pos: p(),
         };
@@ -295,20 +222,9 @@ mod tests {
     fn test_component_call_without_id_prop_keeps_auto_generated_id() {
         crate::codegen::expr::take_expr_registry();
         let mut registry = ComponentRegistry::new();
-        registry.register(ComponentDef {
-            name: "The_Card".to_string(),
-            params: vec![],
-            children: vec![],
-            pos: p(),
-        });
+        registry.register(ComponentDef { name: "The_Card".to_string(), params: vec![], children: vec![], pos: p() });
         let mut host = FakeHost::new();
-        let call = ComponentCall {
-            name: "The_Card".to_string(),
-            props: vec![],
-            identity: Default::default(),
-            children: vec![],
-            pos: p(),
-        };
+        let call = ComponentCall { name: "The_Card".to_string(), props: vec![], identity: Default::default(), children: vec![], pos: p() };
         let html = gen_html(&call, &registry, &mut host);
         assert!(html.contains("id=\"vb-The_Card-"));
     }
@@ -319,12 +235,7 @@ mod tests {
         let mut registry = ComponentRegistry::new();
         registry.register(ComponentDef {
             name: "The_SanPham".to_string(),
-            params: vec![vibao_ast::ParamDef {
-                name: "id".to_string(),
-                data_type: vibao_ast::DataType::So,
-                default_value: None,
-                pos: p(),
-            }],
+            params: vec![vibao_ast::ParamDef { name: "id".to_string(), data_type: vibao_ast::DataType::So, default_value: None, pos: p() }],
             children: vec![],
             pos: p(),
         });
@@ -337,11 +248,8 @@ mod tests {
             pos: p(),
         };
         let html = gen_html(&call, &registry, &mut host);
-        assert!(
-            html.contains("&quot;id&quot;"),
-            "id (param thật, không phải identity) phải luôn đi vào data-vb-props: {}",
-            html
-        );
+        assert!(html.contains("&quot;id&quot;"), "id (param thật, không phải identity) phải luôn đi vào data-vb-props: {}", html);
         assert!(html.contains("id=\"vb-The_SanPham-"), "phải giữ auto-generated id vì identity.id không được set (chỉ props[\"id\"] có giá trị)");
     }
+
 }

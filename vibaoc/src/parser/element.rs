@@ -1,9 +1,6 @@
 use super::{ParseError, Parser};
+use vibao_ast::{Element, ComponentCall, EventNode, EventName, PropsMap, AnimationProps, ResponsiveNode, Breakpoint, LiteralValue, PropKey, Expr};
 use crate::lexer::TokenKind;
-use vibao_ast::{
-    AnimationProps, Breakpoint, ComponentCall, Element, EventName, EventNode, Expr, LiteralValue,
-    PropKey, PropsMap, ResponsiveNode,
-};
 
 fn tag_requires_blocks(tag: vibao_ast::Tag) -> bool {
     use vibao_ast::Tag;
@@ -37,76 +34,42 @@ fn prop_block_kind(name: &str) -> Option<fn(PropsMap) -> vibao_ast::PropBlock> {
     }
 }
 
-fn block_kind_for_prop_key(
-    key: PropKey,
-    tag: vibao_ast::Tag,
-) -> Option<fn(PropsMap) -> vibao_ast::PropBlock> {
+fn block_kind_for_prop_key(key: PropKey, tag: vibao_ast::Tag) -> Option<fn(PropsMap) -> vibao_ast::PropBlock> {
     use vibao_ast::{PropBlock, Tag};
     match key {
         PropKey::BackgroundColor | PropKey::Color | PropKey::BorderColor => Some(PropBlock::Mau),
 
-        PropKey::Width
-        | PropKey::Height
-        | PropKey::MaxWidth
-        | PropKey::MinWidth
-        | PropKey::MaxHeight
-        | PropKey::MinHeight => Some(PropBlock::KichThuoc),
+        PropKey::Width | PropKey::Height | PropKey::MaxWidth
+        | PropKey::MinWidth | PropKey::MaxHeight | PropKey::MinHeight => Some(PropBlock::KichThuoc),
 
-        PropKey::Radius
-        | PropKey::Padding
-        | PropKey::Margin
-        | PropKey::Border
-        | PropKey::BorderStyle
-        | PropKey::Shadow
-        | PropKey::Overflow
+        PropKey::Radius | PropKey::Padding | PropKey::Margin | PropKey::Border
+        | PropKey::BorderStyle | PropKey::Shadow | PropKey::Overflow
         | PropKey::ZIndex => Some(PropBlock::KhoangCach),
 
-        PropKey::FontSize
-        | PropKey::Bold
-        | PropKey::Italic
-        | PropKey::Underline
-        | PropKey::PreserveLines
-        | PropKey::Align
-        | PropKey::LineHeight
-        | PropKey::LetterSpacing
-        | PropKey::TextTransform
-        | PropKey::FontFamily => Some(PropBlock::Chu),
+        PropKey::FontSize | PropKey::Bold | PropKey::Italic | PropKey::Underline
+        | PropKey::PreserveLines | PropKey::Align | PropKey::LineHeight | PropKey::LetterSpacing
+        | PropKey::TextTransform | PropKey::FontFamily => Some(PropBlock::Chu),
 
         PropKey::Columns | PropKey::Rows => Some(PropBlock::GridBoCuc),
         PropKey::Direction | PropKey::AlignItems | PropKey::Wrap => Some(PropBlock::FlexBoCuc),
         PropKey::Gap | PropKey::RowGap | PropKey::ColumnGap => {
-            if tag == Tag::Grid {
-                Some(PropBlock::GridBoCuc)
-            } else {
-                Some(PropBlock::FlexBoCuc)
-            }
+            if tag == Tag::Grid { Some(PropBlock::GridBoCuc) } else { Some(PropBlock::FlexBoCuc) }
         }
 
-        PropKey::TranslateX | PropKey::TranslateY | PropKey::Position | PropKey::Offset => {
-            Some(PropBlock::ViTri)
-        }
+        PropKey::TranslateX | PropKey::TranslateY | PropKey::Position
+        | PropKey::Offset => Some(PropBlock::ViTri),
 
-        PropKey::Fit | PropKey::Source | PropKey::Alt | PropKey::LazyLoad => Some(PropBlock::Media),
+        PropKey::Fit | PropKey::Source | PropKey::Alt
+        | PropKey::LazyLoad => Some(PropBlock::Media),
 
-        PropKey::Type
-        | PropKey::Placeholder
-        | PropKey::Value
-        | PropKey::OptionValue
-        | PropKey::Required
-        | PropKey::Disabled => Some(PropBlock::NhapLieu),
+        PropKey::Type | PropKey::Placeholder | PropKey::Value | PropKey::OptionValue
+        | PropKey::Required | PropKey::Disabled => Some(PropBlock::NhapLieu),
 
         PropKey::To | PropKey::Target | PropKey::Rel => Some(PropBlock::LienKet),
 
-        PropKey::HtmlId
-        | PropKey::ClassBinding
-        | PropKey::Content
-        | PropKey::Hidden
-        | PropKey::Animation
-        | PropKey::Duration
-        | PropKey::Delay
-        | PropKey::Repeat
-        | PropKey::HoverAnimation
-        | PropKey::ScrollAnimation => None,
+        PropKey::HtmlId | PropKey::ClassBinding | PropKey::Content | PropKey::Hidden
+        | PropKey::Animation | PropKey::Duration | PropKey::Delay | PropKey::Repeat
+        | PropKey::HoverAnimation | PropKey::ScrollAnimation => None,
     }
 }
 
@@ -132,34 +95,18 @@ fn prop_block_names(block: &vibao_ast::PropBlock) -> (&'static str, &'static str
 
 fn block_name_in_style(block: &vibao_ast::PropBlock, english: bool) -> &'static str {
     let (vi, en) = prop_block_names(block);
-    if english {
-        en
-    } else {
-        vi
-    }
+    if english { en } else { vi }
 }
 
 fn identity_block_name(english: bool) -> &'static str {
-    if english {
-        "identity"
-    } else {
-        "dinh_danh"
-    }
+    if english { "identity" } else { "dinh_danh" }
 }
 
 fn is_english_block_name(name: &str) -> bool {
     matches!(
         name,
-        "color"
-            | "size"
-            | "spacing"
-            | "typography"
-            | "flex_layout"
-            | "grid_layout"
-            | "position"
-            | "input"
-            | "link"
-            | "identity"
+        "color" | "size" | "spacing" | "typography" | "flex_layout" | "grid_layout"
+            | "position" | "input" | "link" | "identity"
     )
 }
 
@@ -290,22 +237,30 @@ impl Parser {
         self.parse_value()
     }
 
-    fn animation_name_from_expr(&self, expr: &Expr, key: &str) -> Result<String, ParseError> {
+    fn animation_name_from_expr(
+        &self,
+        expr: &Expr,
+        key: &str,
+    ) -> Result<String, ParseError> {
         let name = match expr {
             Expr::Literal(LiteralValue::Str(name), _) if !name.trim().is_empty() => name,
             _ => {
                 return Err(self.error(format!(
-                "The value of prop '{}' must be a static effect-name string, e.g.: \"phong_to\"",
-                key
-            )))
+                    "The value of prop '{}' must be a static effect-name string, e.g.: \"phong_to\"",
+                    key
+                )))
             }
         };
 
         let allowed = match crate::locale::resolve_prop_key(key) {
             Some(PropKey::HoverAnimation) => &["phong_to", "lam_sang", "nang_len"][..],
-            Some(PropKey::ScrollAnimation) => {
-                &["fade_in", "truot_len", "truot_xuong", "phong_to", "rung"][..]
-            }
+            Some(PropKey::ScrollAnimation) => &[
+                "fade_in",
+                "truot_len",
+                "truot_xuong",
+                "phong_to",
+                "rung",
+            ][..],
             _ => &[][..],
         };
 
@@ -321,11 +276,7 @@ impl Parser {
         Ok(name.clone())
     }
 
-    pub(crate) fn parse_element_rest(
-        &mut self,
-        tag: vibao_ast::Tag,
-        pos: vibao_ast::Pos,
-    ) -> Result<Element, ParseError> {
+    pub(crate) fn parse_element_rest(&mut self, tag: vibao_ast::Tag, pos: vibao_ast::Pos) -> Result<Element, ParseError> {
         let mut content: Option<Expr> = None;
         let mut flat_props: PropsMap = Vec::new();
         let mut animation = AnimationProps::default();
@@ -338,9 +289,7 @@ impl Parser {
                     && flat_props.is_empty()
                     && matches!(
                         self.current().kind,
-                        TokenKind::StringLit(_)
-                            | TokenKind::NumberLit(_, _)
-                            | TokenKind::Variable(_)
+                        TokenKind::StringLit(_) | TokenKind::NumberLit(_, _) | TokenKind::Variable(_)
                     )
                 {
                     content = Some(self.parse_value()?);
@@ -359,21 +308,16 @@ impl Parser {
                 }
                 self.skip_comma();
             }
-            self.consume(
-                &TokenKind::RParen,
-                "Expected ')' to close the property list",
-            )?;
+            self.consume(&TokenKind::RParen, "Expected ')' to close the property list")?;
 
             let mut retained = Vec::with_capacity(flat_props.len());
             for (key, value) in flat_props {
                 match crate::locale::resolve_prop_key(&key) {
                     Some(PropKey::HoverAnimation) => {
-                        animation.hieu_ung_hover =
-                            Some(self.animation_name_from_expr(&value, &key)?);
+                        animation.hieu_ung_hover = Some(self.animation_name_from_expr(&value, &key)?);
                     }
                     Some(PropKey::ScrollAnimation) => {
-                        animation.hieu_ung_cuon =
-                            Some(self.animation_name_from_expr(&value, &key)?);
+                        animation.hieu_ung_cuon = Some(self.animation_name_from_expr(&value, &key)?);
                     }
                     _ => retained.push((key, value)),
                 }
@@ -385,8 +329,7 @@ impl Parser {
         let mut identity_declared = false;
         let mut blocks: Vec<vibao_ast::PropBlock> = Vec::new();
         let mut unknown_props: PropsMap = Vec::new();
-        let mut explicit_blocks_seen: std::collections::HashSet<String> =
-            std::collections::HashSet::new();
+        let mut explicit_blocks_seen: std::collections::HashSet<String> = std::collections::HashSet::new();
         for (key, value) in flat_props {
             match crate::locale::resolve_prop_key(&key) {
                 Some(PropKey::HtmlId) => identity.id = Some(value),
@@ -410,10 +353,7 @@ impl Parser {
             while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
                 if let Some(event_name) = self.match_event_name() {
                     let e_pos = self.current_pos();
-                    self.consume(
-                        &TokenKind::LBrace,
-                        "Expected '{' to start the event action body",
-                    )?;
+                    self.consume(&TokenKind::LBrace, "Expected '{' to start the event action body")?;
                     let mut body = Vec::new();
                     while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
                         body.push(self.parse_action()?);
@@ -431,33 +371,18 @@ impl Parser {
                     match name.as_str() {
                         "di_dong" => {
                             let overrides = self.parse_named_props_block()?;
-                            responsive.push(ResponsiveNode {
-                                breakpoint: Breakpoint::DiDong,
-                                overrides,
-                                pos: r_pos,
-                            });
+                            responsive.push(ResponsiveNode { breakpoint: Breakpoint::DiDong, overrides, pos: r_pos });
                         }
                         "may_tinh_bang" => {
                             let overrides = self.parse_named_props_block()?;
-                            responsive.push(ResponsiveNode {
-                                breakpoint: Breakpoint::MayTinhBang,
-                                overrides,
-                                pos: r_pos,
-                            });
+                            responsive.push(ResponsiveNode { breakpoint: Breakpoint::MayTinhBang, overrides, pos: r_pos });
                         }
                         "may_tinh" => {
                             let overrides = self.parse_named_props_block()?;
-                            responsive.push(ResponsiveNode {
-                                breakpoint: Breakpoint::MayTinh,
-                                overrides,
-                                pos: r_pos,
-                            });
+                            responsive.push(ResponsiveNode { breakpoint: Breakpoint::MayTinh, overrides, pos: r_pos });
                         }
                         "hieu_ung" => {
-                            self.consume(
-                                &TokenKind::Colon,
-                                "Expected ':' after the @hieu_ung directive",
-                            )?;
+                            self.consume(&TokenKind::Colon, "Expected ':' after the @hieu_ung directive")?;
                             match &self.current().kind {
                                 TokenKind::Identifier(act) => {
                                     animation.hieu_ung = Some(act.clone());
@@ -488,9 +413,7 @@ impl Parser {
                                 let props_pos = self.current_pos();
                                 let props = self.parse_named_props_block()?;
                                 for (k, _) in &props {
-                                    if let Some(message) =
-                                        misplaced_prop_message(k, other_name, make_block, tag)
-                                    {
+                                    if let Some(message) = misplaced_prop_message(k, other_name, make_block, tag) {
                                         return Err(ParseError {
                                             message,
                                             line: props_pos.line,
@@ -502,10 +425,7 @@ impl Parser {
                                     push_into_block(&mut blocks, make_block, k, v);
                                 }
                             } else {
-                                return Err(self.error(format!(
-                                    "Directive '@{}' is not supported",
-                                    other_name
-                                )));
+                                return Err(self.error(format!("Directive '@{}' is not supported", other_name)));
                             }
                         }
                     }
@@ -513,10 +433,7 @@ impl Parser {
                     children.push(self.parse_child()?);
                 }
             }
-            self.consume(
-                &TokenKind::RBrace,
-                "Expected '}' to close the component body",
-            )?;
+            self.consume(&TokenKind::RBrace, "Expected '}' to close the component body")?;
         }
 
         Ok(Element {
@@ -573,34 +490,24 @@ impl Parser {
                     return Err(self.error(format!(
                         "'{}' is not valid in block @{}: {}",
                         other, block_name, accepted
-                    )));
+                    )))
                 }
             }
         }
         Ok(())
     }
 
-    pub(crate) fn parse_component_call_rest(
-        &mut self,
-        name: String,
-        pos: vibao_ast::Pos,
-    ) -> Result<ComponentCall, ParseError> {
+    pub(crate) fn parse_component_call_rest(&mut self, name: String, pos: vibao_ast::Pos) -> Result<ComponentCall, ParseError> {
         let mut props = Vec::new();
         if self.match_token(&TokenKind::LParen) {
             while !self.check(&TokenKind::RParen) && !self.is_at_end() {
                 let key = self.expect_identifier_like()?;
-                self.consume(
-                    &TokenKind::Colon,
-                    "Expected ':' after the component property name",
-                )?;
+                self.consume(&TokenKind::Colon, "Expected ':' after the component property name")?;
                 let val = self.parse_prop_value(&key)?;
                 props.push((key, val));
                 self.skip_comma();
             }
-            self.consume(
-                &TokenKind::RParen,
-                "Expected ')' to close the component call arguments",
-            )?;
+            self.consume(&TokenKind::RParen, "Expected ')' to close the component call arguments")?;
         }
 
         let mut identity = vibao_ast::IdentityProps::default();
@@ -624,28 +531,16 @@ impl Parser {
                             directive, name
                         )));
                     } else {
-                        return Err(self.error(format!(
-                            "Directive '@{}' is not supported on a component call",
-                            directive
-                        )));
+                        return Err(self.error(format!("Directive '@{}' is not supported on a component call", directive)));
                     }
                 } else {
                     children.push(self.parse_child()?);
                 }
             }
-            self.consume(
-                &TokenKind::RBrace,
-                "Expected '}' to close the component call body",
-            )?;
+            self.consume(&TokenKind::RBrace, "Expected '}' to close the component call body")?;
         }
 
-        Ok(ComponentCall {
-            name,
-            props,
-            identity,
-            children,
-            pos,
-        })
+        Ok(ComponentCall { name, props, identity, children, pos })
     }
 
     fn match_event_name(&mut self) -> Option<EventName> {
@@ -670,18 +565,12 @@ impl Parser {
         let mut overrides = Vec::new();
         while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
             let key = self.expect_identifier_like()?;
-            self.consume(
-                &TokenKind::Colon,
-                "Expected ':' after the responsive override property",
-            )?;
+            self.consume(&TokenKind::Colon, "Expected ':' after the responsive override property")?;
             let val = self.parse_prop_value(&key)?;
             overrides.push((key, val));
             self.skip_comma();
         }
-        self.consume(
-            &TokenKind::RBrace,
-            "Expected '}' to close the responsive block",
-        )?;
+        self.consume(&TokenKind::RBrace, "Expected '}' to close the responsive block")?;
         Ok(overrides)
     }
 }
@@ -700,8 +589,8 @@ mod tests {
         use vibao_ast::PropBlock::*;
         for block in blocks {
             let map: &PropsMap = match block {
-                Mau(m) | KichThuoc(m) | KhoangCach(m) | Chu(m) | FlexBoCuc(m) | GridBoCuc(m)
-                | ViTri(m) | Media(m) | NhapLieu(m) | LienKet(m) => m,
+                Mau(m) | KichThuoc(m) | KhoangCach(m) | Chu(m) | FlexBoCuc(m)
+                | GridBoCuc(m) | ViTri(m) | Media(m) | NhapLieu(m) | LienKet(m) => m,
             };
             if let Some((_, v)) = map.iter().find(|(k, _)| k == key) {
                 return Some(v);
@@ -714,9 +603,7 @@ mod tests {
     fn test_hover_animation_prop_is_extracted_from_props() {
         let tokens = tokenize(r#"(hieu_ung_hover: "phong_to")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Button, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Button, p()).unwrap();
 
         assert_eq!(el.animation.hieu_ung_hover.as_deref(), Some("phong_to"));
         assert!(find_in_blocks(&el.blocks, "hieu_ung_hover").is_none());
@@ -726,9 +613,7 @@ mod tests {
     fn test_scroll_animation_english_prop_is_extracted() {
         let tokens = tokenize(r#"(scroll_animation: "truot_len")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Button, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Button, p()).unwrap();
 
         assert_eq!(el.animation.hieu_ung_cuon.as_deref(), Some("truot_len"));
         assert!(find_in_blocks(&el.blocks, "scroll_animation").is_none());
@@ -738,9 +623,7 @@ mod tests {
     fn test_animation_prop_must_be_static_string() {
         let tokens = tokenize(r#"(hieu_ung_hover: $anim)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let err = parser
-            .parse_element_rest(vibao_ast::Tag::Button, p())
-            .unwrap_err();
+        let err = parser.parse_element_rest(vibao_ast::Tag::Button, p()).unwrap_err();
 
         assert!(err.message.contains("hieu_ung_hover"));
         assert!(err.message.contains("static effect-name string"));
@@ -750,9 +633,7 @@ mod tests {
     fn test_hover_animation_rejects_unsupported_css_name() {
         let tokens = tokenize(r#"(hieu_ung_hover: "rung")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let err = parser
-            .parse_element_rest(vibao_ast::Tag::Button, p())
-            .unwrap_err();
+        let err = parser.parse_element_rest(vibao_ast::Tag::Button, p()).unwrap_err();
 
         assert!(err.message.contains("rung"));
         assert!(err.message.contains("hieu_ung_hover"));
@@ -766,9 +647,7 @@ mod tests {
             let source = format!(r#"(hieu_ung_cuon: "{}")"#, name);
             let tokens = tokenize(&source).unwrap();
             let mut parser = Parser::new(tokens);
-            let el = parser
-                .parse_element_rest(vibao_ast::Tag::Button, p())
-                .unwrap();
+            let el = parser.parse_element_rest(vibao_ast::Tag::Button, p()).unwrap();
             assert_eq!(el.animation.hieu_ung_cuon.as_deref(), Some(name));
         }
     }
@@ -777,9 +656,7 @@ mod tests {
     fn test_hover_animation_english_prop_uses_same_allowed_names() {
         let tokens = tokenize(r#"(hover_animation: "lam_sang")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Button, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Button, p()).unwrap();
 
         assert_eq!(el.animation.hieu_ung_hover.as_deref(), Some("lam_sang"));
     }
@@ -788,9 +665,7 @@ mod tests {
     fn test_animation_props_do_not_leak_into_normal_props() {
         let tokens = tokenize(r#"(hieu_ung_hover: "lam_sang", mau: do)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Button, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Button, p()).unwrap();
 
         assert_eq!(el.animation.hieu_ung_hover.as_deref(), Some("lam_sang"));
         assert!(
@@ -804,9 +679,7 @@ mod tests {
     fn test_den_prop_value_not_confused_with_color_den() {
         let tokens = tokenize(r#"("Trang chủ", den: den)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Link, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Link, p()).unwrap();
 
         let val = find_in_blocks(&el.blocks, "den").expect("missing prop den");
         assert!(
@@ -820,9 +693,7 @@ mod tests {
     fn test_den_prop_value_normal_string_still_works() {
         let tokens = tokenize(r#"(den: "/gioi-thieu")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Link, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Link, p()).unwrap();
 
         let val = find_in_blocks(&el.blocks, "den").expect("missing prop den");
         assert!(matches!(val, Expr::Literal(LiteralValue::Str(s), _) if s == "/gioi-thieu"));
@@ -832,9 +703,7 @@ mod tests {
     fn test_other_props_still_resolve_bare_color_identifier_as_color() {
         let tokens = tokenize(r#"(mau: den)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Text, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Text, p()).unwrap();
 
         let val = find_in_blocks(&el.blocks, "mau").expect("missing prop mau");
         assert!(
@@ -848,15 +717,9 @@ mod tests {
     fn test_den_prop_on_component_call_not_confused_with_color() {
         let tokens = tokenize(r#"(den: den)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let call = parser
-            .parse_component_call_rest("LinkTuyChinh".to_string(), p())
-            .unwrap();
+        let call = parser.parse_component_call_rest("LinkTuyChinh".to_string(), p()).unwrap();
 
-        let (_, val) = call
-            .props
-            .iter()
-            .find(|(k, _)| k == "den")
-            .expect("missing prop den");
+        let (_, val) = call.props.iter().find(|(k, _)| k == "den").expect("missing prop den");
         assert!(matches!(val, Expr::Literal(LiteralValue::Str(s), _) if s == "den"));
     }
 
@@ -864,9 +727,7 @@ mod tests {
     fn test_positional_param_accepts_bare_variable() {
         let tokens = tokenize(r#"($nhan, co: 12)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Text, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Text, p()).unwrap();
 
         let val = el.content.as_ref().expect("missing content");
         assert!(
@@ -874,19 +735,14 @@ mod tests {
             "content must be Variable(\"nhan\"), got {:?}",
             val
         );
-        assert!(
-            find_in_blocks(&el.blocks, "co").is_some(),
-            "prop 'co' must still parse correctly after the positional param"
-        );
+        assert!(find_in_blocks(&el.blocks, "co").is_some(), "prop 'co' must still parse correctly after the positional param");
     }
 
     #[test]
     fn test_positional_param_accepts_member_access() {
         let tokens = tokenize(r#"($item.ten)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Text, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Text, p()).unwrap();
 
         let val = el.content.as_ref().expect("missing content");
         assert!(
@@ -900,9 +756,7 @@ mod tests {
     fn test_positional_param_string_and_number_still_work() {
         let tokens = tokenize(r#"("Xin chào")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Text, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Text, p()).unwrap();
         let val = el.content.as_ref().unwrap();
         assert!(matches!(val, Expr::Literal(LiteralValue::Str(s), _) if s == "Xin chào"));
     }
@@ -911,28 +765,16 @@ mod tests {
     fn test_named_prop_after_variable_shorthand_not_confused() {
         let tokens = tokenize(r#"(mau: xanh, co: 16)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Text, p())
-            .unwrap();
-        assert!(
-            el.content.is_none(),
-            "must not auto-add content when there is no positional param"
-        );
-        assert_eq!(
-            find_in_blocks(&el.blocks, "mau").is_some() as u8
-                + find_in_blocks(&el.blocks, "co").is_some() as u8,
-            2,
-            "both mau and co must have parsed into blocks"
-        );
+        let el = parser.parse_element_rest(vibao_ast::Tag::Text, p()).unwrap();
+        assert!(el.content.is_none(), "must not auto-add content when there is no positional param");
+        assert_eq!(find_in_blocks(&el.blocks, "mau").is_some() as u8 + find_in_blocks(&el.blocks, "co").is_some() as u8, 2, "both mau and co must have parsed into blocks");
     }
 
     #[test]
     fn test_den_regression_fix_applies_inside_explicit_block() {
         let tokens = tokenize(r#"{ @lien_ket { den: den } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Link, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Link, p()).unwrap();
         let val = find_in_blocks(&el.blocks, "den").expect("missing prop den");
         assert!(
             matches!(val, Expr::Literal(LiteralValue::Str(s), _) if s == "den"),
@@ -959,9 +801,7 @@ mod tests {
     fn test_unknown_prop_does_not_vanish_from_ast() {
         let tokens = tokenize(r#"("Xin chào", ten_prop_khong_ton_tai: 1)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Text, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Text, p()).unwrap();
         assert_eq!(
             el.unknown_props.len(),
             1,
@@ -974,9 +814,7 @@ mod tests {
     fn test_dinh_danh_block_cannot_be_declared_twice() {
         let tokens = tokenize(r#"{ @dinh_danh { id: "a" } @dinh_danh { id: "b" } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let err = parser
-            .parse_element_rest(vibao_ast::Tag::Khoi, p())
-            .unwrap_err();
+        let err = parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).unwrap_err();
         assert!(
             err.message.contains("dinh_danh") && err.message.contains("already declared"),
             "phải báo lỗi khai báo trùng @dinh_danh, got: {}",
@@ -1002,18 +840,14 @@ mod tests {
     fn test_gap_on_flex_tag_goes_to_flex_bo_cuc_block() {
         let tokens = tokenize(r#"{ @flex_bo_cuc { gap: 10 } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Flex, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Flex, p()).unwrap();
         assert!(
             el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::FlexBoCuc(m) if m.iter().any(|(k, _)| k == "gap"))),
             "gap trên tag flex phải rơi vào FlexBoCuc, blocks thực tế: {:?}",
             el.blocks
         );
         assert!(
-            !el.blocks
-                .iter()
-                .any(|b| matches!(b, vibao_ast::PropBlock::GridBoCuc(_))),
+            !el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::GridBoCuc(_))),
             "không được có GridBoCuc nào sinh ra cho tag flex"
         );
     }
@@ -1022,18 +856,14 @@ mod tests {
     fn test_gap_on_grid_tag_goes_to_grid_bo_cuc_block() {
         let tokens = tokenize(r#"{ @grid_bo_cuc { gap: 10 } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Grid, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Grid, p()).unwrap();
         assert!(
             el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::GridBoCuc(m) if m.iter().any(|(k, _)| k == "gap"))),
             "gap trên tag grid phải rơi vào GridBoCuc, blocks thực tế: {:?}",
             el.blocks
         );
         assert!(
-            !el.blocks
-                .iter()
-                .any(|b| matches!(b, vibao_ast::PropBlock::FlexBoCuc(_))),
+            !el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::FlexBoCuc(_))),
             "không được có FlexBoCuc nào sinh ra cho tag grid"
         );
     }
@@ -1042,9 +872,7 @@ mod tests {
     fn test_columns_always_goes_to_grid_bo_cuc_regardless_of_tag() {
         let tokens = tokenize(r#"{ @grid_bo_cuc { cot: "1fr 1fr" } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Grid, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Grid, p()).unwrap();
         assert!(
             el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::GridBoCuc(m) if m.iter().any(|(k, _)| k == "cot"))),
             "cot (Columns) phải luôn vào GridBoCuc, blocks thực tế: {:?}",
@@ -1056,9 +884,7 @@ mod tests {
     fn test_direction_always_goes_to_flex_bo_cuc_regardless_of_tag() {
         let tokens = tokenize(r#"{ @flex_bo_cuc { huong: "doc" } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Flex, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Flex, p()).unwrap();
         assert!(
             el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::FlexBoCuc(m) if m.iter().any(|(k, _)| k == "huong"))),
             "huong (Direction) phải luôn vào FlexBoCuc, blocks thực tế: {:?}",
@@ -1070,9 +896,7 @@ mod tests {
     fn test_gap_flat_syntax_defaults_to_flex_bo_cuc_on_exempt_tag() {
         let tokens = tokenize(r#"(gap: 10)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Stack, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Stack, p()).unwrap();
         assert!(
             el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::FlexBoCuc(m) if m.iter().any(|(k, _)| k == "gap"))),
             "gap trên tag không phải flex/grid phải mặc định FlexBoCuc, blocks thực tế: {:?}",
@@ -1084,9 +908,7 @@ mod tests {
     fn test_khoi_rejects_flat_named_args_syntax() {
         let tokens = tokenize(r#"(dem: 20)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let err = parser
-            .parse_element_rest(vibao_ast::Tag::Khoi, p())
-            .unwrap_err();
+        let err = parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).unwrap_err();
         assert!(
             err.message.contains("requires block syntax") && err.message.contains("@khoang_cach"),
             "lỗi phải gợi ý đúng khối @khoang_cach, got: {}",
@@ -1098,27 +920,21 @@ mod tests {
     fn test_flex_rejects_flat_named_args_syntax() {
         let tokens = tokenize(r#"(huong: "doc")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        assert!(parser
-            .parse_element_rest(vibao_ast::Tag::Flex, p())
-            .is_err());
+        assert!(parser.parse_element_rest(vibao_ast::Tag::Flex, p()).is_err());
     }
 
     #[test]
     fn test_input_rejects_flat_named_args_syntax() {
         let tokens = tokenize(r#"(chu_tro: "Nhập tên")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        assert!(parser
-            .parse_element_rest(vibao_ast::Tag::Input, p())
-            .is_err());
+        assert!(parser.parse_element_rest(vibao_ast::Tag::Input, p()).is_err());
     }
 
     #[test]
     fn test_khoi_accepts_explicit_block_syntax() {
         let tokens = tokenize(r#"{ @khoang_cach { dem: 20 } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Khoi, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).unwrap();
         assert!(
             el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::KhoangCach(m) if m.iter().any(|(k, _)| k == "dem"))),
             "blocks thực tế: {:?}",
@@ -1137,29 +953,17 @@ mod tests {
         let el_block = p2.parse_element_rest(vibao_ast::Tag::Text, p()).unwrap();
 
         let get_co = |el: &vibao_ast::Element| -> bool {
-            el.blocks.iter().any(
-                |b| matches!(b, vibao_ast::PropBlock::Chu(m) if m.iter().any(|(k, _)| k == "co")),
-            )
+            el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::Chu(m) if m.iter().any(|(k, _)| k == "co")))
         };
-        assert!(
-            get_co(&el_simple),
-            "cách viết đơn giản: blocks = {:?}",
-            el_simple.blocks
-        );
-        assert!(
-            get_co(&el_block),
-            "cách viết khối: blocks = {:?}",
-            el_block.blocks
-        );
+        assert!(get_co(&el_simple), "cách viết đơn giản: blocks = {:?}", el_simple.blocks);
+        assert!(get_co(&el_block), "cách viết khối: blocks = {:?}", el_block.blocks);
     }
 
     #[test]
     fn test_english_block_names_resolve_same_as_vietnamese() {
         let tokens = tokenize(r#"{ @spacing { padding: 16 } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Khoi, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).unwrap();
         assert!(
             el.blocks.iter().any(|b| matches!(b, vibao_ast::PropBlock::KhoangCach(m) if m.iter().any(|(k, _)| k == "padding"))),
             "blocks: {:?}", el.blocks
@@ -1170,9 +974,7 @@ mod tests {
     fn test_english_identity_block_name() {
         let tokens = tokenize(r#"{ @identity { id: "x" } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Khoi, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).unwrap();
         assert!(el.identity.id.is_some());
     }
 
@@ -1180,9 +982,7 @@ mod tests {
     fn test_animation_key_in_parens_allowed_on_tag_that_requires_blocks() {
         let tokens = tokenize(r#"(hieu_ung_cuon: "fade_in")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Khoi, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).unwrap();
         assert_eq!(el.animation.hieu_ung_cuon.as_deref(), Some("fade_in"));
     }
 
@@ -1190,9 +990,7 @@ mod tests {
     fn test_hover_animation_nang_len_is_accepted() {
         let tokens = tokenize(r#"(hieu_ung_hover: "nang_len")"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Button, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Button, p()).unwrap();
         assert_eq!(el.animation.hieu_ung_hover.as_deref(), Some("nang_len"));
     }
 
@@ -1200,9 +998,7 @@ mod tests {
     fn test_non_animation_key_still_rejected_alongside_animation_key() {
         let tokens = tokenize(r#"(hieu_ung_cuon: "fade_in", dem: 10)"#).unwrap();
         let mut parser = Parser::new(tokens);
-        assert!(parser
-            .parse_element_rest(vibao_ast::Tag::Khoi, p())
-            .is_err());
+        assert!(parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).is_err());
     }
 
     fn parse_err(tag: vibao_ast::Tag, source: &str) -> String {
@@ -1251,14 +1047,8 @@ mod tests {
         let tokens = tokenize("box(padding: 16)").unwrap();
         let mut parser = Parser::new(tokens);
         parser.advance();
-        let err = parser
-            .parse_element_rest(vibao_ast::Tag::Khoi, p())
-            .unwrap_err();
-        assert!(
-            err.message.starts_with("Tag 'box' requires"),
-            "got: {}",
-            err.message
-        );
+        let err = parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).unwrap_err();
+        assert!(err.message.starts_with("Tag 'box' requires"), "got: {}", err.message);
     }
 
     #[test]
@@ -1273,37 +1063,21 @@ mod tests {
     #[test]
     fn test_prop_in_wrong_block_uses_english_names_when_block_is_english() {
         let msg = parse_err(vibao_ast::Tag::Khoi, "{ @color { font_size: 16 } }");
-        assert!(
-            msg.contains("belongs to block @typography, not @color"),
-            "got: {}",
-            msg
-        );
+        assert!(msg.contains("belongs to block @typography, not @color"), "got: {}", msg);
     }
 
     #[test]
     fn test_align_and_align_items_live_in_different_blocks() {
         let msg = parse_err(vibao_ast::Tag::Flex, r#"{ @flex_bo_cuc { can: "giua" } }"#);
-        assert!(
-            msg.contains("belongs to block @chu, not @flex_bo_cuc"),
-            "got: {}",
-            msg
-        );
+        assert!(msg.contains("belongs to block @chu, not @flex_bo_cuc"), "got: {}", msg);
         let msg = parse_err(vibao_ast::Tag::Flex, r#"{ @chu { doc: "giua" } }"#);
-        assert!(
-            msg.contains("belongs to block @flex_bo_cuc, not @chu"),
-            "got: {}",
-            msg
-        );
+        assert!(msg.contains("belongs to block @flex_bo_cuc, not @chu"), "got: {}", msg);
     }
 
     #[test]
     fn test_identity_props_inside_semantic_block_point_to_identity_block() {
         let msg = parse_err(vibao_ast::Tag::Khoi, r#"{ @mau { id: "a" } }"#);
-        assert!(
-            msg.contains("belongs to block @dinh_danh, not @mau"),
-            "got: {}",
-            msg
-        );
+        assert!(msg.contains("belongs to block @dinh_danh, not @mau"), "got: {}", msg);
     }
 
     #[test]
@@ -1314,28 +1088,14 @@ mod tests {
 
     #[test]
     fn test_animation_prop_inside_block_points_back_to_parens() {
-        let msg = parse_err(
-            vibao_ast::Tag::Khoi,
-            r#"{ @mau { hieu_ung_cuon: "fade_in" } }"#,
-        );
-        assert!(
-            msg.contains("animation properties are written in '(...)'"),
-            "got: {}",
-            msg
-        );
+        let msg = parse_err(vibao_ast::Tag::Khoi, r#"{ @mau { hieu_ung_cuon: "fade_in" } }"#);
+        assert!(msg.contains("animation properties are written in '(...)'"), "got: {}", msg);
     }
 
     #[test]
     fn test_gap_is_accepted_in_both_layout_blocks_on_any_tag() {
-        for source in [
-            "{ @flex_bo_cuc { gap: 10 } }",
-            "{ @grid_bo_cuc { gap: 10 } }",
-        ] {
-            for tag in [
-                vibao_ast::Tag::Flex,
-                vibao_ast::Tag::Grid,
-                vibao_ast::Tag::Khoi,
-            ] {
+        for source in ["{ @flex_bo_cuc { gap: 10 } }", "{ @grid_bo_cuc { gap: 10 } }"] {
+            for tag in [vibao_ast::Tag::Flex, vibao_ast::Tag::Grid, vibao_ast::Tag::Khoi] {
                 let tokens = tokenize(source).unwrap();
                 let mut parser = Parser::new(tokens);
                 assert!(
@@ -1352,18 +1112,13 @@ mod tests {
     fn test_unknown_prop_inside_block_is_not_a_parse_error() {
         let tokens = tokenize("{ @mau { ten_khong_ton_tai: 1 } }").unwrap();
         let mut parser = Parser::new(tokens);
-        let el = parser
-            .parse_element_rest(vibao_ast::Tag::Khoi, p())
-            .unwrap();
+        let el = parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).unwrap();
         assert!(find_in_blocks(&el.blocks, "ten_khong_ton_tai").is_some());
     }
 
     #[test]
     fn test_same_block_in_vietnamese_and_english_counts_as_duplicate() {
-        let msg = parse_err(
-            vibao_ast::Tag::Khoi,
-            "{ @mau { mau_nen: trang } @color { mau_vien: den } }",
-        );
+        let msg = parse_err(vibao_ast::Tag::Khoi, "{ @mau { mau_nen: trang } @color { mau_vien: den } }");
         assert_eq!(
             msg,
             "Block '@color' is already declared on this tag and cannot be repeated: merge it into a single '@color' block"
@@ -1373,10 +1128,7 @@ mod tests {
     #[test]
     fn test_identity_block_rejects_unknown_key_with_block_name() {
         let msg = parse_err(vibao_ast::Tag::Khoi, "{ @identity { dem: 1 } }");
-        assert_eq!(
-            msg,
-            "'dem' is not valid in block @identity: only 'id', 'lop' and 'the_html' are accepted"
-        );
+        assert_eq!(msg, "'dem' is not valid in block @identity: only 'id', 'lop' and 'the_html' are accepted");
     }
 
     #[test]
@@ -1385,24 +1137,15 @@ mod tests {
             let source = format!("{{ @dinh_danh {{ {}: \"section\" }} }}", key);
             let tokens = tokenize(&source).unwrap();
             let mut parser = Parser::new(tokens);
-            let el = parser
-                .parse_element_rest(vibao_ast::Tag::Khoi, p())
-                .unwrap();
+            let el = parser.parse_element_rest(vibao_ast::Tag::Khoi, p()).unwrap();
             assert_eq!(el.identity.html_tag.as_deref(), Some("section"), "{}", key);
         }
     }
 
     #[test]
     fn test_identity_html_tag_must_be_in_the_allowed_list() {
-        let msg = parse_err(
-            vibao_ast::Tag::Khoi,
-            r#"{ @dinh_danh { the_html: "script" } }"#,
-        );
-        assert!(
-            msg.starts_with("'the_html' does not accept \"script\": use one of section,"),
-            "got: {}",
-            msg
-        );
+        let msg = parse_err(vibao_ast::Tag::Khoi, r#"{ @dinh_danh { the_html: "script" } }"#);
+        assert!(msg.starts_with("'the_html' does not accept \"script\": use one of section,"), "got: {}", msg);
     }
 
     #[test]
@@ -1415,13 +1158,8 @@ mod tests {
     fn test_component_call_identity_does_not_accept_html_tag() {
         let tokens = tokenize(r#"{ @dinh_danh { the_html: "section" } }"#).unwrap();
         let mut parser = Parser::new(tokens);
-        let err = parser
-            .parse_component_call_rest("The_Card".to_string(), p())
-            .unwrap_err();
-        assert_eq!(
-            err.message,
-            "'the_html' is not valid in block @dinh_danh: only 'id' and 'lop' are accepted"
-        );
+        let err = parser.parse_component_call_rest("The_Card".to_string(), p()).unwrap_err();
+        assert_eq!(err.message, "'the_html' is not valid in block @dinh_danh: only 'id' and 'lop' are accepted");
     }
 
     #[test]
@@ -1431,10 +1169,6 @@ mod tests {
         let err = parser
             .parse_component_call_rest("The_Card".to_string(), p())
             .unwrap_err();
-        assert!(
-            err.message.ends_with("of The_Card(...)"),
-            "got: {}",
-            err.message
-        );
+        assert!(err.message.ends_with("of The_Card(...)"), "got: {}", err.message);
     }
 }

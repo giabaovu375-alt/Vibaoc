@@ -1,5 +1,5 @@
-use super::token::TokenKind;
 use super::tokenize;
+use super::token::TokenKind;
 
 #[test]
 fn test_basic_app() {
@@ -15,10 +15,7 @@ fn test_pascalcase_identifier_keeps_original_casing() {
     let toks = tokenize("TheThe").unwrap();
     assert_eq!(toks.len(), 2, "1 Identifier + 1 Eof: {:?}", toks);
     match &toks[0].kind {
-        TokenKind::Identifier(s) => assert_eq!(
-            s, "TheThe",
-            "must PRESERVE casing, not lowercase to \"thethe\""
-        ),
+        TokenKind::Identifier(s) => assert_eq!(s, "TheThe", "must PRESERVE casing, not lowercase to \"thethe\""),
         other => panic!("expected Identifier(\"TheThe\"), got {:?}", other),
     }
 }
@@ -28,9 +25,7 @@ fn test_uppercase_color_name_keeps_original_casing() {
     let toks = tokenize("Do").unwrap();
     assert_eq!(toks.len(), 2, "1 ColorName + 1 Eof: {:?}", toks);
     match &toks[0].kind {
-        TokenKind::ColorName(s) => {
-            assert_eq!(s, "Do", "must PRESERVE casing, not lowercase to \"do\"")
-        }
+        TokenKind::ColorName(s) => assert_eq!(s, "Do", "must PRESERVE casing, not lowercase to \"do\""),
         other => panic!("expected ColorName(\"Do\"), got {:?}", other),
     }
 }
@@ -41,10 +36,7 @@ fn test_identifier_with_diacritics_normalizes_like_ascii() {
     let toks_khong_dau = tokenize(r#"text("x", mau: xanh)"#).unwrap();
     assert_eq!(toks_dau.len(), toks_khong_dau.len());
     for (a, b) in toks_dau.iter().zip(toks_khong_dau.iter()) {
-        assert_eq!(
-            a.kind, b.kind,
-            "the with-diacritics and without-diacritics tokens must match"
-        );
+        assert_eq!(a.kind, b.kind, "the with-diacritics and without-diacritics tokens must match");
     }
 }
 
@@ -54,23 +46,17 @@ fn test_quoted_multiword_identifier_matches_underscore_form() {
     let toks_underscore = tokenize(r#"text("x", mau_chu: xanh)"#).unwrap();
     assert_eq!(toks_quoted.len(), toks_underscore.len());
     for (a, b) in toks_quoted.iter().zip(toks_underscore.iter()) {
-        assert_eq!(
-            a.kind, b.kind,
-            "the single-quoted and underscore tokens must match"
-        );
+        assert_eq!(a.kind, b.kind, "the single-quoted and underscore tokens must match");
     }
 }
 
 #[test]
 fn test_string_literal_diacritics_untouched() {
     let toks = tokenize(r#"text("Xin chào")"#).unwrap();
-    let has_original_string = toks
-        .iter()
-        .any(|t| matches!(&t.kind, TokenKind::StringLit(s) if s == "Xin chào"));
-    assert!(
-        has_original_string,
-        "a displayed string must keep its Vietnamese diacritics"
-    );
+    let has_original_string = toks.iter().any(|t| {
+        matches!(&t.kind, TokenKind::StringLit(s) if s == "Xin chào")
+    });
+    assert!(has_original_string, "a displayed string must keep its Vietnamese diacritics");
 }
 
 #[test]

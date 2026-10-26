@@ -1,8 +1,8 @@
-use super::document;
-use crate::runtime::state::SharedState;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, HtmlElement};
+use crate::runtime::{state::{SharedState}};
+use super::document;
 
 pub fn toast(message: &str, kieu: &str, duration_ms: i32) {
     let doc = document();
@@ -100,9 +100,7 @@ pub fn close_modal(id: &str) {
             (0..list.length()).any(|i| {
                 list.item(i)
                     .and_then(|n| n.dyn_into::<HtmlElement>().ok())
-                    .map(|el| {
-                        el.style().get_property_value("display").unwrap_or_default() != "none"
-                    })
+                    .map(|el| el.style().get_property_value("display").unwrap_or_default() != "none")
                     .unwrap_or(false)
             })
         })
@@ -149,10 +147,7 @@ pub fn set_theme(requested: &str) {
     } else if names.contains(&requested) {
         requested.to_string()
     } else {
-        crate::runtime::log::warn(&format!(
-            "[ViBao] dat_chu_de(): theme \"{}\" không tồn tại",
-            requested
-        ));
+        crate::runtime::log::warn(&format!("[ViBao] dat_chu_de(): theme \"{}\" không tồn tại", requested));
         return;
     };
 

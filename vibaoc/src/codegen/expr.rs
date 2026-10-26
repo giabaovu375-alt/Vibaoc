@@ -87,9 +87,7 @@ pub fn resolve_value(expr: &Expr) -> ResolvedValue {
 pub fn get_static_value(expr: &Expr) -> String {
     match expr {
         Expr::Literal(LiteralValue::Str(s), _) => s.clone(),
-        Expr::Literal(LiteralValue::Num(n, Some(unit)), _) => {
-            format!("{}{}", format_number(*n), unit)
-        }
+        Expr::Literal(LiteralValue::Num(n, Some(unit)), _) => format!("{}{}", format_number(*n), unit),
         Expr::Literal(LiteralValue::Num(n, None), _) => format_number(*n),
         Expr::Literal(LiteralValue::Bool(b), _) => b.to_string(),
         Expr::Literal(LiteralValue::Color(c), _) => c.clone(),

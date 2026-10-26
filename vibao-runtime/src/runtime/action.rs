@@ -7,12 +7,7 @@ use super::state::{self, LoopFrame, SharedState};
 use super::value::VbValue;
 use super::{api, log};
 
-pub async fn dispatch_all(
-    shared: &SharedState,
-    actions: &[Action],
-    loop_frame: Option<&LoopFrame>,
-    component_id: Option<&str>,
-) {
+pub async fn dispatch_all(shared: &SharedState, actions: &[Action], loop_frame: Option<&LoopFrame>, component_id: Option<&str>) {
     for action in actions {
         dispatch_one(shared, action, loop_frame, component_id).await;
     }
@@ -27,21 +22,12 @@ fn dispatch_one<'a>(
     Box::pin(async move {
         match action {
             Action::FunctionCall { name, args, .. }
-                if matches!(
-                    name.as_str(),
-                    "them_vao_mang" | "xoa_theo_id" | "cap_nhat_theo_id"
-                ) =>
+                if matches!(name.as_str(), "them_vao_mang" | "xoa_theo_id" | "cap_nhat_theo_id") =>
             {
                 dispatch_array_mutation(shared, name, args, loop_frame, component_id);
             }
 
-            Action::FunctionCall {
-                name,
-                args,
-                opts,
-                assign_to,
-                ..
-            } => {
+            Action::FunctionCall { name, args, opts, assign_to, .. } => {
                 let arg_values: Vec<VbValue> = args
                     .iter()
                     .map(|e| expr_eval::eval_with_loop_frame(shared, e, loop_frame, component_id))
@@ -60,9 +46,7 @@ fn dispatch_one<'a>(
                 shared.borrow_mut().set_state(target, v);
             }
 
-            Action::ApiCall {
-                background: true, ..
-            } => {
+            Action::ApiCall { background: true, .. } => {
                 let shared = shared.clone();
                 let mut detached = action.clone();
                 if let Action::ApiCall { background, .. } = &mut detached {
@@ -71,13 +55,7 @@ fn dispatch_one<'a>(
                 let loop_frame = loop_frame.cloned();
                 let component_id = component_id.map(|id| id.to_string());
                 wasm_bindgen_futures::spawn_local(async move {
-                    dispatch_one(
-                        &shared,
-                        &detached,
-                        loop_frame.as_ref(),
-                        component_id.as_deref(),
-                    )
-                    .await;
+                    dispatch_one(&shared, &detached, loop_frame.as_ref(), component_id.as_deref()).await;
                 });
             }
 
@@ -91,8 +69,7 @@ fn dispatch_one<'a>(
                 on_failure,
                 ..
             } => {
-                let endpoint_val =
-                    expr_eval::eval_with_loop_frame(shared, endpoint, loop_frame, component_id);
+                let endpoint_val = expr_eval::eval_with_loop_frame(shared, endpoint, loop_frame, component_id);
                 let endpoint_str = endpoint_val.to_string();
                 let data_val = data
                     .as_ref()
@@ -103,14 +80,7 @@ fn dispatch_one<'a>(
                     .map(|h| expr_eval::eval_with_loop_frame(shared, h, loop_frame, component_id));
 
                 let base_url = state::get_base_url(shared);
-                let result = api::call(
-                    &base_url,
-                    method,
-                    &endpoint_str,
-                    data_val.as_ref(),
-                    headers_val.as_ref(),
-                )
-                .await;
+                let result = api::call(&base_url, method, &endpoint_str, data_val.as_ref(), headers_val.as_ref()).await;
 
                 if let Some(var_name) = assign_to {
                     shared.borrow_mut().set_state(var_name, result.data.clone());
@@ -131,14 +101,8 @@ fn dispatch_one<'a>(
                 }
             }
 
-            Action::IfAction {
-                condition,
-                consequent,
-                alternate,
-                ..
-            } => {
-                let cond_val =
-                    expr_eval::eval_with_loop_frame(shared, condition, loop_frame, component_id);
+            Action::IfAction { condition, consequent, alternate, .. } => {
+                let cond_val = expr_eval::eval_with_loop_frame(shared, condition, loop_frame, component_id);
                 if cond_val.is_truthy() {
                     dispatch_all(shared, consequent, loop_frame, component_id).await;
                 } else if let Some(alt) = alternate {
@@ -220,9 +184,7 @@ fn dispatch_array_mutation(
         _ => unreachable!("dispatch_array_mutation is only ever called for the 3 function names already matched in dispatch_one"),
     }
 
-    shared
-        .borrow_mut()
-        .set_state(array_name, VbValue::Array(items));
+    shared.borrow_mut().set_state(array_name, VbValue::Array(items));
 }
 
 fn eval_id_field_args(
@@ -261,19 +223,9 @@ fn canonical_toast_kind(kind: &str) -> String {
     .to_string()
 }
 
-fn eval_opts(
-    shared: &SharedState,
-    opts: &PropsMap,
-    loop_frame: Option<&LoopFrame>,
-    component_id: Option<&str>,
-) -> BTreeMap<String, VbValue> {
+fn eval_opts(shared: &SharedState, opts: &PropsMap, loop_frame: Option<&LoopFrame>, component_id: Option<&str>) -> BTreeMap<String, VbValue> {
     opts.iter()
-        .map(|(k, v)| {
-            (
-                k.clone(),
-                expr_eval::eval_with_loop_frame(shared, v, loop_frame, component_id),
-            )
-        })
+        .map(|(k, v)| (k.clone(), expr_eval::eval_with_loop_frame(shared, v, loop_frame, component_id)))
         .collect()
 }
 
@@ -290,10 +242,7 @@ async fn dispatch_function_call(
                 .get("kieu")
                 .map(|v| canonical_toast_kind(&v.to_string()))
                 .unwrap_or_else(|| "info".to_string());
-            let thoi_gian = opts
-                .get("thoi_gian")
-                .map(|v| v.to_num_or_zero())
-                .unwrap_or(3000.0);
+            let thoi_gian = opts.get("thoi_gian").map(|v| v.to_num_or_zero()).unwrap_or(3000.0);
             super::dom::toast(&msg, &kieu, thoi_gian as i32);
             VbValue::Null
         }
@@ -362,15 +311,9 @@ async fn dispatch_function_call(
             let result = api::call(&base_url, "GET", &endpoint, None, None).await;
             if !result.ok {
                 let msg = if state::get_lang(shared) == "en" {
-                    format!(
-                        "Failed to load data: {}",
-                        result.error.as_deref().unwrap_or("")
-                    )
+                    format!("Failed to load data: {}", result.error.as_deref().unwrap_or(""))
                 } else {
-                    format!(
-                        "Tải dữ liệu thất bại: {}",
-                        result.error.as_deref().unwrap_or("")
-                    )
+                    format!("Tải dữ liệu thất bại: {}", result.error.as_deref().unwrap_or(""))
                 };
                 super::dom::toast(&msg, "loi", 3000);
                 return VbValue::Null;
@@ -430,15 +373,9 @@ mod tests {
             index_var: None,
             index_value: None,
         };
-        let opts: PropsMap = vec![(
-            "msg".to_string(),
-            vibao_ast::Expr::Variable("ten".to_string(), p()),
-        )];
+        let opts: PropsMap = vec![("msg".to_string(), vibao_ast::Expr::Variable("ten".to_string(), p()))];
         let result = eval_opts(&shared, &opts, Some(&frame), None);
-        assert_eq!(
-            result.get("msg").and_then(|v| v.as_str()),
-            Some("San pham A")
-        );
+        assert_eq!(result.get("msg").and_then(|v| v.as_str()), Some("San pham A"));
     }
 
     #[test]
@@ -481,15 +418,7 @@ mod tests {
     #[test]
     fn test_xoa_theo_id_removes_correct_item_by_id_value() {
         let shared = state::new_shared_state();
-        set_array_state(
-            &shared,
-            "tasks",
-            vec![
-                obj_with_id(10.0, "a"),
-                obj_with_id(20.0, "b"),
-                obj_with_id(30.0, "c"),
-            ],
-        );
+        set_array_state(&shared, "tasks", vec![obj_with_id(10.0, "a"), obj_with_id(20.0, "b"), obj_with_id(30.0, "c")]);
 
         let args = vec![
             Expr::Variable("tasks".to_string(), p()),
@@ -508,15 +437,7 @@ mod tests {
     #[test]
     fn test_xoa_theo_id_immune_to_stale_position_after_prior_removal() {
         let shared = state::new_shared_state();
-        set_array_state(
-            &shared,
-            "tasks",
-            vec![
-                obj_with_id(10.0, "a"),
-                obj_with_id(20.0, "b"),
-                obj_with_id(30.0, "c"),
-            ],
-        );
+        set_array_state(&shared, "tasks", vec![obj_with_id(10.0, "a"), obj_with_id(20.0, "b"), obj_with_id(30.0, "c")]);
 
         let args1 = vec![
             Expr::Variable("tasks".to_string(), p()),
@@ -535,11 +456,7 @@ mod tests {
         let result = shared.borrow_mut().get_state("tasks");
         let items = result.as_array().unwrap();
         assert_eq!(items.len(), 1, "exactly 1 element must remain");
-        assert_eq!(
-            items[0].get_field("ten").as_str(),
-            Some("b"),
-            "the remaining element must be \"b\" (id=20), not wrongly removed"
-        );
+        assert_eq!(items[0].get_field("ten").as_str(), Some("b"), "the remaining element must be \"b\" (id=20), not wrongly removed");
     }
 
     #[test]
@@ -555,21 +472,13 @@ mod tests {
         dispatch_array_mutation(&shared, "xoa_theo_id", &args, None, None);
 
         let result = shared.borrow_mut().get_state("tasks");
-        assert_eq!(
-            result.as_array().unwrap().len(),
-            1,
-            "the array must not change when no matching id is found"
-        );
+        assert_eq!(result.as_array().unwrap().len(), 1, "the array must not change when no matching id is found");
     }
 
     #[test]
     fn test_cap_nhat_theo_id_replaces_correct_item_by_id_value() {
         let shared = state::new_shared_state();
-        set_array_state(
-            &shared,
-            "tasks",
-            vec![obj_with_id(10.0, "a"), obj_with_id(20.0, "b")],
-        );
+        set_array_state(&shared, "tasks", vec![obj_with_id(10.0, "a"), obj_with_id(20.0, "b")]);
 
         let args = vec![
             Expr::Variable("tasks".to_string(), p()),
@@ -581,30 +490,14 @@ mod tests {
 
         let result = shared.borrow_mut().get_state("tasks");
         let items = result.as_array().unwrap();
-        assert_eq!(
-            items[0].as_str(),
-            Some("a_moi"),
-            "the id=10 element must be REPLACED entirely with the new value"
-        );
-        assert_eq!(
-            items[1].get_field("ten").as_str(),
-            Some("b"),
-            "the other element (id=20) is unaffected"
-        );
+        assert_eq!(items[0].as_str(), Some("a_moi"), "the id=10 element must be REPLACED entirely with the new value");
+        assert_eq!(items[1].get_field("ten").as_str(), Some("b"), "the other element (id=20) is unaffected");
     }
 
     #[test]
     fn test_cap_nhat_theo_id_immune_to_stale_position_after_prior_deletion() {
         let shared = state::new_shared_state();
-        set_array_state(
-            &shared,
-            "tasks",
-            vec![
-                obj_with_id(10.0, "a"),
-                obj_with_id(20.0, "b"),
-                obj_with_id(30.0, "c"),
-            ],
-        );
+        set_array_state(&shared, "tasks", vec![obj_with_id(10.0, "a"), obj_with_id(20.0, "b"), obj_with_id(30.0, "c")]);
 
         let args_delete = vec![
             Expr::Variable("tasks".to_string(), p()),
@@ -624,16 +517,8 @@ mod tests {
         let result = shared.borrow_mut().get_state("tasks");
         let items = result.as_array().unwrap();
         assert_eq!(items.len(), 2);
-        assert_eq!(
-            items[0].get_field("ten").as_str(),
-            Some("b"),
-            "\"b\" (id=20) is untouched"
-        );
-        assert_eq!(
-            items[1].as_str(),
-            Some("c_da_sua"),
-            "\"c\" (id=30) must be CORRECTLY updated despite shifting position"
-        );
+        assert_eq!(items[0].get_field("ten").as_str(), Some("b"), "\"b\" (id=20) is untouched");
+        assert_eq!(items[1].as_str(), Some("c_da_sua"), "\"c\" (id=30) must be CORRECTLY updated despite shifting position");
     }
 
     #[test]
@@ -649,11 +534,7 @@ mod tests {
         dispatch_array_mutation(&shared, "xoa_theo_id", &args, None, None);
 
         let result = shared.borrow_mut().get_state("tasks");
-        assert_eq!(
-            result.as_array().unwrap().len(),
-            1,
-            "the array must not change when the id field name is invalid"
-        );
+        assert_eq!(result.as_array().unwrap().len(), 1, "the array must not change when the id field name is invalid");
     }
 
     #[test]
@@ -661,16 +542,17 @@ mod tests {
         let shared = state::new_shared_state();
         set_array_state(&shared, "tasks", vec![VbValue::str("a")]);
 
-        let args = vec![Expr::literal_num(123.0, p()), Expr::literal_str("x", p())];
+        let args = vec![
+            Expr::literal_num(123.0, p()),
+            Expr::literal_str("x", p()),
+        ];
         dispatch_array_mutation(&shared, "them_vao_mang", &args, None, None);
     }
 
     #[test]
     fn test_array_mutation_on_non_array_state_is_noop() {
         let shared = state::new_shared_state();
-        shared
-            .borrow_mut()
-            .set_state("khong_phai_mang", VbValue::Num(5.0));
+        shared.borrow_mut().set_state("khong_phai_mang", VbValue::Num(5.0));
 
         let args = vec![
             Expr::Variable("khong_phai_mang".to_string(), p()),
@@ -679,11 +561,7 @@ mod tests {
         dispatch_array_mutation(&shared, "them_vao_mang", &args, None, None);
 
         let result = shared.borrow_mut().get_state("khong_phai_mang");
-        assert_eq!(
-            result.as_num(),
-            Some(5.0),
-            "the original value is unchanged when it is not an array"
-        );
+        assert_eq!(result.as_num(), Some(5.0), "the original value is unchanged when it is not an array");
     }
 
     #[test]
@@ -704,20 +582,13 @@ mod tests {
         dispatch_array_mutation(&shared, "them_vao_mang", &args, Some(&frame), None);
 
         let result = shared.borrow_mut().get_state("ket_qua");
-        assert_eq!(
-            result.as_array().unwrap()[0].as_str(),
-            Some("gia_tri_tu_vong_lap")
-        );
+        assert_eq!(result.as_array().unwrap()[0].as_str(), Some("gia_tri_tu_vong_lap"));
     }
 
     #[test]
     fn test_cap_nhat_theo_id_resolves_loop_variable_in_id_value_and_new_value() {
         let shared = state::new_shared_state();
-        set_array_state(
-            &shared,
-            "tasks",
-            vec![obj_with_id(10.0, "a"), obj_with_id(20.0, "b")],
-        );
+        set_array_state(&shared, "tasks", vec![obj_with_id(10.0, "a"), obj_with_id(20.0, "b")]);
 
         let mut task_obj = BTreeMap::new();
         task_obj.insert("id".to_string(), VbValue::Num(20.0));
@@ -742,15 +613,7 @@ mod tests {
 
         let result = shared.borrow_mut().get_state("tasks");
         let items = result.as_array().unwrap();
-        assert_eq!(
-            items[0].get_field("ten").as_str(),
-            Some("a"),
-            "the other element is unaffected"
-        );
-        assert_eq!(
-            items[1].as_str(),
-            Some("b_moi"),
-            "must correctly update the element whose id matches \\$task.id (=20)"
-        );
+        assert_eq!(items[0].get_field("ten").as_str(), Some("a"), "the other element is unaffected");
+        assert_eq!(items[1].as_str(), Some("b_moi"), "must correctly update the element whose id matches \\$task.id (=20)");
     }
 }

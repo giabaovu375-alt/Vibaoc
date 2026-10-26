@@ -201,7 +201,7 @@ text("Hello", font_size: 16, bold: true)
 | `@mau` / `@color` | `mau_nen`/`background_color`, `mau`/`color` (also `mau_chu`), `mau_vien`/`border_color` |
 | `@kich_thuoc` / `@size` | `rong`/`width`, `cao`/`height`, `max_rong`/`max_width`, `min_rong`/`min_width`, `max_cao`/`max_height`, `min_cao`/`min_height` |
 | `@khoang_cach` / `@spacing` | `radius`, `dem`/`padding`, `le`/`margin`, `vien`/`border`, `kieu_vien`/`border_style`, `bong`/`shadow`, `cuon_tran`/`overflow`, `tang_z`/`z_index` |
-| `@chu` / `@typography` | `co`/`font_size`, `dam`/`bold`, `nghieng`/`italic`, `gach_chan`/`underline`, `can`/`align`, `hang`/`line_height`, `khoang_chu`/`letter_spacing`, `bien_doi`/`text_transform`, `phong_chu`/`font_family` |
+| `@chu` / `@typography` | `co`/`font_size`, `dam`/`bold`, `nghieng`/`italic`, `gach_chan`/`underline`, `giu_dong`/`preserve_lines` (keeps line breaks and spaces, `white-space: pre-wrap`; static value only), `can`/`align`, `hang`/`line_height`, `khoang_chu`/`letter_spacing`, `bien_doi`/`text_transform`, `phong_chu`/`font_family` |
 | `@flex_bo_cuc` / `@flex_layout` | `huong`/`direction`, `doc`/`align_items`, `boc`/`wrap`, `gap`, `gap_doc`/`row_gap`, `gap_ngang`/`column_gap` |
 | `@grid_bo_cuc` / `@grid_layout` | `cot`/`columns`, `hang_luoi`/`rows`, `gap`, `gap_doc`/`row_gap`, `gap_ngang`/`column_gap` |
 | `@vi_tri` / `@position` | `tran_x`/`translate_x`, `tran_y`/`translate_y`, `vi_tri`/`position`, `offset` |
@@ -262,6 +262,27 @@ rules (`scroll-behavior`, `scroll-padding-top`); `tai_phong`/`font_url`
 adds a `<link rel="stylesheet">` to the HTML shell. Values must be static
 (a state-dependent value is ignored with a warning), any other key is a
 build error, and only one block may be declared, in the main file.
+
+### Themes: `chu_de` / `theme`
+
+```vbao
+chu_de sang { $nen = trang, $chu = xam_dam }
+chu_de toi  { $nen = "#1a202c", $chu = "#e2e8f0" }
+
+giao_dien { mau_nen: $nen, mau: $chu }
+```
+
+- Every theme must declare the same set of `$variables` with constant values (color, number, or string).
+  The first theme is the default; a theme named `toi` or `dark` follows `prefers-color-scheme: dark` until the user
+  picks one.
+- A theme variable may only be the whole value of a style prop (`@mau`, `@kich_thuoc`, `@khoang_cach`, `@chu`,
+  `@flex_bo_cuc`, `@grid_bo_cuc`, `@vi_tri`) or of `giao_dien`. Using it as content, in a condition, in an
+  expression, in a template string, or inside a responsive block is a build error.
+- `dat_chu_de(name)` / `set_theme(name)` selects a declared theme; with no argument it switches to the next one. The
+  choice is saved in `localStorage` (`vb-theme`) and restored before first paint when two or more themes exist.
+- CSS: `:root` holds the default theme, `@media (prefers-color-scheme: dark)` the dark one under
+  `:root:not([data-vb-theme])`, and `:root[data-vb-theme="name"]` every theme; each rule also sets
+  `--vb-theme: <name>`.
 
 ### Static files and the HTML shell
 
@@ -349,6 +370,8 @@ $a && $b, $a || $b, !$a
 "Hello $name"          // template string interpolation; a $ before a digit or
                         // a non-identifier character is a literal character
 round($n)               // built-in function, see §8
+$list[0].field          // array element by integer literal index (not an expression)
+$list.rong, $list.do_dai // empty / length of an array or string (Vietnamese-only names)
 ```
 
 ## 7. Control flow
@@ -424,8 +447,10 @@ page("/") {
 }
 ```
 
-`on_unload` for the outgoing page runs before it's hidden; `on_load` for
-the incoming page runs after it's shown and bound.
+`on_unload` for the outgoing page runs before it's hidden. `on_load` for
+the incoming page is awaited before the page is bound, so a plain
+`api_call` inside it delays event binding until the network answers;
+use `api_call(..., background: true)` to detach it.
 
 ### Built-in actions
 
@@ -444,6 +469,8 @@ All of these run as real Rust/WASM, not JavaScript:
 | `load_data(endpoint)` | Real `GET` via `fetch` |
 | `copy_to_clipboard(text)` | **Disabled**, see `LIMITATIONS.md` |
 | `array_push`, `array_remove_by_id`, `array_update_by_id` | Array CRUD helpers for state arrays with an `id` field |
+| `set_theme(name?)` | Select a declared theme, or the next one with no argument; stores the choice in `localStorage` |
+| `api_call(method, url, data?, headers: {...}, background: true)` | `fetch` with a JSON body. `headers` adds or overrides request headers; `background: true` (literal only) detaches the call. The response is assigned to the variable on the left of `=`, also on failure, and the `success` / `failure` blocks run when it arrives |
 
 ### Assignment and conditional actions
 
@@ -495,9 +522,14 @@ one level of nesting — with some rough edges under heavier use; see
 ## 10. Build & run
 
 ```bash
-vibaoc build app.vbao          # writes dist/: HTML/CSS/JS + pkg/ (WASM runtime)
-vibaoc check app.vbao --ast    # debug: print the parsed AST, writes nothing
+vibaoc build app.vbao                       # writes dist/: HTML/CSS/JS + pkg/ (WASM runtime)
+vibaoc build app.vbao --site-url https://example.com   # also sitemap.xml, robots.txt, canonical/og tags
+vibaoc serve app.vbao --port 8000           # build, serve locally, rebuild on change
+vibaoc check app.vbao --ast                 # debug: print the parsed AST, writes nothing
 ```
+
+`404.html` (a copy of `index.html`) is written whenever the app has two or more routes. See
+[`TRIEN_KHAI.md`](TRIEN_KHAI.md) for what `--site-url` generates and its limits.
 
 `dist/` is build output and should not be committed (it's in
 `.gitignore`, the same as `target/`). Release archives already bundle the

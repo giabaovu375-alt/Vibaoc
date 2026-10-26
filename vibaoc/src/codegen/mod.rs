@@ -6,14 +6,14 @@ pub mod element;
 pub mod expr;
 pub mod global_style;
 pub mod layout;
-pub mod props;
 pub mod theme;
+pub mod props;
 
+use vibao_ast::{App, Child, ColorValue, Expr, Page, Program};
 use crate::codegen::component::ComponentRegistry;
 use crate::codegen::css::{esc_attr, BASE_CSS};
 use crate::codegen::element::{tag_to_class_name, ElementCodegenHost};
 use std::collections::HashMap;
-use vibao_ast::{App, Child, ColorValue, Expr, Page, Program};
 
 #[derive(Debug, Clone)]
 pub struct CodegenOptions {
@@ -73,15 +73,10 @@ impl CodegenContext {
     }
 
     pub fn get_css(&self) -> String {
-        self.css_blocks
-            .iter()
-            .chain(self.media_queries.iter())
-            .cloned()
-            .collect::<Vec<_>>()
-            .join("\n\n")
+        self.css_blocks.iter().chain(self.media_queries.iter()).cloned().collect::<Vec<_>>().join("\n\n")
     }
 
-    #[allow(dead_code)]
+#[allow(dead_code)]
     pub fn add_js(&mut self, block: &str) {
         if !block.trim().is_empty() {
             self.js_blocks.push(block.to_string());
@@ -145,10 +140,7 @@ pub struct Codegen {
 
 impl Codegen {
     pub fn new(options: CodegenOptions) -> Self {
-        Codegen {
-            ctx: CodegenContext::new(options),
-            registry: ComponentRegistry::new(),
-        }
+        Codegen { ctx: CodegenContext::new(options), registry: ComponentRegistry::new() }
     }
 
     pub fn generate(&mut self, program: &Program) -> CodegenOutput {
@@ -171,43 +163,21 @@ impl Codegen {
         for page in &app.pages {
             self.ctx.reset_page();
             let html = self.gen_page(page);
-            page_initial_state_vars.push((
-                page.route.clone(),
-                self.ctx.get_state_vars().iter().cloned().collect(),
-            ));
-            page_metadata.push((
-                page.route.clone(),
-                page.name.clone(),
-                page.description.clone(),
-            ));
+            page_initial_state_vars.push((page.route.clone(), self.ctx.get_state_vars().iter().cloned().collect()));
+            page_metadata.push((page.route.clone(), page.name.clone(), page.description.clone()));
             pages.insert(page.route.clone(), html);
         }
 
-        let html = pages
-            .get("/")
-            .cloned()
-            .unwrap_or_else(|| pages.values().next().cloned().unwrap_or_default());
+        let html = pages.get("/").cloned().unwrap_or_else(|| pages.values().next().cloned().unwrap_or_default());
         let js = self.gen_app_js(app, &page_initial_state_vars, &page_metadata);
         let warnings = self.registry.warnings.clone();
-        let default_page = app
-            .pages
-            .iter()
+        let default_page = app.pages.iter()
             .find(|p| p.route == "/")
             .or_else(|| app.pages.first());
         let default_title = default_page.and_then(|p| p.name.clone());
         let default_description = default_page.and_then(|p| p.description.clone());
 
-        CodegenOutput {
-            html,
-            css: self.ctx.get_css(),
-            js,
-            pages,
-            warnings,
-            default_title,
-            default_description,
-            stylesheets: global_style.stylesheets,
-            theme_names: app.themes.iter().map(|t| t.name.clone()).collect(),
-        }
+        CodegenOutput { html, css: self.ctx.get_css(), js, pages, warnings, default_title, default_description, stylesheets: global_style.stylesheets, theme_names: app.themes.iter().map(|t| t.name.clone()).collect() }
     }
 
     fn gen_page(&mut self, page: &Page) -> String {
@@ -285,36 +255,27 @@ impl Codegen {
     }
 
     fn gen_children_internal(&mut self, children: &[Child]) -> String {
-        children
-            .iter()
-            .map(|c| self.gen_child(c))
-            .filter(|s| !s.is_empty())
-            .collect::<Vec<_>>()
-            .join("\n")
+        children.iter().map(|c| self.gen_child(c)).filter(|s| !s.is_empty()).collect::<Vec<_>>().join("\n")
     }
 
-    fn gen_app_js(
-        &self,
-        app: &App,
-        page_initial_state_vars: &[(String, Vec<(String, Expr)>)],
-        page_metadata: &[(String, Option<String>, Option<String>)],
-    ) -> String {
+    fn gen_app_js(&self, app: &App, page_initial_state_vars: &[(String, Vec<(String, Expr)>)], page_metadata: &[(String, Option<String>, Option<String>)]) -> String {
+
         let expr_registry = expr::take_expr_registry();
-        let expr_registry_json =
-            serde_json::to_string(&expr_registry).unwrap_or_else(|_| "[]".to_string());
+        let expr_registry_json = serde_json::to_string(&expr_registry)
+            .unwrap_or_else(|_| "[]".to_string());
 
         let action_registry = action::take_action_registry();
-        let action_registry_json =
-            serde_json::to_string(&action_registry).unwrap_or_else(|_| "[]".to_string());
+        let action_registry_json = serde_json::to_string(&action_registry)
+            .unwrap_or_else(|_| "[]".to_string());
 
-        let page_initial_state_json =
-            serde_json::to_string(&page_initial_state_vars).unwrap_or_else(|_| "[]".to_string());
+        let page_initial_state_json = serde_json::to_string(&page_initial_state_vars)
+            .unwrap_or_else(|_| "[]".to_string());
 
-        let page_metadata_json =
-            serde_json::to_string(page_metadata).unwrap_or_else(|_| "[]".to_string());
+        let page_metadata_json = serde_json::to_string(page_metadata)
+            .unwrap_or_else(|_| "[]".to_string());
 
-        let global_vars_json =
-            serde_json::to_string(self.ctx.get_global_vars()).unwrap_or_else(|_| "[]".to_string());
+        let global_vars_json = serde_json::to_string(self.ctx.get_global_vars())
+            .unwrap_or_else(|_| "[]".to_string());
 
         const WASM_JS_PATH: &str = "./pkg/vibao_runtime.js";
 
@@ -385,13 +346,15 @@ impl ElementCodegenHost for Codegen {
 pub fn resolve_page_bg_color(cv: &ColorValue) -> String {
     match cv {
         ColorValue::Hex(hex) => hex.clone(),
-        ColorValue::Name(name) => crate::lexer::resolve_color_name(name).unwrap_or_else(|| {
-            panic!(
-                "invariant violated: ColorValue::Name(\"{}\") is not in color_map() - \
+        ColorValue::Name(name) => {
+            crate::lexer::resolve_color_name(name).unwrap_or_else(|| {
+                panic!(
+                    "invariant violated: ColorValue::Name(\"{}\") is not in color_map() - \
                      the lexer should never emit ColorName for an invalid name",
-                name
-            )
-        }),
+                    name
+                )
+            })
+        }
         ColorValue::Variable(name) => format!("var({})", theme::css_var_name(name)),
         ColorValue::Func { func, args } => {
             let args_str = args
@@ -429,10 +392,7 @@ mod tests {
 
     #[test]
     fn test_resolve_page_bg_color_hex() {
-        assert_eq!(
-            resolve_page_bg_color(&ColorValue::Hex("#123456".to_string())),
-            "#123456"
-        );
+        assert_eq!(resolve_page_bg_color(&ColorValue::Hex("#123456".to_string())), "#123456");
     }
 
     #[test]
@@ -502,7 +462,7 @@ mod tests {
 
     #[test]
     fn test_generate_mounts_component_calls_on_every_page_not_just_last() {
-        use vibao_ast::{ComponentCall, ComponentDef, PropsMap};
+        use vibao_ast::{ComponentDef, ComponentCall, PropsMap};
 
         let comp_def = ComponentDef {
             name: "TieuDe".to_string(),
@@ -548,17 +508,12 @@ mod tests {
 
         for route in routes {
             let page_html = out.pages.get(route).unwrap_or_else(|| {
-                panic!(
-                    "out.pages is missing HTML for route \"{}\". Available routes: {:?}",
-                    route,
-                    out.pages.keys().collect::<Vec<_>>()
-                )
+                panic!("out.pages is missing HTML for route \"{}\". Available routes: {:?}", route, out.pages.keys().collect::<Vec<_>>())
             });
             assert!(
                 page_html.contains("data-vb-component=\"TieuDe\""),
                 "route \"{}\" must contain the mounted TieuDe component, actual HTML:\n{}",
-                route,
-                page_html
+                route, page_html
             );
         }
     }
@@ -599,20 +554,11 @@ mod tests {
 
         let marker = "pageInitialState: ";
         let start = out.js.find(marker).unwrap_or_else(|| {
-            panic!(
-                "app.js must contain \"pageInitialState: \", actual:\n{}",
-                out.js
-            )
+            panic!("app.js must contain \"pageInitialState: \", actual:\n{}", out.js)
         }) + marker.len();
-        let end = out.js[start..]
-            .find(",\n      globalVars")
-            .unwrap_or_else(|| {
-                panic!(
-                    "could not find a valid end point for pageInitialState in app.js:\n{}",
-                    out.js
-                )
-            })
-            + start;
+        let end = out.js[start..].find(",\n      globalVars").unwrap_or_else(|| {
+            panic!("could not find a valid end point for pageInitialState in app.js:\n{}", out.js)
+        }) + start;
         let page_initial_state_slice = out.js[start..end].trim();
 
         assert!(
@@ -719,15 +665,11 @@ mod tests {
         let out = codegen.generate(&program);
 
         let marker = "globalVars: ";
-        let start =
-            out.js.find(marker).unwrap_or_else(|| {
-                panic!("app.js must contain \"globalVars: \", actual:\n{}", out.js)
-            }) + marker.len();
+        let start = out.js.find(marker).unwrap_or_else(|| {
+            panic!("app.js must contain \"globalVars: \", actual:\n{}", out.js)
+        }) + marker.len();
         let end = out.js[start..].find("\n    });").unwrap_or_else(|| {
-            panic!(
-                "could not find a valid end point for globalVars in app.js:\n{}",
-                out.js
-            )
+            panic!("could not find a valid end point for globalVars in app.js:\n{}", out.js)
         }) + start;
         let global_vars_slice = out.js[start..end].trim();
 

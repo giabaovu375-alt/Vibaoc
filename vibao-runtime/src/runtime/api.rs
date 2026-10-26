@@ -63,11 +63,8 @@ pub async fn call(
 
     let _ = request.headers().set("Accept", "application/json");
 
-    if request
-        .headers()
-        .set("Content-Type", "application/json")
-        .is_err()
-    {}
+    if request.headers().set("Content-Type", "application/json").is_err() {
+    }
 
     if let Some(extra) = headers.and_then(|h| h.as_object()) {
         for (name, value) in extra.iter() {
@@ -113,11 +110,7 @@ pub async fn call(
 
     if !ok {
         let nested = data.dig_path("error.message");
-        let message = if nested.is_null() {
-            data.dig_path("message")
-        } else {
-            nested
-        };
+        let message = if nested.is_null() { data.dig_path("message") } else { nested };
         let error_msg = message
             .as_str()
             .map(|s| s.to_string())
@@ -144,18 +137,12 @@ mod tests {
 
     #[test]
     fn test_resolve_url_relative_path() {
-        assert_eq!(
-            resolve_url("https://api.vibao.dev", "/users"),
-            "https://api.vibao.dev/users"
-        );
+        assert_eq!(resolve_url("https://api.vibao.dev", "/users"), "https://api.vibao.dev/users");
     }
 
     #[test]
     fn test_resolve_url_no_leading_slash() {
-        assert_eq!(
-            resolve_url("https://api.vibao.dev", "users"),
-            "https://api.vibao.dev/users"
-        );
+        assert_eq!(resolve_url("https://api.vibao.dev", "users"), "https://api.vibao.dev/users");
     }
 
     #[test]

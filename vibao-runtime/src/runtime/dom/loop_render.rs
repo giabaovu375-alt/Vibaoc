@@ -1,11 +1,9 @@
-use super::subtree::{bind_component, bind_subtree};
-use super::{
-    document, eval_expr_id_tracked, query_all, ATTR_COMPONENT, ATTR_LOOP, ATTR_LOOP_ITEM_MARKER,
-};
-use crate::runtime::state::{self, LoopFrame, SharedState};
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
-use web_sys::Element;
+use web_sys::{Element};
+use crate::runtime::{state::{self, LoopFrame, SharedState}};
+use super::{ATTR_COMPONENT, ATTR_LOOP, ATTR_LOOP_ITEM_MARKER, document, eval_expr_id_tracked, query_all};
+use super::subtree::{bind_component, bind_subtree};
 
 pub(super) struct LoopBindingState {
     rendered_node_count: usize,
@@ -33,12 +31,7 @@ pub(super) fn unregister_component_props_in_subtree(shared: &SharedState, root: 
     }
 }
 
-pub(super) fn bind_loop(
-    shared: &SharedState,
-    anchor: &Element,
-    outer_loop_frame: Option<&LoopFrame>,
-    component_id: Option<&str>,
-) {
+pub(super) fn bind_loop(shared: &SharedState, anchor: &Element, outer_loop_frame: Option<&LoopFrame>, component_id: Option<&str>) {
     let raw = match anchor.get_attribute(ATTR_LOOP) {
         Some(r) => r,
         None => return,
@@ -84,9 +77,7 @@ pub(super) fn bind_loop(
         None => return,
     };
 
-    let binding_state = Rc::new(std::cell::RefCell::new(LoopBindingState {
-        rendered_node_count: 0,
-    }));
+    let binding_state = Rc::new(std::cell::RefCell::new(LoopBindingState { rendered_node_count: 0 }));
     let anchor = anchor.clone();
     let outer_loop_frame = outer_loop_frame.cloned();
     let component_id = component_id.map(|s| s.to_string());
@@ -94,12 +85,7 @@ pub(super) fn bind_loop(
     state::subscribe(
         shared,
         Box::new(move |sh: &SharedState| {
-            let iterable = eval_expr_id_tracked(
-                sh,
-                spec.iterable_expr_id,
-                outer_loop_frame.as_ref(),
-                component_id.as_deref(),
-            );
+            let iterable = eval_expr_id_tracked(sh, spec.iterable_expr_id, outer_loop_frame.as_ref(), component_id.as_deref());
             let items = iterable.as_array().cloned().unwrap_or_default();
 
             let bs = binding_state.borrow_mut();
@@ -114,10 +100,9 @@ pub(super) fn bind_loop(
 
             let mut insert_after: web_sys::Node = anchor.clone().into();
             for (index, item) in items.iter().enumerate() {
-                let fragment = template
-                    .content()
-                    .clone_node_with_deep(true)
-                    .unwrap_or_else(|_| doc.create_document_fragment().into());
+                let fragment = template.content().clone_node_with_deep(true).unwrap_or_else(|_| {
+                    doc.create_document_fragment().into()
+                });
 
                 let frame = LoopFrame {
                     item_var: spec.item_var.clone(),
@@ -156,12 +141,7 @@ pub(super) fn bind_loop(
     );
 }
 
-pub(super) fn bind_fragment_with_loop_frame(
-    shared: &SharedState,
-    fragment: &web_sys::DocumentFragment,
-    frame: &LoopFrame,
-    component_id: Option<&str>,
-) {
+pub(super) fn bind_fragment_with_loop_frame(shared: &SharedState, fragment: &web_sys::DocumentFragment, frame: &LoopFrame, component_id: Option<&str>) {
     let children = fragment.children();
     for i in 0..children.length() {
         if let Some(el) = children.item(i) {
