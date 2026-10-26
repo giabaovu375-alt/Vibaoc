@@ -1,42 +1,108 @@
 name: Build Release Binaries
+
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             name: linux-x86_64
+            exe: vibaoc
+            smoke: true
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             name: windows-x86_64
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            name: macos-x86_64
+            exe: vibaoc.exe
+            smoke: true
           - os: macos-latest
             target: aarch64-apple-darwin
             name: macos-arm64
+            exe: vibaoc
+            smoke: true
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            name: macos-x86_64
+            exe: vibaoc
+            smoke: false
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown,${{ matrix.target }}
-      - run: cargo install wasm-bindgen-cli
-      - shell: bash
+
+      - name: Đọc phiên bản
+        run: echo "VERSION=$(sed -n 's/^version *= *"\(.*\)"/\1/p' vibaoc/Cargo.toml | head -n1)" >> "$GITHUB_ENV"
+
+      - name: Build runtime (WASM)
         run: bash scripts/build-runtime.sh
-      - run: cargo build --release --target ${{ matrix.target }} -p vibaoc
-      - shell: bash
+
+      - name: Build compiler
+        run: cargo build --release -p vibaoc --target ${{ matrix.target }}
+
+      - name: Đóng gói
         run: |
-          mkdir -p release/vibao-0.1.0-${{ matrix.name }}
-          cp target/${{ matrix.target }}/release/vibaoc* release/vibao-0.1.0-${{ matrix.name }}/ 2>/dev/null || true
-          cp -r vibao-runtime/pkg release/vibao-0.1.0-${{ matrix.name }}/
-          tar -czf vibao-0.1.0-${{ matrix.name }}.tar.gz -C release/vibao-0.1.0-${{ matrix.name }} .
+          PKG="vibao-${VERSION}-${{ matrix.name }}"
+          mkdir -p "release/$PKG/pkg"
+          cp "target/${{ matrix.target }}/release/${{ matrix.exe }}" "release/$PKG/"
+          cp vibao-runtime/pkg/vibao_runtime.js vibao-runtime/pkg/vibao_runtime_bg.wasm "release/$PKG/pkg/"
+          cat > "release/$PKG/README.txt" <<EOF2
+          ViBao Compiler ${VERSION} (${{ matrix.name }})
+
+          Giải nén, rồi thêm thư mục này vào PATH hoặc chạy trực tiếp ${{ matrix.exe }}.
+          Trình biên dịch và runtime trình duyệt (thư mục pkg) phải nằm cạnh nhau.
+
+          Cách dùng:
+            ${{ matrix.exe }} build app.vbao
+            ${{ matrix.exe }} serve app.vbao
+          EOF2
+          tar -czf "release/$PKG.tar.gz" -C "release/$PKG" .
+          echo "PKG=$PKG" >> "$GITHUB_ENV"
+
+      - name: Kiểm nhanh gói
+        if: matrix.smoke
+        run: |
+          mkdir -p smoke
+          tar -xzf "release/$PKG.tar.gz" -C smoke
+          ./smoke/${{ matrix.exe }} --version
+          ./smoke/${{ matrix.exe }} build examples/portfolio.vbao --out smoke-out
+          test -f smoke-out/pkg/vibao_runtime_bg.wasm
+
       - uses: actions/upload-artifact@v4
         with:
-          name: vibao-0.1.0-${{ matrix.name }}
-          path: vibao-0.1.0-${{ matrix.name }}.tar.gz
+          name: ${{ env.PKG }}
+          path: release/${{ env.PKG }}.tar.gz
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+
+      - name: Checksum
+        run: cd assets && sha256sum *.tar.gz > SHA256SUMS.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            assets/*.tar.gz
+            assets/SHA256SUMS.txt
