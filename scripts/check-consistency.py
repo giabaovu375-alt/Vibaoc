@@ -21,27 +21,22 @@ DOMAINS = {
     "FunctionName": (AST / "function.rs", [LOCALE / "function_vi.rs", LOCALE / "function_en.rs"]),
 }
 
-
 def read(path: Path) -> str:
     if not path.exists():
         raise RuntimeError(f"missing file: {path}")
     return path.read_text(encoding="utf-8")
-
 
 def enum_variants(text: str, enum_name: str) -> set[str]:
     m = re.search(rf"pub enum {re.escape(enum_name)}\s*\{{(.*?)\n\}}", text, re.S)
     if not m:
         raise RuntimeError(f"cannot find enum {enum_name}")
     body = m.group(1)
-    # Semantic enums here are unit variants. Ignore comments/doc comments.
     body = re.sub(r"//.*", "", body)
     body = re.sub(r"/\*.*?\*/", "", body, flags=re.S)
     return set(re.findall(r"(?m)^\s*([A-Z][A-Za-z0-9_]*)\s*,", body))
 
-
 def mapped_variants(text: str, enum_name: str) -> set[str]:
     return set(re.findall(rf"=>\s*{re.escape(enum_name)}::([A-Z][A-Za-z0-9_]*)\b", text))
-
 
 def method_variants(text: str, enum_name: str, method_name: str) -> set[str]:
     m = re.search(
@@ -52,7 +47,6 @@ def method_variants(text: str, enum_name: str, method_name: str) -> set[str]:
     if not m:
         raise RuntimeError(f"cannot find {enum_name}::{method_name}")
     return set(re.findall(r"Self::([A-Z][A-Za-z0-9_]*)\s*=>", m.group(1)))
-
 
 def check_domain(name: str, enum_file: Path, locale_files: list[Path]) -> list[str]:
     variants = enum_variants(read(enum_file), name)
@@ -67,15 +61,10 @@ def check_domain(name: str, enum_file: Path, locale_files: list[Path]) -> list[s
             problems.append(f"{name}: {locale_file.name} missing: {', '.join(sorted(missing))}")
         if extra:
             problems.append(f"{name}: {locale_file.name} has unknown variants: {', '.join(sorted(extra))}")
-    # Both locale tables should cover the semantic domain. Aliases are allowed
-    # at the surface-name level, so this checks identity coverage only.
     missing_union = variants - union
     if missing_union:
         problems.append(f"{name}: no locale maps: {', '.join(sorted(missing_union))}")
 
-    # Action/Function identities must also have a canonical runtime spelling.
-    # This is deliberately static: it checks the repetitive mapping without
-    # pretending to replace cargo/rustc.
     if name in {"ActionName", "FunctionName"}:
         method = method_variants(read(enum_file), name, "runtime_name")
         missing_runtime = variants - method
@@ -85,7 +74,6 @@ def check_domain(name: str, enum_file: Path, locale_files: list[Path]) -> list[s
         if extra_runtime:
             problems.append(f"{name}::runtime_name has unknown variants: {', '.join(sorted(extra_runtime))}")
     return problems
-
 
 def main() -> int:
     problems: list[str] = []
@@ -115,7 +103,6 @@ def main() -> int:
         print(f"- {name}: semantic variants covered by VI + EN locale tables")
     print("- locale/mod.rs: VI + EN modules wired")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

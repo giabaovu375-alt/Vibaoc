@@ -9,11 +9,16 @@ ung_dung("Bộ đếm") {
     trang("/") {
         state $dem = 0
 
-        khoi(dem: 24, huong: cot, khoang_chu: 16) {
+        khoi {
+            @khoang_cach { dem: 24 }
+            @flex_bo_cuc { huong: cot, gap: 16 }
+
             text("Bộ đếm ViBao", co: 28, dam: true)
             text("Giá trị hiện tại: $dem", co: 20)
 
-            khoi(huong: hang, khoang_chu: 8) {
+            khoi {
+                @flex_bo_cuc { huong: hang, gap: 8 }
+
                 button("Tăng") {
                     khi_nhan { $dem = $dem + 1 }
                 }

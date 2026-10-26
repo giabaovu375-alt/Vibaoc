@@ -1,8 +1,3 @@
-// ============================================================
-// VIBAO COMPILER (Rust) — ast/tests.rs
-// UNIT TESTS
-// ============================================================
-
 use super::child::{get_prop, PropsMap};
 use super::expr::{BinaryOp, Expr};
 use super::Pos;
@@ -28,7 +23,6 @@ fn test_get_prop_lookup() {
 #[test]
 fn test_nested_expr_via_box() {
     let pos = Pos { line: 1, column: 1 };
-    // $n - 1  -> Binary { Sub, Variable("n"), Literal(1) }
     let expr = Expr::Binary {
         op: BinaryOp::Sub,
         left: Box::new(Expr::Variable("n".to_string(), pos)),

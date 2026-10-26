@@ -22,7 +22,10 @@ ung_dung("Quan ly cong viec") {
         }
 
         vong_lap $task trong $tasks {
-            khoi(dem: 12, huong: hang, gap: 12) {
+            khoi {
+                @khoang_cach { dem: 12 }
+                @flex_bo_cuc { huong: hang, gap: 12 }
+
                 neu $task.xong {
                     text("Xong: $task.tieu_de", mau: xam)
                 } khong_thi {

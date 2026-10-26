@@ -1,5 +1,3 @@
-// VIBAO COMPILER — end-to-end: state, variables, and data actions.
-
 mod common;
 use common::build_source;
 
@@ -22,8 +20,14 @@ ung_dung("App") {
     );
     result.assert_ok();
     let js = result.js();
-    assert!(js.contains("dem_trang_chu"), "state from the first page must be present");
-    assert!(js.contains("dem_khac"), "state from a later page must also be present");
+    assert!(
+        js.contains("dem_trang_chu"),
+        "state from the first page must be present"
+    );
+    assert!(
+        js.contains("dem_khac"),
+        "state from a later page must also be present"
+    );
 }
 
 #[test]
@@ -146,7 +150,9 @@ fn two_way_model_binding_wires_input_to_a_state_variable() {
 ung_dung("App") {
     trang("/") {
         state $ten = "Khach"
-        input(gia_tri: $ten, loai: "text")
+        input {
+            @nhap_lieu { gia_tri: $ten, loai: "text" }
+        }
         text("Xin chao, $ten")
     }
 }
@@ -154,7 +160,10 @@ ung_dung("App") {
     );
     result.assert_ok();
     let html = result.html();
-    assert!(html.contains("ten"), "the bound state variable name should appear in the emitted markup");
+    assert!(
+        html.contains("ten"),
+        "the bound state variable name should appear in the emitted markup"
+    );
 }
 
 #[test]
@@ -177,10 +186,6 @@ ung_dung("App") {
 
 #[test]
 fn numeric_addition_on_state_does_not_lose_its_numeric_type_at_build_time() {
-    // Regression-style coverage at the compiler boundary: incrementing a
-    // numeric state variable must still be recognized as a numeric
-    // expression by the compiler (actual runtime arithmetic semantics
-    // are covered by vibao-runtime's own unit tests).
     let (_dir, result) = build_source(
         "numeric-counter",
         r#"

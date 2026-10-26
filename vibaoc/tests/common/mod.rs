@@ -1,27 +1,9 @@
-// VIBAO COMPILER — shared end-to-end test helpers.
-//
-// Every test in this crate's `tests/` directory drives the real
-// `vibaoc` binary as a subprocess against real `.vbao` source files,
-// then inspects the compiled `index.html` / `app.js` / `style.css` on
-// disk. This is a deliberately black-box setup: it exercises the full
-// pipeline (lexer -> parser -> resolver -> validator -> codegen -> file
-// output) exactly the way `vibaoc build app.vbao` would for a real
-// user, instead of calling internal functions directly.
-//
-// Each `tests/e2e_*.rs` file compiles this module independently (Rust
-// integration tests are separate crates), and no single file happens
-// to use every helper here -- `#![allow(dead_code)]` avoids spurious
-// "never used" warnings for helpers that are only exercised by a
-// sibling test file.
 #![allow(dead_code)]
 
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-/// A minimal self-cleaning temp directory. The project deliberately
-/// avoids the `tempfile` crate dependency, so tests hand-roll the same
-/// pattern here.
 pub struct TempDir {
     pub path: PathBuf,
 }
@@ -55,7 +37,6 @@ fn vibaoc_bin() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_vibaoc"))
 }
 
-/// Result of running `vibaoc build`.
 pub struct BuildResult {
     pub ok: bool,
     pub stdout: String,
@@ -96,8 +77,6 @@ impl BuildResult {
     }
 }
 
-/// Writes `source` to a fresh temp dir as `app.vbao` and runs
-/// `vibaoc build app.vbao --out dist` against it.
 pub fn build_source(label: &str, source: &str) -> (TempDir, BuildResult) {
     let dir = TempDir::new(label);
     let src = dir.write("app.vbao", source);
@@ -106,12 +85,25 @@ pub fn build_source(label: &str, source: &str) -> (TempDir, BuildResult) {
     (dir, result)
 }
 
+pub fn run_version() -> String {
+    let output = Command::new(vibaoc_bin())
+        .arg("--version")
+        .output()
+        .expect("không chạy được vibaoc --version");
+    String::from_utf8_lossy(&output.stdout).trim().to_string()
+}
+
 pub fn run_build(source: &PathBuf, out_dir: &PathBuf) -> BuildResult {
+    run_build_with_args(source, out_dir, &[])
+}
+
+pub fn run_build_with_args(source: &PathBuf, out_dir: &PathBuf, extra: &[&str]) -> BuildResult {
     let output = Command::new(vibaoc_bin())
         .arg("build")
         .arg(source)
         .arg("--out")
         .arg(out_dir)
+        .args(extra)
         .output()
         .expect("failed to spawn vibaoc binary");
     BuildResult {
@@ -122,7 +114,6 @@ pub fn run_build(source: &PathBuf, out_dir: &PathBuf) -> BuildResult {
     }
 }
 
-/// Runs `vibaoc check --ast <source>` and returns (success, stdout, stderr).
 pub fn run_check_ast(source: &PathBuf) -> (bool, String, String) {
     let output = Command::new(vibaoc_bin())
         .arg("check")

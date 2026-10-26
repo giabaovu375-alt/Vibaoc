@@ -27,23 +27,17 @@ app("Actions demo EN") {
         button("Call API directly") {
             on_click { api_call("GET", "/api/ping") }
         }
-        button("Call API with callbacks (bug repro)") {
+        button("Call API with callbacks") {
             on_click {
-                // ANOTHER REAL GAP (vibaoc/src/parser/action.rs): the
-                // success/failure callback block ONLY recognizes the
-                // literal Vietnamese identifiers "thanh_cong"/"that_bai"
-                // (`if cb_name == "thanh_cong"` / `== "that_bai"`), with
-                // no English equivalent ("success"/"failure" are silently
-                // ignored - parsed as a callback with an unrecognized
-                // name, matching neither branch, so NEITHER on_success
-                // NOR on_failure is ever set). Even in a 100% English
-                // file, "thanh_cong"/"that_bai" are required here.
+                // English response handlers `success`/`failure` and the
+                // English toast option `type:` are normalized by the
+                // parser to `thanh_cong`/`that_bai` and `kieu:`.
                 api_call("GET", "/api/ping") {
-                    thanh_cong {
-                        notify("API OK", kieu: thanh_cong)
+                    success {
+                        notify("API OK", type: success)
                     }
-                    that_bai {
-                        notify("API failed", kieu: loi)
+                    failure {
+                        notify("API failed", type: error)
                     }
                 }
             }

@@ -58,7 +58,7 @@ Please include:
 - The exact command you ran (`vibaoc build ...` / `vibaoc check ...`).
 - What you expected vs. what happened, including any error output.
 
-## Scope for 0.1.0
+## Scope for 0.1.5
 
 See [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) for what's intentionally
 out of scope, disabled, or still rough in this release, so issues don't

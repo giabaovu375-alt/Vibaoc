@@ -4,13 +4,19 @@ lang = "vi";
 
 ung_dung("Component demo") {
     @the TheNhan(nhan: chuoi, mau_nen: mau) {
-        khoi(dem: 6, mau_nen: $mau_nen, radius: 6) {
+        khoi {
+            @khoang_cach { dem: 6, radius: 6 }
+            @mau { mau_nen: $mau_nen }
+
             text("$nhan", co: 12, dam: true, mau: trang)
         }
     }
 
     @the TheThanhVien(ten: chuoi, tuoi: so, la_admin: bool) {
-        khoi(dem: 16, mau_nen: xam_nhat, radius: 8) {
+        khoi {
+            @khoang_cach { dem: 16, radius: 8 }
+            @mau { mau_nen: xam_nhat }
+
             text($ten, co: 18, dam: true)
             text("Tuổi: $tuoi", co: 14)
             neu $la_admin {

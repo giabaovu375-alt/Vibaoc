@@ -1,0 +1,292 @@
+lang = "vi";
+
+ứng_dụng("Portfolio cá nhân") {
+
+    chủ_đề sáng {
+        $nền = trang
+        $chữ = xám_đậm
+        $phụ = xám
+        $nền_thẻ = trang
+        $nền_chip = xám_nhạt
+        $viền = xám
+        $nhấn = xanh
+        $chữ_nhấn = trang
+    }
+
+    chủ_đề tối {
+        $nền = "#1a202c"
+        $chữ = "#e2e8f0"
+        $phụ = "#a0aec0"
+        $nền_thẻ = "#2d3748"
+        $nền_chip = "#2d3748"
+        $viền = "#4a5568"
+        $nhấn = "#63b3ed"
+        $chữ_nhấn = "#1a202c"
+    }
+
+    giao_diện {
+        phông_chữ: "Inter, system-ui, -apple-system, sans-serif"
+        tải_phông: "https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+        cỡ: 16
+        màu: $chữ
+        màu_nền: $nền
+        hàng: 1.6
+        cuộn_mượt: true
+        cuộn_lùi: 72
+    }
+
+    @thẻ ThẻDựÁn(tên: chuỗi, mô_tả: chuỗi, đường_dẫn: chuỗi) {
+        flex {
+            @flex_bố_cục { hướng: cột, gap: 8 }
+
+            text($tên, cỡ: 18, đậm: true)
+            text($mô_tả, cỡ: 14, màu: $phụ)
+            link("Xem mã nguồn", đến: $đường_dẫn, mục_tiêu: "_blank", quan_hệ: "noreferrer", màu: $nhấn)
+        }
+    }
+
+    trang("/", "Gia Bảo - Vibe code", mô_tả: "Portfolio của Gia Bảo: giới thiệu, kỹ năng, dự án và thông tin liên hệ.") {
+        state $kỹ_năng = ["Vibe code", "Rust", "WebAssembly", "Three.js"]
+        state $dự_án = [
+            {id: 1, tên: "Compiler", mô_tả: "Trình biên dịch ViBao: viết web bằng tiếng Việt, biên dịch ra HTML, CSS và WebAssembly.", url: "https://github.com/giabaovu375-alt/Vibaoc"},
+            {id: 2, tên: "Game 3D bằng three.js", mô_tả: "Game 3D chạy trên trình duyệt, viết bằng three.js.", url: "https://github.com/giabaovu375-alt/punchan-arena"},
+            {id: 3, tên: "Web chúc mừng sinh nhật", mô_tả: "Trang web nhỏ dùng để gửi lời chúc mừng sinh nhật.", url: "https://github.com/giabaovu375-alt/Happy-birthday-"}
+        ]
+        state $tên_liên_hệ = ""
+        state $email_liên_hệ = ""
+        state $tin_nhắn = ""
+        state $menu_mở = false
+        state $repo_ds = []
+        state $repo_tt = "dang_tai"
+
+        on_tải {
+            $repo_ds = gọi_api("GET", "https://api.github.com/users/giabaovu375-alt/repos?sort=updated&per_page=6", chạy_nền: true) {
+                thành_công { $repo_tt = "xong" }
+                thất_bại { $repo_tt = "loi" }
+            }
+        }
+
+        đính_đầu(offset: 0) {
+            @định_danh { thẻ_html: "header" }
+
+            khối {
+                @màu { màu_nền: $nền }
+                @khoảng_cách { đệm: 16 }
+
+                flex {
+                    @flex_bố_cục { hướng: hàng, gap: 24, dọc: giữa }
+
+                    text("Gia Bảo", cỡ: 20, đậm: true)
+
+                    flex {
+                        @flex_bố_cục { hướng: hàng, gap: 24 }
+                        @định_danh { thẻ_html: "nav" }
+                        @di_động { ẩn: true }
+
+                    link("Giới thiệu", đến: "#gioi-thieu", màu: $nhấn)
+                    link("Kỹ năng", đến: "#ky-nang", màu: $nhấn)
+                    link("Dự án", đến: "#du-an", màu: $nhấn)
+                    link("Liên hệ", đến: "#lien-he", màu: $nhấn)
+                    link("GitHub", đến: "https://github.com/giabaovu375-alt", mục_tiêu: "_blank", quan_hệ: "noreferrer", màu: $nhấn)
+                    }
+
+                    button("Menu", hiệu_ứng_hover: "lam_sang") {
+                        @màu { màu_nền: $nền_chip }
+                        @khoảng_cách { đệm: 8, radius: 8 }
+                        @máy_tính_bảng { ẩn: true }
+                        @máy_tính { ẩn: true }
+
+                        khi_nhấn { $menu_mở = !$menu_mở }
+                    }
+
+                    button("Giao diện", hiệu_ứng_hover: "lam_sang") {
+                        @màu { màu_nền: $nền_chip, màu: $chữ }
+                        @khoảng_cách { đệm: 8, radius: 8 }
+
+                        khi_nhấn { đặt_chủ_đề() }
+                    }
+                }
+
+                nếu $menu_mở {
+                    flex {
+                        @màu { màu_nền: $nền_chip }
+                        @khoảng_cách { đệm: 12, radius: 8 }
+                        @flex_bố_cục { hướng: hàng, bọc: true, gap: 16 }
+                        @máy_tính_bảng { ẩn: true }
+                        @máy_tính { ẩn: true }
+
+                    link("Giới thiệu", đến: "#gioi-thieu", màu: $nhấn) { khi_nhấn { $menu_mở = false } }
+                    link("Kỹ năng", đến: "#ky-nang", màu: $nhấn) { khi_nhấn { $menu_mở = false } }
+                    link("Dự án", đến: "#du-an", màu: $nhấn) { khi_nhấn { $menu_mở = false } }
+                    link("Liên hệ", đến: "#lien-he", màu: $nhấn) { khi_nhấn { $menu_mở = false } }
+                    link("GitHub", đến: "https://github.com/giabaovu375-alt", mục_tiêu: "_blank", quan_hệ: "noreferrer", màu: $nhấn)
+                    }
+                }
+            }
+        }
+
+        căn_giữa(max_rộng: 960) {
+            @định_danh { thẻ_html: "main" }
+
+            flex {
+                @khoảng_cách { đệm: 32 }
+                @flex_bố_cục { hướng: hàng, gap: 32, dọc: giữa }
+                @di_động { hướng: cột, đệm: 16, gap: 16 }
+                @định_danh { id: "gioi-thieu", thẻ_html: "section" }
+
+                image(nguồn: "avatar.svg", mô_tả_ảnh: "Ảnh đại diện", rộng: 160, cao: 160, radius: 80)
+
+                flex {
+                    @flex_bố_cục { hướng: cột, gap: 12 }
+
+                    h1("Xin chào, tôi là Gia Bảo", cỡ: 32)
+                    text("Vibe code: biến ý tưởng thành sản phẩm chạy được cùng AI.", cỡ: 16, màu: $phụ)
+                }
+            }
+
+            flex {
+                @khoảng_cách { đệm: 32 }
+                @flex_bố_cục { hướng: cột, gap: 16 }
+                @định_danh { id: "ky-nang", thẻ_html: "section" }
+
+                h2("Kỹ năng", cỡ: 24)
+                flex {
+                    @flex_bố_cục { hướng: hàng, bọc: true, gap: 8 }
+
+                    vòng_lặp $k trong $kỹ_năng {
+                        khối {
+                            @khoảng_cách { đệm: 8, radius: 16 }
+                            @màu { màu_nền: $nền_chip }
+
+                            text($k, cỡ: 14)
+                        }
+                    }
+                }
+            }
+
+            flex {
+                @khoảng_cách { đệm: 32 }
+                @flex_bố_cục { hướng: cột, gap: 16 }
+                @định_danh { id: "du-an", thẻ_html: "section" }
+
+                h2("Dự án", cỡ: 24)
+                grid {
+                    @grid_bố_cục { cột: 3, gap: 16 }
+                    @di_động { cột: 1 }
+
+                    vòng_lặp $d trong $dự_án {
+                        khối(hiệu_ứng_cuộn: "fade_in", hiệu_ứng_hover: "nang_len") {
+                            @khoảng_cách { đệm: 20, radius: 8, bóng: "0 1px 6px rgba(0,0,0,.14)" }
+                            @màu { màu_nền: $nền_thẻ }
+
+                            ThẻDựÁn(tên: $d.tên, mô_tả: $d.mô_tả, đường_dẫn: $d.url)
+                        }
+                    }
+                }
+            }
+
+            flex {
+                @khoảng_cách { đệm: 32 }
+                @flex_bố_cục { hướng: cột, gap: 16 }
+                @định_danh { id: "github", thẻ_html: "section" }
+
+                h2("Repo mới trên GitHub", cỡ: 24)
+
+                nếu $repo_tt == "dang_tai" {
+                    text("Đang tải danh sách repo…", cỡ: 14, màu: $phụ)
+                }
+                nếu $repo_tt == "loi" {
+                    text("Không tải được danh sách repo. Thử tải lại trang sau.", cỡ: 14, màu: $phụ)
+                }
+                nếu $repo_tt == "xong" {
+                    nếu $repo_ds.rỗng {
+                        text("Chưa có repo công khai nào.", cỡ: 14, màu: $phụ)
+                    }
+
+                    grid {
+                        @grid_bố_cục { cột: 3, gap: 16 }
+                        @di_động { cột: 1 }
+
+                        vòng_lặp $r trong $repo_ds {
+                            khối {
+                                @khoảng_cách { đệm: 20, radius: 8, bóng: "0 1px 6px rgba(0,0,0,.14)" }
+                                @màu { màu_nền: $nền_thẻ }
+
+                                flex {
+                                    @flex_bố_cục { hướng: cột, gap: 8 }
+
+                                    text($r.name, cỡ: 18, đậm: true)
+                                    nếu $r.description {
+                                        text($r.description, cỡ: 14, màu: $phụ)
+                                    }
+                                    link("Xem mã nguồn", đến: $r.html_url, mục_tiêu: "_blank", quan_hệ: "noreferrer", màu: $nhấn)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            flex {
+                @khoảng_cách { đệm: 32 }
+                @flex_bố_cục { hướng: cột, gap: 16 }
+                @định_danh { id: "lien-he", thẻ_html: "section" }
+
+                h2("Liên hệ", cỡ: 24)
+                text("Email: giabaovu375@gmail.com", cỡ: 16)
+                link("Gửi email", đến: "mailto:giabaovu375@gmail.com", màu: $nhấn)
+
+                form() {
+                    khối {
+                        @kích_thước { max_rộng: 480 }
+
+                        flex {
+                            @flex_bố_cục { hướng: cột, gap: 12 }
+
+                            input {
+                                @khoảng_cách { đệm: 10, radius: 8, viền: 1 }
+                                @màu { màu_nền: $nền, màu: $chữ, màu_viền: $viền }
+                                @nhập_liệu { giá_trị: $tên_liên_hệ, chữ_trỏ: "Tên của bạn", bắt_buộc: true }
+                            }
+                            input {
+                                @khoảng_cách { đệm: 10, radius: 8, viền: 1 }
+                                @màu { màu_nền: $nền, màu: $chữ, màu_viền: $viền }
+                                @nhập_liệu { giá_trị: $email_liên_hệ, loại: "email", chữ_trỏ: "Email", bắt_buộc: true }
+                            }
+                            vùng_văn_bản {
+                                @khoảng_cách { đệm: 10, radius: 8, viền: 1 }
+                                @màu { màu_nền: $nền, màu: $chữ, màu_viền: $viền }
+                                @nhập_liệu { giá_trị: $tin_nhắn, chữ_trỏ: "Lời nhắn của bạn", bắt_buộc: true }
+                            }
+                            button("Gửi liên hệ", hiệu_ứng_hover: "lam_sang") {
+                                @màu { màu_nền: $nhấn, màu: $chữ_nhấn }
+                                @khoảng_cách { đệm: 12, radius: 8 }
+                            }
+                        }
+                    }
+
+                    khi_gửi {
+                        gọi_api("POST", "https://formspree.io/f/THAY_BANG_ID_CUA_BAN", { name: $tên_liên_hệ, email: $email_liên_hệ, message: $tin_nhắn }) {
+                            thành_công {
+                                thông_báo("Đã gửi liên hệ, cảm ơn bạn!", kiểu: thành_công)
+                                $tên_liên_hệ = ""
+                                $email_liên_hệ = ""
+                                $tin_nhắn = ""
+                            }
+                            thất_bại {
+                                thông_báo("Chưa gửi được, vui lòng thử lại hoặc gửi email trực tiếp.", kiểu: lỗi)
+                            }
+                        }
+                    }
+                }
+            }
+
+            khối {
+                @khoảng_cách { đệm: 24 }
+                @định_danh { thẻ_html: "footer" }
+
+                text("© 2026 Gia Bảo", cỡ: 14, màu: $phụ)
+            }
+        }
+    }
+}

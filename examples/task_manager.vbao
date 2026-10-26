@@ -1,12 +1,13 @@
 lang = "vi";
 
-// Vi du: quan ly danh sach cong viec voi mang dong, vong lap, va
-// cac thao tac CRUD tren mang theo id (them_vao_mang / xoa_theo_id /
-// cap_nhat_theo_id).
 ung_dung("Quan ly cong viec") {
 
     @the TheNhan(nhan: chuoi, mau_nen: mau) {
-        khoi(dem: 6, mau_nen: $mau_nen, radius: 6, huong: hang) {
+        flex {
+            @khoang_cach { dem: 6, radius: 6 }
+            @mau { mau_nen: $mau_nen }
+            @flex_bo_cuc { huong: hang }
+
             text("$nhan", co: 12, dam: true, mau: trang)
         }
     }
@@ -18,7 +19,11 @@ ung_dung("Quan ly cong viec") {
         ]
         state $id_ke_tiep = 3
 
-        khoi(dem: 24, huong: cot, khoang_chu: 16, max_rong: 640) {
+        can_giua(max_rong: 640) {
+        flex {
+            @khoang_cach { dem: 24 }
+            @flex_bo_cuc { huong: cot, gap: 16 }
+
             text("Quan ly cong viec", co: 28, dam: true)
             text("Tong: $tasks.do_dai cong viec", co: 14, mau: xam)
 
@@ -30,27 +35,39 @@ ung_dung("Quan ly cong viec") {
             }
 
             vong_lap $task trong $tasks {
-                khoi(dem: 12, radius: 6, huong: hang, khoang_chu: 12, mau_vien: xam_nhat, kieu_vien: 1) {
-                    khoi(huong: cot, khoang_chu: 4) {
-                        neu $task.xong {
-                            text("✅ $task.tieu_de", co: 15, mau: xam)
-                        } khong_thi {
-                            text("$task.tieu_de", co: 15, dam: true)
-                        }
-                        TheNhan(nhan: "$task.do_uu_tien", mau_nen: xam)
-                    }
-                    khoi(huong: hang, khoang_chu: 8) {
-                        button("Xong") {
-                            khi_nhan {
-                                cap_nhat_theo_id($tasks, "id", $task.id, {id: $task.id, tieu_de: $task.tieu_de, do_uu_tien: $task.do_uu_tien, xong: true})
+                khoi {
+                    @khoang_cach { dem: 12, radius: 6, vien: 1, kieu_vien: 1 }
+                    @mau { mau_vien: xam_nhat }
+
+                    flex {
+                        @flex_bo_cuc { huong: hang, gap: 12 }
+
+                        flex {
+                            @flex_bo_cuc { huong: cot, gap: 4 }
+
+                            neu $task.xong {
+                                text("✅ $task.tieu_de", co: 15, mau: xam)
+                            } khong_thi {
+                                text("$task.tieu_de", co: 15, dam: true)
                             }
+                            TheNhan(nhan: "$task.do_uu_tien", mau_nen: xam)
                         }
-                        button("Xoa") {
-                            khi_nhan { xoa_theo_id($tasks, "id", $task.id) }
+                        flex {
+                            @flex_bo_cuc { huong: hang, gap: 8 }
+
+                            button("Xong") {
+                                khi_nhan {
+                                    cap_nhat_theo_id($tasks, "id", $task.id, {id: $task.id, tieu_de: $task.tieu_de, do_uu_tien: $task.do_uu_tien, xong: true})
+                                }
+                            }
+                            button("Xoa") {
+                                khi_nhan { xoa_theo_id($tasks, "id", $task.id) }
+                            }
                         }
                     }
                 }
             }
+        }
         }
     }
 }

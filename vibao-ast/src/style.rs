@@ -1,15 +1,6 @@
-// ============================================================
-// VIBAO COMPILER (Rust) — ast/style.rs
-// COLOR VALUE, ANIMATION, RESPONSIVE
-// ============================================================
-
 use super::child::PropsMap;
 use super::expr::{ColorFuncKind, Expr};
 use super::Pos;
-
-// ════════════════════════════════════════════════════════════
-// 12. COLOR VALUE (used specifically for explicit color props, e.g. mau_nen)
-// ════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone)]
 pub enum ColorValue {
@@ -22,15 +13,11 @@ pub enum ColorValue {
     },
 }
 
-// ════════════════════════════════════════════════════════════
-// 13. ANIMATION
-// ════════════════════════════════════════════════════════════
-
 #[derive(Debug, Clone, Default)]
 pub struct AnimationProps {
     pub hieu_ung: Option<String>,
-    pub thoi_gian: Option<u32>, // duration, ms
-    pub tre: Option<u32>,       // delay, ms
+    pub thoi_gian: Option<u32>,
+    pub tre: Option<u32>,
     pub lap: Option<LapValue>,
     pub hieu_ung_hover: Option<String>,
     pub hieu_ung_cuon: Option<String>,
@@ -39,18 +26,14 @@ pub struct AnimationProps {
 #[derive(Debug, Clone)]
 pub enum LapValue {
     Count(u32),
-    MaiMai, // infinite ("forever")
+    MaiMai,
 }
-
-// ════════════════════════════════════════════════════════════
-// 14. RESPONSIVE
-// ════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Breakpoint {
-    DiDong,      // mobile
-    MayTinhBang, // tablet
-    MayTinh,     // desktop
+    DiDong,
+    MayTinhBang,
+    MayTinh,
 }
 
 #[derive(Debug, Clone)]

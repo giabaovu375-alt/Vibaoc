@@ -17,7 +17,9 @@ app("Collection loop EN") {
 
         text("Product list", bold: true)
         loop $product trong $products {
-            box(padding: 8, border: 1) {
+            box {
+                @spacing { padding: 8, border: 1 }
+
                 text($product.name, bold: true)
                 text($product.price)
             }

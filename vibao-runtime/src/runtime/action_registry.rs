@@ -1,15 +1,3 @@
-// ============================================================
-// VIBAO RUNTIME (Rust/WASM) — runtime/action_registry.rs
-// A counterpart to expr_registry.rs, but for `Action` instead of `Expr`.
-//
-// Codegen serializes every Vec<Action> (each event handler's body, e.g.
-// on_click/on_change/...) to JSON, embedded into __vb.boot(). At
-// runtime, dom.rs (bind_events) only embeds an "action id" into the
-// data-vb-on-click="<actionId>" attribute - when a button is clicked,
-// the registry is looked up by that id, retrieving the real
-// Vec<Action>, handed to action::dispatch() to execute.
-// ============================================================
-
 use std::cell::RefCell;
 
 use vibao_ast::Action;
@@ -34,7 +22,6 @@ pub fn load_from_json(json: &str) {
     }
 }
 
-/// Looks up a sequence of Actions (an event handler's body) by id.
 pub fn get(id: usize) -> Option<Vec<Action>> {
     REGISTRY.with(|reg| reg.borrow().get(id).cloned())
 }

@@ -27,15 +27,15 @@ vibaoc --version
 
 Prebuilt archives are published on the
 [Releases page](https://github.com/giabaovu375-alt/Vibaoc/releases). Each
-`v0.1.0` release currently includes:
+`v0.1.5` release currently includes:
 
 | Archive | Platform |
 |---|---|
-| `vibao-0.1.0-linux-x86_64.tar.gz` | Linux, x86_64 |
-| `vibao-0.1.0-linux-arm64.tar.gz` | Linux / Android (Termux), arm64 |
-| `vibao-0.1.0-macos-x86_64.tar.gz` | macOS, Intel |
-| `vibao-0.1.0-macos-arm64.tar.gz` | macOS, Apple Silicon |
-| `vibao-0.1.0-windows-x86_64.tar.gz` | Windows, x86_64 |
+| `vibao-0.1.5-linux-x86_64.tar.gz` | Linux, x86_64 |
+| `vibao-0.1.5-linux-arm64.tar.gz` | Linux / Android (Termux), arm64 |
+| `vibao-0.1.5-macos-x86_64.tar.gz` | macOS, Intel |
+| `vibao-0.1.5-macos-arm64.tar.gz` | macOS, Apple Silicon |
+| `vibao-0.1.5-windows-x86_64.tar.gz` | Windows, x86_64 |
 
 Each archive contains:
 
@@ -50,7 +50,7 @@ README.txt
 Steps:
 
 1. Download the archive matching your platform.
-2. Extract it: `tar -xzf vibao-0.1.0-<platform>.tar.gz`
+2. Extract it: `tar -xzf vibao-0.1.5-<platform>.tar.gz`
 3. Place `vibaoc` on your `PATH`, and keep the `pkg/` folder next to it —
    `vibaoc build` looks for `pkg/` beside its own binary at runtime.
 
@@ -93,7 +93,7 @@ automatically. `VIBAO_PKG_DIR` can override this path if needed.
 To build a distributable release archive for your current platform:
 
 ```bash
-bash scripts/build-release.sh 0.1.0
+bash scripts/build-release.sh 0.1.5
 ```
 
 See [`scripts/RELEASE.md`](../scripts/RELEASE.md) for the full release

@@ -1,20 +1,28 @@
 # ViBao
 
-**ViBao** là một DSL và compiler ưu tiên tiếng Việt để xây web UI.
-ViBao compile trực tiếp ra HTML/CSS/JS cùng một runtime WebAssembly nhỏ
-gọn — không cần Node.js, không cần bundler, không cần framework
-JavaScript.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
+[![Release](https://img.shields.io/github/v/release/giabaovu375-alt/Vibaoc)](https://github.com/giabaovu375-alt/Vibaoc/releases)
+
+**ViBao** là ngôn ngữ mô tả giao diện web ưu tiên tiếng Việt, kèm compiler. Mã nguồn `.vbao` được biên dịch thẳng ra
+HTML, CSS, JS và một runtime WebAssembly nhỏ. Không cần Node.js, bundler hay framework JavaScript.
+
+> English: [`README.md`](../README.md)
 
 ```vbao
-ung_dung("Ung dung cua toi") {
+lang = "vi";
+
+ứng_dụng("Ứng dụng của tôi") {
     trang("/") {
-        khoi(dem: 16) {
-            text("So dem: ", dam: true)
-            button("Tang") {
-                khi_nhan {
-                    $dem = $dem + 1
-                    neu $dem >= 10 {
-                        thong_bao("Da dat 10!", kieu: thanh_cong)
+        state $đếm = 0
+
+        khối {
+            @khoảng_cách { đệm: 16 }
+            text("Số đếm: $đếm", đậm: true)
+            button("Tăng") {
+                khi_nhấn {
+                    $đếm = $đếm + 1
+                    nếu $đếm >= 10 {
+                        thông_báo("Đã đạt 10!", kiểu: thành_công)
                     }
                 }
             }
@@ -23,228 +31,124 @@ ung_dung("Ung dung cua toi") {
 }
 ```
 
-Chương trình y hệt, viết bằng tiếng Anh:
+Từ khoá viết có dấu hoặc không dấu đều được, kết quả giống hệt nhau. Từ khoá tiếng Anh cũng được chấp nhận và có thể
+trộn trong cùng một file.
 
-```vbao
-app("My app") {
-    page("/") {
-        box(padding: 16) {
-            text("Count: ", bold: true)
-            button("Increment") {
-                on_click {
-                    $count = $count + 1
-                    if $count >= 10 {
-                        notify("Reached 10!", type: success)
-                    }
-                }
-            }
-        }
-    }
-}
-```
+## Tính năng
 
-Từ khoá tiếng Việt và tiếng Anh đều resolve về cùng một AST — viết
-bằng ngôn ngữ nào tuỳ thích, trộn lẫn thoải mái, đổi qua lại bất cứ
-lúc nào.
-
-## Mục tiêu
-
-ViBao tồn tại để thử một ý tưởng mà hầu hết ngôn ngữ khác chưa làm:
-**viết code UI bằng từ khoá của chính ngôn ngữ mình, không chỉ tiếng
-Anh.** Tiếng Việt và tiếng Anh là những gì đã có hiện tại, nhưng không
-phải giới hạn cuối — lớp locale được thiết kế để bất kỳ ngôn ngữ nào
-cũng có thể thêm vào mà không đụng vào lõi compiler (xem
-[Từ khoá đa ngôn ngữ](#từ-khoá-đa-ngôn-ngữ)).
-
-Ngoài locale, ViBao cũng là nơi để thử nghiệm cú pháp và tính năng mà
-các framework lớn chưa làm — những ý tưởng không nhất thiết phải giống
-"thêm một bản clone của React". Nếu bạn có ý tưởng lạ về cách code UI
-nên hoạt động, một cú pháp khác thường, hay một thư viện built-in nhỏ
-mà chưa ai làm — dự án này muốn là sân chơi cho những thứ đó, và rất
-hoan nghênh đóng góp theo hướng này, không chỉ dừng ở sửa bug.
-
-Đây cũng là một project cá nhân để học compiler và language design
-công khai, nên hãy kỳ vọng nhịp độ và quy mô của một side project, chứ
-không phải một toolchain có công ty đứng sau.
-
-## Từ khoá đa ngôn ngữ
-
-ViBao không có ý định chỉ dừng lại ở tiếng Việt/tiếng Anh. Lớp locale
-(`vibaoc/src/locale/`) được thiết kế tách biệt hoàn toàn khỏi phần còn
-lại của compiler: lexer, parser, codegen, và validator chỉ làm việc với
-các định danh ngữ nghĩa không phụ thuộc ngôn ngữ (`Tag`, `PropKey`,
-`ActionName`, `FunctionName`, định nghĩa trong `vibao-ast`). Mỗi ngôn
-ngữ chỉ đơn giản là một bảng ánh xạ từ ngữ bề mặt sang các định danh đó
-— hiện có `vi.rs` và `en.rs`, với cùng cấu trúc sẵn sàng cho `ja.rs`,
-`es.rs`, `fr.rs`,... trong tương lai.
-
-Cụ thể, để thêm một locale từ khoá mới cần:
-1. Viết file `vibaoc/src/locale/<lang>.rs` mới (kèm `<lang>_action.rs`
-   / `<lang>_function.rs` / `<lang>_prop.rs`) ánh xạ từ ngữ của ngôn
-   ngữ đó sang các giá trị `Tag`/`PropKey`/`ActionName`/`FunctionName`
-   đã có sẵn — không có ngữ nghĩa mới, chỉ là tên gọi mới cho cùng khái
-   niệm.
-2. Đăng ký trong `vibaoc/src/locale/mod.rs` và
-   `vibaoc/src/lexer/tables.rs`, theo đúng pattern đã dùng cho tiếng
-   Việt và tiếng Anh.
-3. Thêm test resolution xác nhận từ khoá của locale mới map về đúng
-   AST như các locale hiện có (xem các module test `*_vi.rs` /
-   `*_en.rs` để copy pattern).
-
-Lúc runtime, lexer luôn kiểm tra bảng của locale đang active *cùng
-với* tiếng Anh (tiếng Anh là locale fallback toàn cục), nên thêm ngôn
-ngữ mới không bao giờ làm hỏng file `.vbao` đã có. Tiếng Việt và tiếng
-Anh là 2 ngôn ngữ duy nhất hỗ trợ hiện tại — rất hoan nghênh đóng góp
-thêm locale mới, xem [CONTRIBUTING.md](../CONTRIBUTING.md).
-
-## Vì sao chọn ViBao?
-
-- **Compile ra web app tĩnh.** Output là HTML/CSS/JS thuần, mở trực
-  tiếp trong trình duyệt hoặc deploy ở bất kỳ đâu.
-- **Runtime nhỏ gọn.** State, reactivity, routing, và event được xử lý
-  bởi một WebAssembly runtime nhẹ thay vì một framework JS lớn.
-- **Báo lỗi lúc compile, không phải lúc chạy production.** Action
-  không xác định, function không xác định, và vài lỗi phổ biến khác
-  được compiler bắt ngay với thông báo rõ ràng và vị trí trong source.
+- **Biên dịch ra web tĩnh**: `index.html`, `style.css`, `app.js` và runtime WASM; mở trực tiếp hoặc đưa lên host tĩnh.
+- **Reactive nhẹ**: `state`, biểu thức, `nếu`, `vòng_lặp`, two-way binding cho `input`, router nhiều trang.
+- **Chủ đề sáng/tối**: khai báo bằng `chủ_đề`, tự theo hệ điều hành, đổi bằng `đặt_chủ_đề()` và nhớ lựa chọn.
+- **Gọi API**: `gọi_api` có `tiêu_đề`, đọc phản hồi `$phản_hồi.choices[0].message.content`, chạy nền không chặn trang.
+- **Lỗi lúc biên dịch**: action lạ, hàm lạ, prop sai khối, biến theme dùng sai đều báo lỗi kèm vị trí (tiếng Việt hoặc tiếng Anh).
+- **Triển khai**: `--site-url` sinh `sitemap.xml`, `robots.txt`, canonical, `og:image`; `404.html` cho SPA.
+- **Đa ngôn ngữ từ khoá**: lớp locale tách riêng, thêm ngôn ngữ mới không đụng lõi compiler.
 
 ## Bắt đầu nhanh
 
-Tải bản build sẵn cho hệ điều hành của bạn từ
-[Releases](https://github.com/giabaovu375-alt/Vibaoc/releases) — không
-cần Rust hay WASM tooling — hoặc cài bằng 1 lệnh:
+Tải file chạy cho nền tảng của bạn ở trang [Releases](https://github.com/giabaovu375-alt/Vibaoc/releases)
+(Linux, macOS, Windows, Android qua Termux), hoặc cài bằng một lệnh:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/giabaovu375-alt/Vibaoc/main/scripts/install.sh | sh
 ```
 
-Xem chi tiết đầy đủ (kể cả cài trên Android qua Termux) tại
-[`docs/INSTALLATION.md`](INSTALLATION.md).
-
-Sau đó compile 1 file `.vbao`:
+Chi tiết từng nền tảng và Termux: [`INSTALLATION.md`](INSTALLATION.md).
 
 ```bash
-vibaoc app.vbao
-# hoặc, viết đầy đủ:
-vibaoc build app.vbao --out dist
+vibaoc check app.vbao                    # chỉ kiểm tra lỗi
+vibaoc build app.vbao --out dist         # biên dịch ra dist/
+vibaoc serve app.vbao --port 8000        # build, mở server cục bộ, tự build lại khi sửa file
 ```
 
-Mở `dist/index.html` trong trình duyệt để xem kết quả.
+Mở `dist/index.html` hoặc `http://127.0.0.1:8000` để xem kết quả.
 
-Thêm ví dụ mẫu ở [`examples/`](../examples/): 1 bộ đếm
-(`counter.vbao`), 1 app nhiều trang có component tái sử dụng
-(`multi_page.vbao`), và 1 app quản lý công việc nhỏ có CRUD trên mảng
-(`task_manager.vbao`).
+## Ví dụ trong repo
+
+Các ví dụ chỉ nằm trên GitHub, không đóng gói vào bản release.
+
+| File | Nội dung |
+|---|---|
+| [`examples/multi_page.vbao`](../examples/multi_page.vbao) | Nhiều trang và component dùng lại |
+| [`examples/task_manager.vbao`](../examples/task_manager.vbao) | Danh sách việc với thêm/xóa/cập nhật |
+| [`examples/portfolio.vbao`](../examples/portfolio.vbao) | Web profile: theme sáng/tối, menu di động, form, repo lấy từ GitHub |
+| [`examples/chat_groq.vbao`](../examples/chat_groq.vbao) | Chat gọi Groq API (điền khóa API trước khi chạy) |
+
+`chat_groq.vbao` cần khóa API của bạn. Khóa viết trong nguồn sẽ lộ ở trình duyệt, chỉ dùng khi thử cục bộ và không đưa
+file đã điền khóa lên repo công khai.
 
 ## Cấu trúc repo
 
 ```text
 .
-├── vibao-ast/        # AST dùng chung và định danh ngữ nghĩa
-├── vibaoc/           # Compiler CLI (lexer, parser, resolver,
-│                      # validator, codegen) + test end-to-end
-├── vibao-runtime/    # Runtime chạy trong trình duyệt, compile ra WASM
-├── docs/             # Tài liệu ngôn ngữ và dự án
-└── scripts/          # Script build, release, install, verify
+├── vibao-ast/        # AST và các kiểu ngữ nghĩa dùng chung
+├── vibaoc/           # Compiler CLI (lexer, parser, validator, codegen) và test end-to-end
+├── vibao-runtime/    # Runtime chạy trong trình duyệt, biên dịch ra WASM
+├── examples/         # Ví dụ
+├── docs/             # Tài liệu
+└── scripts/          # Build, đóng gói, cài đặt, kiểm tra
 ```
 
 ## Build từ source
 
-Yêu cầu:
-- Rust và Cargo
-- Target `wasm32-unknown-unknown` của Rust (chỉ cần khi build runtime
-  cho trình duyệt)
-- `wasm-bindgen-cli` — `scripts/build-runtime.sh` tự cài đúng phiên
-  bản đã khoá trong `Cargo.lock` nếu chưa có
+Cần Rust và Cargo. Cần thêm target `wasm32-unknown-unknown` để build runtime; `scripts/build-runtime.sh` tự cài
+`wasm-bindgen-cli` đúng phiên bản nếu thiếu.
 
 ```bash
-cargo test --workspace          # chạy toàn bộ test suite
-bash scripts/build-runtime.sh   # build runtime package (WASM)
-bash scripts/build-release.sh 0.1.0   # build release archive cho platform hiện tại
+bash scripts/build-runtime.sh       # build runtime (WASM); bắt buộc trước khi chạy test e2e
+cargo test --workspace              # chạy toàn bộ test
+bash scripts/verify.sh              # fmt, test và build với cảnh báo bị coi là lỗi
+bash scripts/build-release.sh 0.1.5 # đóng gói bản release cho nền tảng hiện tại
 ```
 
-Xem [`scripts/RELEASE.md`](../scripts/RELEASE.md) để biết quy trình
-release đầy đủ.
+Quy trình phát hành đầy đủ: [`../scripts/RELEASE.md`](../scripts/RELEASE.md).
 
-## Tài liệu ngôn ngữ
+## Triển khai
 
-| Tài liệu | Mô tả |
+```bash
+vibaoc build app.vbao --out dist --site-url https://ten-mien.com
+```
+
+Xem [`TRIEN_KHAI.md`](TRIEN_KHAI.md) cho các file được sinh ra và hạn chế hiện tại.
+
+## Tài liệu
+
+| Tài liệu | Nội dung |
 |---|---|
-| [`SYNTAX_VI.md`](SYNTAX_VI.md) | Cheat-sheet cú pháp tiếng Việt |
-| [`SYNTAX_EN.md`](SYNTAX_EN.md) | Cheat-sheet cú pháp tiếng Anh |
+| [`SYNTAX_VI.md`](SYNTAX_VI.md) | Cú pháp tiếng Việt: khối, state, action, theme, component |
+| [`SYNTAX_EN.md`](SYNTAX_EN.md) | Cú pháp tiếng Anh |
+| [`PROFILE_GUIDE.md`](PROFILE_GUIDE.md) | Làm một web profile: tài nguyên, font, neo, form |
+| [`TRIEN_KHAI.md`](TRIEN_KHAI.md) | Triển khai lên host tĩnh |
+| [`INSTALLATION.md`](INSTALLATION.md) | Cài đặt trên từng nền tảng |
 | [`VIBAO_SPEC.md`](VIBAO_SPEC.md) | Đặc tả ngôn ngữ đầy đủ |
-| [`LIMITATIONS.md`](LIMITATIONS.md) | Phần chưa hoàn thiện/có giới hạn ở bản 0.1.0 |
-| [`INSTALLATION.md`](INSTALLATION.md) | Hướng dẫn cài đặt chi tiết (mọi nền tảng) |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Kiến trúc compiler và runtime |
+| [`LIMITATIONS.md`](LIMITATIONS.md) | Phần chưa hoàn thiện hoặc không làm gì (tiếng Anh) |
+| [`ROADMAP_0.2.0.md`](ROADMAP_0.2.0.md) | Lộ trình tới 0.2.0 |
+| [`../CHANGELOG.md`](../CHANGELOG.md) | Lịch sử thay đổi |
 
-## Ví dụ dài hơn một chút
+## Hạn chế hiện tại
 
-Một app bộ đếm nhỏ với state, điều kiện, và vòng lặp:
+ViBao 0.1.5 còn sớm, dùng được cho web nhỏ nhưng còn những chỗ chưa hoàn thiện:
 
-```vbao
-lang = "vi";
+- Một số tag (`modal`, `tabs`, `table`, `chart`, ...) vẫn là placeholder, chỉ sinh `<div>` rỗng. Dùng `@thẻ` để tự dựng.
+- `@khoảng_cách` đang chứa cả viền, bóng, bo góc và `overflow`, không chỉ đệm và lề.
+- Mọi route dùng chung một `index.html`, nên Open Graph giống nhau cho cả trang.
+- Sau khi chọn theme bằng tay, chưa có cách quay về chế độ theo hệ điều hành.
+- Khóa API viết trong nguồn sẽ lộ ở trình duyệt.
 
-ung_dung("Vi du ViBao") {
-    trang("/") {
-        state $dem = 0
-        state $tasks = [
-            {id: 1, tieu_de: "Viet tai lieu", xong: false},
-            {id: 2, tieu_de: "Sua loi giao dien", xong: true}
-        ]
+Danh sách đầy đủ: [`LIMITATIONS.md`](LIMITATIONS.md). Lỗi và góp ý đều được hoan nghênh.
 
-        khoi(dem: 24, huong: cot, khoang_chu: 12) {
-            text("Bo dem: $dem", co: 20, dam: true)
-            button("Tang") {
-                khi_nhan { $dem = $dem + 1 }
-            }
+## Kiểm thử
 
-            neu $dem >= 10 {
-                text("Da dat 10!", mau: xanh_la)
-            } khong_thi {
-                text("Chua den 10", mau: xam)
-            }
-
-            vong_lap $task trong $tasks {
-                text($task.tieu_de)
-            }
-        }
-    }
-}
-```
-
-## Trạng thái dự án
-
-ViBao 0.1.0 là bản public đầu tiên, còn sớm — dùng được cho app cơ
-bản, nhưng vẫn còn nhiều điểm gồ ghề thật sự. Vài điểm đáng chú ý:
-
-- Key option trong action (`kieu:`/`thoi_gian:` trong `thong_bao(...)`)
-  hiện chỉ nhận đúng tên tiếng Việt, kể cả trong file toàn tiếng Anh —
-  viết `type:`/`duration:` sẽ bị bỏ qua im lặng (không lỗi, không cảnh
-  báo).
-- 1 số component phức tạp (`modal`, `tabs`, `table`, `chart`,...) hiện
-  chỉ là placeholder, render ra `<div>` rỗng. Dùng `@the` để tự xây
-  component tương đương.
-- `huong`/`gap`/`khoang_chu` không có tác dụng trên `khoi` (box) — chỉ
-  có tác dụng trên `flex`/`grid`/`cuon`.
-
-Danh sách đầy đủ, kể cả những gì đang tắt, cần thêm kiểm thử thực tế,
-hoặc cố tình để sau 0.1.0 — xem [`LIMITATIONS.md`](LIMITATIONS.md)
-(tiếng Anh). Bug report và feedback — về các điểm gồ ghề trên, về thiết
-kế locale/từ khoá, hay bất kỳ điều gì khác — đều rất được hoan nghênh;
-xem [Đóng góp](#đóng-góp).
-
-## Testing
-
-```bash
-cargo test --workspace
-```
-
-Test suite gồm 3 lớp: unit test trong từng crate, contract test cho
-shape JSON của AST, và end-to-end test chạy binary `vibaoc` thật trên
-file `.vbao` thật.
+- **Unit test** trong từng crate: lexer, parser, validator, codegen, runtime.
+- **Contract test** (`vibao-ast/tests/serde_contract.rs`): cố định dạng JSON của AST giữa compiler và runtime.
+- **End-to-end** (`vibaoc/tests/e2e_*.rs`): chạy binary `vibaoc` thật trên file `.vbao` thật và kiểm tra
+  `index.html`, `app.js`, `style.css` sinh ra.
 
 ## Đóng góp
 
-Xem [CONTRIBUTING.md](../CONTRIBUTING.md) trước khi mở pull request.
+Xem [`../CONTRIBUTING.md`](../CONTRIBUTING.md) trước khi mở pull request.
 
 ## License
 
-[MIT License](../LICENSE).
+[MIT](../LICENSE).

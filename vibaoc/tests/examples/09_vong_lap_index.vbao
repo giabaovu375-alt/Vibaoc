@@ -8,7 +8,9 @@ ung_dung("Vong lap co chi so") {
         state $ten_list = ["An", "Binh", "Chi"]
 
         vong_lap $ten, $idx trong $ten_list {
-            khoi(huong: hang, gap: 8) {
+            khoi {
+                @flex_bo_cuc { huong: hang, gap: 8 }
+
                 text("So thu tu:")
                 text($idx)
                 text($ten, dam: true)

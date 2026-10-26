@@ -1,4 +1,7 @@
 /target
-/vibao-runtime/pkg
-*.tar.gz
+/dist
 /release
+/vibao-runtime/pkg
+*.zip
+*.tar.gz
+.DS_Store

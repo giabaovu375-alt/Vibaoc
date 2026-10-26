@@ -1,5 +1,3 @@
-//! English surface names for `FunctionName`.
-
 use vibao_ast::FunctionName;
 
 pub fn function_name_en(name: &str) -> Option<FunctionName> {
@@ -20,7 +18,12 @@ mod tests {
     use std::collections::HashSet;
 
     const ALL: &[&str] = &[
-        "format_price", "format_date", "truncate", "uppercase", "format_percent", "round",
+        "format_price",
+        "format_date",
+        "truncate",
+        "uppercase",
+        "format_percent",
+        "round",
     ];
 
     #[test]
@@ -31,7 +34,8 @@ mod tests {
 
     #[test]
     fn all_names_resolve_to_distinct_function_names() {
-        let resolved: HashSet<FunctionName> = ALL.iter().filter_map(|n| function_name_en(n)).collect();
+        let resolved: HashSet<FunctionName> =
+            ALL.iter().filter_map(|n| function_name_en(n)).collect();
         assert_eq!(resolved.len(), 6);
     }
 

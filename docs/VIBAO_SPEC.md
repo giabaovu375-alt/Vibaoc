@@ -1,4 +1,4 @@
-# ViBao — Language Specification (0.1.0)
+# ViBao — Language Specification (0.1.5)
 
 This is the full technical reference for ViBao's syntax and compiled
 output. For a quick cheat-sheet instead, see
@@ -51,17 +51,24 @@ app("My app") {
         // home page content
     }
 
-    page("/about", "About", background_color: light_gray) {
-        // another page, with an optional display name and background color
+    page("/about", "About", background_color: light_gray, description: "Learn more about me") {
+        // another page, with a display name, background color, and SEO description
     }
 }
 ```
 
 - `app("Name")` — the required root block that wraps everything else.
-- `page("/path", "Name", background_color: <color>)` — declares one
-  route. The second positional argument (display name) and the
-  `background_color` option are both optional and can appear in any
-  order after the route.
+- `page("/path", "Name", background_color: <color>, description: "...")` —
+  declares one route. The second positional argument (display name),
+  `background_color`, and `description`/`mo_ta` are all optional and can
+  appear in any order after the route.
+  - The display name becomes that page's `<title>` and
+    `description`/`mo_ta` becomes its `<meta name="description">` -
+    both update automatically on every SPA navigation to match the
+    active page (this is a single-page app under the hood, so there's
+    only one real `<title>`/`<meta>` tag, kept in sync with the current
+    route at runtime). A page that omits one of these leaves the
+    previous page's value in place rather than clearing it.
 - Routes support dynamic segments with `:name` (e.g. `"/product/:id"`).
   The router matches these at navigation time and injects the matched
   value into state under that name (e.g. `$id`).
@@ -80,15 +87,45 @@ placeholder list.
 | `p` | `<p>` | |
 | `label` | `<span>` | |
 | `button` | `<button>` | |
-| `link` | `<a>` | `den:` / `to:` generates `href` and SPA navigation on click (see §5) |
+| `link` | `<a>` | `den:` / `to:` generates `href` and SPA navigation on click (see §5). `muc_tieu:`/`target:` and `quan_he:`/`rel:` set the plain HTML `target`/`rel` attributes (e.g. `target: "_blank", rel: "noreferrer"` for an external link) |
 | `image` | `<img>` | |
 | `video` | `<video>` | |
 | `icon` | `<span>` | |
 | `input` | `<input>` | |
+| `textarea` | `<textarea>` | multi-line text input; use `gia_tri`/`value` with a `$variable` for two-way binding, same as `input` |
+| `radio` | `<input type="radio">` | default `type="radio"` unless overridden via `loai`/`type`. For a **radio group** (several radios sharing one choice), give every radio the same `gia_tri`/`value` (a `$variable` — this becomes the shared two-way binding key) plus its own `chon`/`option_value` (a fixed string — this radio's own value within the group). See the example below the table. |
+| `checkbox` | `<input type="checkbox">` | default `type="checkbox"` unless overridden via `loai`/`type` |
+| `select` | `<select>` | each child element becomes an `<option>` — its content is the label, `gia_tri`/`value` is the option value (defaults to the label); static options only, see [`LIMITATIONS.md`](LIMITATIONS.md) |
+| `nav` | `<nav>` | |
+| `form` | `<form>` | children render normally; `on_submit`/`khi_gui` fires on submit, and the browser's default full-page reload is automatically suppressed |
 | `spacer` | `<div>` | |
 | `divider` | `<hr>` | |
 | `scroll` | `<div>` | also a layout tag, see below |
 | `container` | `<div>` | also a layout tag, see below |
+
+**Radio group example** — chọn chủ đề sáng/tối:
+
+```vbao
+state $chu_de = "sáng"
+
+chon_mot {
+    @nhap_lieu { gia_tri: $chu_de, chon: "sáng" }
+}
+text("Sáng")
+chon_mot {
+    @nhap_lieu { gia_tri: $chu_de, chon: "tối" }
+}
+text("Tối")
+```
+
+Both radios share `gia_tri: $chu_de` (the two-way binding key — only one
+of them can be selected at a time), but each has its own `chon` value
+identifying which choice it represents. Lưu ý: `chon`/`gia_tri` ở đây so
+sánh đúng **nội dung chuỗi ký tự** (`"sáng"` khác `"sang"`), vì đây là
+string literal, không phải identifier — cơ chế "chấp nhận cả có dấu lẫn
+không dấu" chỉ áp dụng cho **tên** (tên biến, tên tag, tên prop...), không
+áp dụng cho nội dung bên trong dấu ngoặc kép. Viết `chon: "sáng"` ở mọi
+radio trong cùng nhóm và giữ nguyên chính tả đó xuyên suốt là đủ.
 
 ### Layout tags (full flexbox/grid support)
 
@@ -106,109 +143,198 @@ placeholder list.
 
 ## 5. Element syntax
 
+A tag takes named props in one of two forms, depending on the tag.
+
+**Block form** — props are grouped by meaning into `@block { ... }`
+inside the tag's `{ ... }` body:
+
 ```vbao
-tag(prop1: value1, prop2: value2, ...) {
-    // children, event blocks, animation/responsive blocks
+box {
+    @color { background_color: xam_nhat, border_color: xam }
+    @spacing { padding: 16, border: 1, radius: 8 }
+    @size { width: 320 }
+
+    text("Hello")
 }
 ```
 
-- Props (`key: value`) **must be inside `(...)`** right after the tag
-  name — you cannot put `key: value` inside `{...}`.
-- `{...}` only contains child elements and event blocks (`on_click { ... }`).
+**Simple form** — `tag("content", key: value, ...) { children }`, with
+the props inside `(...)`:
+
+```vbao
+text("Hello", font_size: 16, bold: true)
+```
+
+- `box`, `flex`, `grid`, `input`, `textarea`, `radio`, `checkbox` and
+  `select` (Vietnamese: `khoi`, `flex`, `grid`, `input`, `vung_van_ban`,
+  `chon_mot`, `hop_kiem`, `lua_chon`) **require** the block form. Inside
+  `(...)` they accept only a positional first value and the animation
+  props (`hover_animation`, `scroll_animation`); any other named prop is
+  a compile error that names the block to use.
+- Every other tag accepts both forms. Both produce the same AST: a prop
+  written in `(...)` is placed into its block automatically, and the two
+  styles can be mixed on one tag.
+- Block order is free. A block can be declared once per tag; the
+  Vietnamese and English names of a block are the same block, so
+  `@mau` followed by `@color` is a duplicate-block error.
+- A prop must be in the block it belongs to. `gap`, `row_gap` and
+  `column_gap` are accepted in both `@flex_layout` and `@grid_layout`.
+- A prop name the compiler does not recognize is not a parse error; it
+  is reported later as an "unrecognized prop" build warning.
 - For text-bearing tags (`text`, `button`, `link`, ...), the first
-  unnamed string argument is automatically bound to the `content` prop:
+  unnamed string argument is the content, not a prop:
 
   ```vbao
   text("Hello", font_size: 16)   // content = "Hello", font_size = 16
   ```
 
-### Prop table (simple elements — text/button/input/...)
+- Besides children and event blocks (`on_click { ... }`), the body of a
+  tag can hold `@block` groups and `@di_dong`/`@may_tinh_bang`/
+  `@may_tinh` responsive blocks. Inside a responsive block, props are
+  written flat (`@di_dong { width: 320, hidden: true }`), without
+  sub-blocks.
 
-| Prop | CSS/HTML | Notes |
-|---|---|---|
-| `color` / `text_color` | `color` | |
-| `border_color` | `border-color` | |
-| `width` | `width` | e.g. `200` (px) or `"50%"` |
-| `height` | `height` | |
-| `max_width` | `max-width` | |
-| `radius` | `border-radius` | |
-| `padding` | `padding` | |
-| `margin` | `margin` | |
-| `border` | `border-width` | |
-| `border_style` | `border-style` | |
-| `shadow` | `box-shadow` | |
-| `overflow` | `overflow` | |
-| `z_index` | `z-index` | |
-| `font_size` | `font-size` | |
-| `bold` | `font-weight: bold` (bool) | |
-| `italic` | `font-style: italic` (bool) | |
-| `underline` | `text-decoration: underline` (bool) | |
-| `align` | `text-align` (`left`/`right`/`center`/`justify`) | |
-| `line_height` | `line-height` | |
-| `letter_spacing` | `letter-spacing` | |
-| `transform` | `transform` | |
-| `font` | `font-family` | |
-| `direction` | `flex-direction` (on `flex` elements) | |
-| `gap` | `gap` | |
-| `wrap` | flex-wrap related | |
-| `fit` | `object-fit` (image/video) | |
-| `alt` | `alt` (image) | |
-| `lazy` | `loading="lazy"` (bool) | |
-| `type` | `type` (input) | |
-| `placeholder` | `placeholder` (input) | |
-| `required` | `required` (bool) | |
-| `disabled` | `disabled` (bool) | |
-| `value` | `value` (input) — a `$variable` here activates two-way binding | |
-| `content` | text content | auto-filled from the first positional string |
-| `den` / `to` | `href` + SPA navigation | **`link` only.** Must be a static string literal — dynamic routes aren't supported, use `button` + `navigate()` instead |
+### Props by block
 
-### Layout-tag-only props (`box`/`flex`/`grid`/...)
+| Block (vi / en) | Props (Vietnamese / English) |
+|---|---|
+| `@mau` / `@color` | `mau_nen`/`background_color`, `mau`/`color` (also `mau_chu`), `mau_vien`/`border_color` |
+| `@kich_thuoc` / `@size` | `rong`/`width`, `cao`/`height`, `max_rong`/`max_width`, `min_rong`/`min_width`, `max_cao`/`max_height`, `min_cao`/`min_height` |
+| `@khoang_cach` / `@spacing` | `radius`, `dem`/`padding`, `le`/`margin`, `vien`/`border`, `kieu_vien`/`border_style`, `bong`/`shadow`, `cuon_tran`/`overflow`, `tang_z`/`z_index` |
+| `@chu` / `@typography` | `co`/`font_size`, `dam`/`bold`, `nghieng`/`italic`, `gach_chan`/`underline`, `can`/`align`, `hang`/`line_height`, `khoang_chu`/`letter_spacing`, `bien_doi`/`text_transform`, `phong_chu`/`font_family` |
+| `@flex_bo_cuc` / `@flex_layout` | `huong`/`direction`, `doc`/`align_items`, `boc`/`wrap`, `gap`, `gap_doc`/`row_gap`, `gap_ngang`/`column_gap` |
+| `@grid_bo_cuc` / `@grid_layout` | `cot`/`columns`, `hang_luoi`/`rows`, `gap`, `gap_doc`/`row_gap`, `gap_ngang`/`column_gap` |
+| `@vi_tri` / `@position` | `tran_x`/`translate_x`, `tran_y`/`translate_y`, `vi_tri`/`position`, `offset` |
+| `@media` | `khop`/`fit`, `nguon`/`source`, `mo_ta_anh`/`alt`, `tai_cham`/`lazy_load` |
+| `@nhap_lieu` / `@input` | `loai`/`type`, `chu_tro`/`placeholder`, `gia_tri`/`value`, `chon`/`option_value`, `bat_buoc`/`required`, `vo_hieu`/`disabled` |
+| `@lien_ket` / `@link` | `den`/`to`, `muc_tieu`/`target`, `quan_he`/`rel` |
+| `@dinh_danh` / `@identity` | `id`, `lop`/`class`, `the_html`/`html_tag` |
 
-| Prop | Applies to | Notes |
-|---|---|---|
-| `color` | all layout tags | **background-color, not text color** |
-| `padding` | all layout tags | |
-| `margin` | `box` | |
-| `radius` | `box` | |
-| `border` | `box` | |
-| `shadow` | `box` | |
-| `overflow_x`, `overflow_y` | `box` | |
-| `direction` | `flex` | row/column — **no effect on `box`**, see `LIMITATIONS.md` |
-| `gap`, `gap_x`, `gap_y` | `flex`/`grid` | **no effect on `box`** |
-| `justify` | `flex` | `justify-content` — `start`/`end`/`center` |
-| `align` | `flex` | `align-items` — `start`/`end`/`center`/`stretch` |
-| `columns`, `rows` | `grid` | `grid-template-columns`/`rows` |
-| `min_width`, `max_width`, `min_height`, `max_height` | `container` | |
-| `position` | `sticky`/`fixed` | `top`/`bottom`/`left`/`right` |
+Notes:
+
+- `can`/`align` (text alignment) lives in `@chu`; `doc`/`align_items`
+  (cross-axis alignment) lives in `@flex_bo_cuc`.
+- `den`/`to` on `link`: a static value starting with `/` is an in-app
+  route and `#id` an in-page anchor (both handled by the SPA router);
+  `https://...`, `mailto:`, `tel:` and relative files (`cv.pdf`) are
+  followed by the browser. A dynamic `$variable` only binds `href` (never
+  an in-app route); use `button` + `navigate()` for that. `muc_tieu`/
+  `target` and `quan_he`/`rel` are plain HTML attributes (e.g.
+  `"_blank"`, `"noreferrer"`).
+- A `$variable` as `gia_tri`/`value` on `input`/`textarea` (or on
+  `checkbox`/`radio`) activates two-way binding.
+- `id` is the element's HTML `id`, useful as an anchor-link target.
+- `the_html`/`html_tag` replaces the `<div>` of a container tag by one of
+  `section`, `header`, `footer`, `main`, `article`, `aside`, `nav`,
+  `figure`, `ul`, `li` (a static string). Elements only; on a tag that is
+  not rendered as `<div>` it is ignored with a warning.
+
+### Layout values
+
+- `huong`/`direction` on `flex` (also inside `@di_dong`): `cot`, `doc` or
+  `column` is a column; `hang`, `ngang` or `row` is a row. Any other
+  value is a row.
+- Inside `@di_dong`/`@may_tinh_bang`/`@may_tinh` the props handled are
+  `cot`, `huong`, `co`, `rong`, `cao`, `dem`, `an`, `gap`, `max_rong`
+  and `le`. Any other name is a build warning.
+
+### Global style: `giao_dien` / `global_style`
+
+An optional block at the app level, next to pages and components:
+
+```vbao
+giao_dien {
+    phong_chu: "Inter, sans-serif"
+    co: 16
+    mau: xam_dam
+    mau_nen: trang
+    hang: 1.6
+    tai_phong: "https://fonts.googleapis.com/css2?family=Inter"
+    cuon_muot: true
+    cuon_lui: 72
+}
+```
+
+`phong_chu`/`font_family`, `co`/`font_size`, `mau`/`color`, `mau_nen`/
+`background_color` and `hang`/`line_height` become `body` rules;
+`cuon_muot`/`smooth_scroll` and `cuon_lui`/`scroll_offset` become `html`
+rules (`scroll-behavior`, `scroll-padding-top`); `tai_phong`/`font_url`
+adds a `<link rel="stylesheet">` to the HTML shell. Values must be static
+(a state-dependent value is ignored with a warning), any other key is a
+build error, and only one block may be declared, in the main file.
+
+### Static files and the HTML shell
+
+`vibaoc build app.vbao` copies the `public/` directory next to the
+source file into the output directory (images, a PDF, fonts, ...). A
+top-level entry named `index.html`, `app.js`, `style.css` or `pkg` is
+skipped with a warning. Reference these files with a relative path such
+as `image(nguon: "avatar.svg")` or `link("CV", den: "cv.pdf")`. A
+`favicon.svg`, `favicon.png` or `favicon.ico` in `public/` is linked
+automatically.
+
+The shell `index.html` carries the `<title>` and `mo_ta` of the `/`
+page (or the first page) as `<title>`, `<meta name="description">` and
+Open Graph `og:title`/`og:description`. After the first page the runtime
+updates only the title and description while navigating.
+
+### Props each layout tag uses
+
+Layout tags only read the props below. Anything else on them (such as
+`huong` on `box`) is accepted but produces a build warning naming the
+tags that do use it — see [`LIMITATIONS.md`](LIMITATIONS.md).
+
+| Tag | Props |
+|---|---|
+| `flex` | `direction`, `gap`, `row_gap`, `column_gap`, `align`, `align_items`, `wrap`, `width`, `height`, `padding`, `background_color`, `radius` |
+| `grid` | `columns`, `rows`, `gap`, `row_gap`, `column_gap`, `width`, `padding`, `background_color` |
+| `box` | `background_color`, `border_color`, `border_style`, `border`, `width`, `height`, `min_width`, `max_width`, `min_height`, `max_height`, `radius`, `padding`, `margin`, `shadow`, `overflow`, `translate_x`, `translate_y`, `z_index` |
+| `stack` | `align`, `align_items`, `width`, `height` |
+| `scroll` | `direction`, `width`, `height` |
+| `container` | `max_width`, `padding` |
+| `sticky` | `offset` |
+| `fixed` | `position`, `width`, `height` |
+| `layer` | none |
+
+### Compile errors for block syntax
+
+| Mistake | Message |
+|---|---|
+| Named prop in `(...)` of a tag that requires blocks | `Tag 'box' requires block syntax for property 'padding': write box { @spacing { padding: ... } } instead of using '(...)'` |
+| Prop in the wrong block | `Property 'font_size' belongs to block @typography, not @color: move it to @typography { font_size: ... }` |
+| Prop that no block accepts (`an`, `noi_dung`, ...) | `Property 'an' cannot be used inside block @color` |
+| Same block twice | `Block '@color' is already declared on this tag and cannot be repeated: merge it into a single '@color' block` |
+| Key other than `id`/`lop` in `@dinh_danh` | `'dem' is not valid in block @dinh_danh: only 'id' and 'lop' are accepted` |
+| `@mau`-style block on a component call | `'@mau' is a semantic block of Element and does not apply to component calls: ...` |
+
+With `lang = "vi";` the same messages are shown in Vietnamese.
 
 ### Colors
 
-Only these 14 names resolve to a hex value; anything else is printed
-as-is into CSS (invalid):
+Only these 14 names resolve to a hex value, in their Vietnamese spelling
+(there are no English color names). Any other identifier where a color
+is expected is a hard build error.
 
 ```
-white=#FFFFFF   black=#000000    red=#E53E3E     blue=#3182CE
-green=#38A169   yellow=#F59E0B   pink=#D53F8C    purple=#805AD5
-orange=#DD6B20  gray=#718096     light_gray=#F7FAFC
-dark_gray=#2D3748  emerald=#25855A  brown=#7B341E
+trang=#FFFFFF   den=#000000     do=#E53E3E      xanh=#3182CE
+xanh_la=#38A169 vang=#F59E0B    hong=#D53F8C    tim=#805AD5
+cam=#DD6B20     xam=#718096     xam_nhat=#F7FAFC
+xam_dam=#2D3748 luc=#25855A     nau=#7B341E
 ```
-
-(Vietnamese source uses the equivalents: `trang`, `den`, `do`, `xanh`,
-`xanh_la`, `vang`, `hong`, `tim`, `cam`, `xam`, `xam_nhat`, `xam_dam`,
-`luc`, `nau`.)
 
 ### Animation
 
 ```vbao
-box() {
-    hover_animation: "grow"     // set alongside other props, inside (...)
-}
+button("Click", hover_animation: "phong_to", scroll_animation: "fade_in")
 ```
 
-Hover animation supports `grow` and `brighten`. Scroll/load-in animation
-supports `fade_in`, `slide_up`, `slide_down`, `grow`, `shake`. These
-generate `data-vb-anim-hover` / `data-vb-anim-scroll` attributes; the
-runtime binds them with real DOM events (`mouseenter`/`mouseleave`,
+Hover animation supports `phong_to` and `lam_sang`. Scroll/load-in
+animation supports `fade_in`, `truot_len`, `truot_xuong`, `phong_to`,
+`rung`. The effect name must be a static string. Vietnamese prop names:
+`hieu_ung_hover`, `hieu_ung_cuon`. They are always written in `(...)`,
+including on tags that require blocks (`khoi(hieu_ung_cuon: "fade_in")`).
+These generate `data-vb-anim-hover` / `data-vb-anim-scroll` attributes;
+the runtime binds them with real DOM events (`mouseenter`/`mouseleave`,
 `IntersectionObserver`) via `web-sys` — no JavaScript animation library.
 
 ## 6. Expressions
@@ -311,7 +437,7 @@ All of these run as real Rust/WASM, not JavaScript:
 | `alert(text)` | `window.alert()` |
 | `navigate(path)` | Real SPA navigation (History API, no reload) |
 | `open_new_tab(path)` | Opens a new tab |
-| `open_modal(id)` / `close_modal(id)` | No working target in 0.1.0, see `LIMITATIONS.md` |
+| `open_modal(id)` / `close_modal(id)` | No working target in 0.1.5, see `LIMITATIONS.md` |
 | `scroll_to(target)` | Smooth-scrolls to an element |
 | `scroll_to_top()` | Scrolls to the top of the page |
 | `save_data(endpoint, data)` | Real `POST` via `fetch` |
@@ -336,21 +462,31 @@ if $count > 10 {
 ## 9. Components (`@the`)
 
 ```vbao
-@the Member(name: string, age: number) {
-    box(padding: 16, color: light_gray) {
+@the Member(name: chuoi, age: so) {
+    box {
+        @color { background_color: xam_nhat }
+        @spacing { padding: 16 }
         text($name, font_size: 18, bold: true)
         text("Age: $age", font_size: 14)
     }
 }
 
 Member(name: "An", age: 20)
-Member(name: "Binh", age: 25)
+Member(name: "Binh", age: 25) {
+    @identity { id: "member-binh" }
+}
 ```
 
-Parameter types are declared as `name: type`. Only 7 types are accepted:
-`string`, `number`, `color`, `bool`, `array`, `object`, `action`
-(Vietnamese: `chuoi`, `so`, `mau`, `bool`, `mang`, `doi_tuong`,
-`hanh_dong`). There is no `any` type.
+Parameter types are declared as `name: type`. Only 7 types are accepted,
+and only in their Vietnamese spelling: `chuoi` (string), `so` (number),
+`mau` (color), `bool`, `mang` (array), `doi_tuong` (object), `hanh_dong`
+(action). A parameter with no type annotation is untyped. There is no
+`any` keyword.
+
+Parameter names are free-named and written in `(...)`. The one fixed
+property of a component call is `id`/`class`, which goes in an
+`@identity { ... }` block in the call's body — never in `(...)`, so it
+can never collide with a parameter of the same name.
 
 Component props work well for the common case — static literal values,
 one level of nesting — with some rough edges under heavier use; see

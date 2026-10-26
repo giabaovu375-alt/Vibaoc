@@ -1,7 +1,3 @@
-//! English surface names for `PropKey`.
-//! English is the universal locale and is always accepted alongside the
-//! active locale (currently Vietnamese).
-
 use vibao_ast::PropKey;
 
 pub fn prop_name_en(name: &str) -> Option<PropKey> {
@@ -27,6 +23,7 @@ pub fn prop_name_en(name: &str) -> Option<PropKey> {
         "bold" => PropKey::Bold,
         "italic" => PropKey::Italic,
         "underline" => PropKey::Underline,
+        "preserve_lines" => PropKey::PreserveLines,
         "align" => PropKey::Align,
         "line_height" => PropKey::LineHeight,
         "letter_spacing" => PropKey::LetterSpacing,
@@ -52,10 +49,14 @@ pub fn prop_name_en(name: &str) -> Option<PropKey> {
         "type" => PropKey::Type,
         "placeholder" => PropKey::Placeholder,
         "value" => PropKey::Value,
+        "option_value" => PropKey::OptionValue,
         "required" => PropKey::Required,
         "disabled" => PropKey::Disabled,
         "class" => PropKey::ClassBinding,
+        "id" => PropKey::HtmlId,
         "to" => PropKey::To,
+        "target" => PropKey::Target,
+        "rel" => PropKey::Rel,
         "content" => PropKey::Content,
         "animation" => PropKey::Animation,
         "duration" => PropKey::Duration,
@@ -73,28 +74,80 @@ mod tests {
     use std::collections::HashSet;
 
     const ALL: &[&str] = &[
-        "background_color", "color", "border_color", "width", "height",
-        "max_width", "min_width", "max_height", "min_height", "radius",
-        "padding", "margin", "border", "border_style", "shadow", "overflow",
-        "z_index", "font_size", "bold", "italic", "underline", "align",
-        "line_height", "letter_spacing", "text_transform", "font_family",
-        "direction", "gap", "row_gap", "column_gap", "align_items", "wrap",
-        "columns", "rows", "translate_x", "translate_y", "position", "offset",
-        "hidden", "fit", "source", "alt", "lazy_load", "type", "placeholder",
-        "value", "required", "disabled", "class", "to", "content", "animation",
-        "duration", "delay", "repeat", "hover_animation", "scroll_animation",
+        "background_color",
+        "color",
+        "border_color",
+        "width",
+        "height",
+        "max_width",
+        "min_width",
+        "max_height",
+        "min_height",
+        "radius",
+        "padding",
+        "margin",
+        "border",
+        "border_style",
+        "shadow",
+        "overflow",
+        "z_index",
+        "font_size",
+        "bold",
+        "italic",
+        "underline",
+        "preserve_lines",
+        "align",
+        "line_height",
+        "letter_spacing",
+        "text_transform",
+        "font_family",
+        "direction",
+        "gap",
+        "row_gap",
+        "column_gap",
+        "align_items",
+        "wrap",
+        "columns",
+        "rows",
+        "translate_x",
+        "translate_y",
+        "position",
+        "offset",
+        "hidden",
+        "fit",
+        "source",
+        "alt",
+        "lazy_load",
+        "type",
+        "placeholder",
+        "value",
+        "option_value",
+        "required",
+        "disabled",
+        "class",
+        "id",
+        "to",
+        "target",
+        "rel",
+        "content",
+        "animation",
+        "duration",
+        "delay",
+        "repeat",
+        "hover_animation",
+        "scroll_animation",
     ];
 
     #[test]
     fn all_names_resolve() {
-        assert_eq!(ALL.len(), 57);
+        assert_eq!(ALL.len(), 62);
         assert!(ALL.iter().all(|name| prop_name_en(name).is_some()));
     }
 
     #[test]
     fn all_names_resolve_to_distinct_prop_keys() {
         let resolved: HashSet<PropKey> = ALL.iter().filter_map(|n| prop_name_en(n)).collect();
-        assert_eq!(resolved.len(), 57);
+        assert_eq!(resolved.len(), 62);
     }
 
     #[test]

@@ -175,7 +175,7 @@ checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 
 [[package]]
 name = "vibao-ast"
-version = "0.1.0"
+version = "0.1.5"
 dependencies = [
  "serde",
  "serde_json",
@@ -183,7 +183,7 @@ dependencies = [
 
 [[package]]
 name = "vibao-runtime"
-version = "0.1.0"
+version = "0.1.5"
 dependencies = [
  "console_error_panic_hook",
  "js-sys",
@@ -197,7 +197,7 @@ dependencies = [
 
 [[package]]
 name = "vibaoc"
-version = "0.1.0"
+version = "0.1.5"
 dependencies = [
  "serde",
  "serde_json",

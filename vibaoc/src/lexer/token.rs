@@ -1,29 +1,14 @@
-// ============================================================
-// VIBAO COMPILER (Rust) — lexer/token.rs
-// TokenKind + Token: defines the token kinds and the concrete token struct
-// ============================================================
-
 use std::fmt;
 
-// ════════════════════════════════════════════════════════════
-// 1. TOKEN TYPE
-// ════════════════════════════════════════════════════════════
-
-/// Every token kind in ViBao. Uses an enum instead of a string type like
-/// the old TS version — Rust's match will catch a compile error if a
-/// branch is ever missed (exhaustiveness checking is built into the
-/// language; no need to hand-write it like in TS).
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
-    // Keywords - declarations
     Trang,
     UngDung,
     Theme,
     State,
-    Nhap, // `nhap X tu "..."` (import X from "...")
-    Tu,   // 'tu' (from) in 'nhap X tu "..."'
+    Nhap,
+    Tu,
 
-    // Keywords - control flow
     Neu,
     KhongThi,
     NeuNhieu,
@@ -31,7 +16,6 @@ pub enum TokenKind {
     MacDinh,
     VongLap,
 
-    // Keywords - events
     OnClick,
     OnHover,
     OnBlur,
@@ -42,20 +26,17 @@ pub enum TokenKind {
     OnTai,
     OnHuy,
 
-    // Component (text, box, flex, button, ...)
     Component(String),
 
-    // Literals
     StringLit(String),
-    NumberLit(f64, String), // (value, original string including unit if any — e.g. "50%")
+    NumberLit(f64, String),
     BoolLit(bool),
     ColorHex(String),
     ColorName(String),
 
-Identifier(String),
-    Variable(String), // $ten_bien (does not include the leading $)
+    Identifier(String),
+    Variable(String),
 
-    // Operators
     Plus,
     Minus,
     Star,
@@ -68,16 +49,15 @@ Identifier(String),
     Neq,
     AndAnd,
     OrOr,
-    Bang,    // ! (logical negation, its own token - distinct from Neq "!=")
-    Percent, // % used as the modulo operator, distinct from the CSS unit suffix "50%"
+    Bang,
+    Percent,
     Equals,
     Colon,
     Comma,
     Dot,
     Semicolon,
-    Arrow, // -> (also accepts the unicode arrow character)
+    Arrow,
 
-    // Brackets
     LParen,
     RParen,
     LBrace,
@@ -85,18 +65,11 @@ Identifier(String),
     LBracket,
     RBracket,
 
-    // Special
-    At, // @ (standalone token, not @the - used for @hieu_ung, @di_dong...)
+    At,
     Eof,
 }
 
 impl fmt::Display for TokenKind {
-    /// Displays a token in a HUMAN-READABLE form, used in parse error
-    /// messages - very different from `{:?}` (Debug), which prints the
-    /// raw Rust enum syntax (e.g. `Identifier("mua_nen")`) and would
-    /// look like an internal debugging error to someone writing ViBao
-    /// code. Every error site in parser/*.rs should use `{}` (Display,
-    /// this impl) instead of `{:?}`.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             TokenKind::Trang => write!(f, "từ khóa 'trang'"),
@@ -168,8 +141,6 @@ impl fmt::Display for TokenKind {
     }
 }
 
-/// A single concrete token in the source, with its position for
-/// precise error reporting.
 #[derive(Debug, Clone)]
 pub struct Token {
     pub kind: TokenKind,
@@ -187,16 +158,14 @@ impl Token {
 mod tests {
     use super::*;
 
-    /// A dev-experience regression test: parse error messages must
-    /// display a token in HUMAN-READABLE form (e.g. "định danh 'abc'"),
-    /// not Rust's raw Debug syntax (e.g. 'Identifier("abc")') - if the
-    /// Display impl ever accidentally gets simplified back to
-    /// `write!(f, "{:?}", self)`, this test will fail immediately.
     #[test]
     fn test_display_identifier_is_human_readable() {
         let s = format!("{}", TokenKind::Identifier("abc".to_string()));
         assert_eq!(s, "định danh 'abc'");
-        assert!(!s.contains("Identifier("), "Display must not leak the raw enum Debug syntax");
+        assert!(
+            !s.contains("Identifier("),
+            "Display must not leak the raw enum Debug syntax"
+        );
     }
 
     #[test]
@@ -214,9 +183,6 @@ mod tests {
 
     #[test]
     fn test_display_works_through_reference() {
-        // Many places in the parser match on `&self.current().kind`, so
-        // Display needs to work correctly through a reference (Rust
-        // auto-derefs since &T: Display whenever T: Display).
         let kind = TokenKind::Identifier("x".to_string());
         let r: &TokenKind = &kind;
         assert_eq!(format!("{}", r), "định danh 'x'");

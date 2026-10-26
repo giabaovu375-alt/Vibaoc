@@ -1,10 +1,3 @@
-// VIBAO COMPILER — end-to-end: bilingual locale resolution and styling.
-//
-// ViBao's core design promise is that Vietnamese and English surface
-// keywords/props resolve to the same AST. These tests build real
-// sources in each surface language and confirm the compiler accepts
-// both and produces working output.
-
 mod common;
 use common::build_source;
 
@@ -26,10 +19,9 @@ ung_dung("App") {
 "#,
     );
     result.assert_err();
-    // With `lang = "vi";` declared, diagnostics should be rendered in
-    // Vietnamese rather than the English default.
     assert!(
-        result.stderr.to_lowercase().contains("không xác định") || result.stderr.contains("lỗi ngữ nghĩa"),
+        result.stderr.to_lowercase().contains("không xác định")
+            || result.stderr.contains("lỗi ngữ nghĩa"),
         "expected a Vietnamese diagnostic message, stderr:\n{}",
         result.stderr
     );
@@ -53,7 +45,8 @@ ung_dung("App") {
     );
     result.assert_err();
     assert!(
-        result.stderr.contains("Unknown action") || result.stderr.to_lowercase().contains("unknown"),
+        result.stderr.contains("Unknown action")
+            || result.stderr.to_lowercase().contains("unknown"),
         "expected an English diagnostic message by default, stderr:\n{}",
         result.stderr
     );
@@ -66,7 +59,10 @@ fn mixed_vietnamese_and_english_props_are_both_accepted_on_the_same_tag() {
         r#"
 app("App") {
     page("/") {
-        box(mau_nen: xam_nhat, padding: 16, radius: 8) {
+        box {
+            @color { mau_nen: xam_nhat }
+            @spacing { padding: 16, radius: 8 }
+
             text("Ca hai locale cung mot the")
         }
     }
@@ -98,7 +94,8 @@ fn responsive_mobile_block_overrides_are_emitted_in_css() {
         r#"
 ung_dung("App") {
     trang("/") {
-        khoi(rong: 800) {
+        khoi {
+            @kich_thuoc { rong: 800 }
             @di_dong {
                 rong: 320
             }
@@ -164,12 +161,6 @@ ung_dung("App") {
 "#,
     );
     result.assert_ok();
-    // Any string containing `$` is parsed as a template string and
-    // therefore always resolved dynamically at runtime (bound via the
-    // expr registry in app.js), never inlined as static HTML text --
-    // this holds even when, as here, there is no actual `$variable`
-    // reference. So the literal text is expected to live in app.js's
-    // serialized expression registry, not in index.html.
     let js = result.js();
     assert!(
         js.contains("50"),

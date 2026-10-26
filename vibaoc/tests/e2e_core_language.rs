@@ -1,9 +1,3 @@
-// VIBAO COMPILER — end-to-end: core language constructs.
-//
-// Black-box tests that build real `.vbao` sources through the actual
-// `vibaoc` CLI and inspect the emitted HTML/CSS/JS. See
-// `tests/common/mod.rs` for the shared harness.
-
 mod common;
 use common::build_source;
 
@@ -32,7 +26,9 @@ fn vietnamese_and_english_surface_syntax_compile_to_equivalent_output() {
         r#"
 ung_dung("App") {
     trang("/") {
-        khoi(dem: 16) {
+        khoi {
+            @khoang_cach { dem: 16 }
+
             text("Xin chao", dam: true)
         }
     }
@@ -46,7 +42,9 @@ ung_dung("App") {
         r#"
 app("App") {
     page("/") {
-        box(padding: 16) {
+        box {
+            @spacing { padding: 16 }
+
             text("Xin chao", bold: true)
         }
     }
@@ -55,12 +53,74 @@ app("App") {
     );
     en_result.assert_ok();
 
-    // Both surface languages resolve to the same AST tags/props, so
-    // both should mark the text element as bold in the emitted HTML.
     let vi_html = vi_result.html();
     let en_html = en_result.html();
     assert!(vi_html.contains("Xin chao"));
     assert!(en_html.contains("Xin chao"));
+}
+
+#[test]
+fn nguon_co_dau_va_khong_dau_cho_ra_cung_html_va_css() {
+    let khong_dau = r##"
+lang = "vi";
+ung_dung("Ứng dụng") {
+    chu_de sang { $nen = trang  $chu = xam_dam }
+    chu_de toi { $nen = "#1a202c"  $chu = "#e2e8f0" }
+    giao_dien { mau_nen: $nen, mau: $chu }
+    @the TheDuAn(ten: chuoi, duong_dan: chuoi) {
+        flex {
+            @flex_bo_cuc { huong: cot, gap: 8 }
+            text($ten, co: 18, dam: true)
+            link("Mở", den: $duong_dan, mau: $chu)
+        }
+    }
+    trang("/") {
+        state $ky_nang = ["Rust", "WebAssembly"]
+        state $ten_nguoi = "Bảo"
+        khoi {
+            @khoang_cach { dem: 16, radius: 8 }
+            text("Xin chào $ten_nguoi")
+            vong_lap $k trong $ky_nang {
+                text($k)
+            }
+            TheDuAn(ten: "Dự án", duong_dan: "https://example.com")
+        }
+    }
+}
+"##;
+    let co_dau = r##"
+lang = "vi";
+ứng_dụng("Ứng dụng") {
+    chủ_đề sáng { $nền = trang  $chữ = xám_đậm }
+    chủ_đề tối { $nền = "#1a202c"  $chữ = "#e2e8f0" }
+    giao_diện { màu_nền: $nền, màu: $chữ }
+    @thẻ ThẻDựÁn(tên: chuỗi, đường_dẫn: chuỗi) {
+        flex {
+            @flex_bố_cục { hướng: cột, gap: 8 }
+            text($tên, cỡ: 18, đậm: true)
+            link("Mở", đến: $đường_dẫn, màu: $chữ)
+        }
+    }
+    trang("/") {
+        state $kỹ_năng = ["Rust", "WebAssembly"]
+        state $tên_người = "Bảo"
+        khối {
+            @khoảng_cách { đệm: 16, radius: 8 }
+            text("Xin chào $tên_người")
+            vòng_lặp $k trong $kỹ_năng {
+                text($k)
+            }
+            ThẻDựÁn(tên: "Dự án", đường_dẫn: "https://example.com")
+        }
+    }
+}
+"##;
+    let (_dir_a, a) = build_source("khong-dau", khong_dau);
+    a.assert_ok();
+    let (_dir_b, b) = build_source("co-dau", co_dau);
+    b.assert_ok();
+    assert_eq!(a.html(), b.html());
+    assert_eq!(a.css(), b.css());
 }
 
 #[test]
@@ -109,8 +169,16 @@ ung_dung("App") {
     );
     result.assert_ok();
     let html = result.html();
-    assert!(html.contains("data-vb-if="), "expected an if-binding attribute in HTML:\n{}", html);
-    assert!(html.contains("data-vb-else"), "expected an else-binding attribute in HTML:\n{}", html);
+    assert!(
+        html.contains("data-vb-if="),
+        "expected an if-binding attribute in HTML:\n{}",
+        html
+    );
+    assert!(
+        html.contains("data-vb-else"),
+        "expected an else-binding attribute in HTML:\n{}",
+        html
+    );
 }
 
 #[test]
@@ -129,8 +197,6 @@ ung_dung("App") {
     );
     result.assert_ok();
     let js = result.js();
-    // The loop is desugared into a bound range; the item variable name
-    // must be preserved (not silently replaced by a default like "i").
     assert!(js.contains("\"i\"") || js.contains("'i'"));
 }
 
@@ -215,7 +281,9 @@ fn dynamic_layout_prop_generates_a_style_binding() {
 ung_dung("App") {
     trang("/") {
         state $do_rong = 200
-        khoi(rong: $do_rong) {
+        khoi {
+            @kich_thuoc { rong: $do_rong }
+
             text("noi dung")
         }
     }
@@ -236,7 +304,9 @@ fn user_defined_component_can_be_instantiated_multiple_times() {
         r#"
 ung_dung("App") {
     @the TheThe(nhan: chuoi) {
-        khoi(dem: 6) {
+        khoi {
+            @khoang_cach { dem: 6 }
+
             text($nhan)
         }
     }
@@ -252,7 +322,11 @@ ung_dung("App") {
     result.assert_ok();
     let html = result.html();
     let count = html.matches("data-vb-component=\"TheThe\"").count();
-    assert_eq!(count, 3, "expected 3 mounted TheThe instances, found {}. HTML:\n{}", count, html);
+    assert_eq!(
+        count, 3,
+        "expected 3 mounted TheThe instances, found {}. HTML:\n{}",
+        count, html
+    );
 }
 
 #[test]
@@ -280,5 +354,47 @@ ung_dung("App") {
     result.assert_ok();
     let html = result.html();
     let count = html.matches("data-vb-component=\"TheTieuDe\"").count();
-    assert_eq!(count, 3, "expected one mounted TheTieuDe per page, found {}", count);
+    assert_eq!(
+        count, 3,
+        "expected one mounted TheTieuDe per page, found {}",
+        count
+    );
+}
+
+#[test]
+fn output_sinh_ra_khong_con_comment_cua_compiler() {
+    let (_dir, result) = build_source(
+        "khong-comment",
+        r#"
+app("App") {
+    page("/") {
+        text("Xin chao")
+    }
+}
+"#,
+    );
+    result.assert_ok();
+    let css = result.css();
+    let js = result.js();
+    for dau_vet in [
+        "ViBao Base CSS",
+        "ViBao Animation classes",
+        "/* Tabs */",
+        "/* Toast */",
+    ] {
+        assert!(
+            !css.contains(dau_vet),
+            "css còn comment '{}':\n{}",
+            dau_vet,
+            css
+        );
+    }
+    for dau_vet in ["DO NOT EDIT", "App init", "WASM Bootstrap"] {
+        assert!(
+            !js.contains(dau_vet),
+            "js còn comment '{}':\n{}",
+            dau_vet,
+            js
+        );
+    }
 }

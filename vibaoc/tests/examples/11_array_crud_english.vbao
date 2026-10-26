@@ -16,7 +16,10 @@ app("Task manager EN") {
         }
 
         loop $task trong $tasks {
-            box(padding: 12, direction: row, gap: 12) {
+            box {
+                @spacing { padding: 12 }
+                @flex_layout { direction: row, gap: 12 }
+
                 if $task.done {
                     text($task.title, color: xam)
                 } else {

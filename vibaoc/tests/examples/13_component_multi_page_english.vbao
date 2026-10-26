@@ -3,14 +3,20 @@
 // components were mounted (see docs/VIBAO_SPEC.md section 0).
 app("Multi-page component EN") {
     @the Card(title: chuoi, subtitle: chuoi) {
-        box(padding: 16, border: 1, border_color: xam_nhat, radius: 8) {
+        box {
+            @spacing { padding: 16, border: 1, radius: 8 }
+            @color { border_color: xam_nhat }
+
             text($title, font_size: 18, bold: true)
             text($subtitle, font_size: 14, color: xam)
         }
     }
 
     page("/") {
-        box(padding: 24, direction: column, gap: 16) {
+        box {
+            @spacing { padding: 24 }
+            @flex_layout { direction: column, gap: 16 }
+
             text("Home", font_size: 28, bold: true)
             Card(title: "Fast to write", subtitle: "Vietnamese or English syntax")
             Card(title: "Small runtime", subtitle: "WebAssembly, no framework")
@@ -19,7 +25,10 @@ app("Multi-page component EN") {
     }
 
     page("/about") {
-        box(padding: 24, direction: column, gap: 12) {
+        box {
+            @spacing { padding: 24 }
+            @flex_layout { direction: column, gap: 12 }
+
             text("About", font_size: 28, bold: true)
             Card(title: "Open source", subtitle: "Compiled with vibaoc")
             Card(title: "Written in Rust", subtitle: "Fast, safe compiler core")
@@ -28,7 +37,10 @@ app("Multi-page component EN") {
     }
 
     page("/contact") {
-        box(padding: 24, direction: column, gap: 12) {
+        box {
+            @spacing { padding: 24 }
+            @flex_layout { direction: column, gap: 12 }
+
             text("Contact", font_size: 28, bold: true)
             Card(title: "Email us", subtitle: "hello@example.com")
         }

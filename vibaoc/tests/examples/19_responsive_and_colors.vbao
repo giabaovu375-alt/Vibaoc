@@ -5,7 +5,10 @@
 // mixed-props e2e test).
 app("Responsive & colors") {
     page("/") {
-        box(mau_nen: xam_nhat, rong: 800, padding: 16) {
+        box {
+            @color { mau_nen: xam_nhat }
+            @size { rong: 800 }
+            @spacing { padding: 16 }
             @di_dong {
                 rong: 320
             }

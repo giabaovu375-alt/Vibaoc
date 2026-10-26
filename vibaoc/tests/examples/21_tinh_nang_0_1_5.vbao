@@ -1,0 +1,35 @@
+lang = "vi";
+
+ứng_dụng("Tính năng 0.1.5") {
+    chủ_đề sáng { $nền = trang  $chữ = xám_đậm }
+    chủ_đề tối { $nền = "#1a202c"  $chữ = "#e2e8f0" }
+
+    giao_diện { màu_nền: $nền, màu: $chữ }
+
+    trang("/") {
+        state $ds = []
+        state $tt = "dang_tai"
+        state $khóa = "khoa-thu"
+
+        on_tải {
+            $ds = gọi_api("GET", "https://api.example.com/items", tiêu_đề: {Authorization: "Bearer $khóa"}, chạy_nền: true) {
+                thành_công { $tt = "xong" }
+                thất_bại { $tt = "loi" }
+            }
+        }
+
+        khối {
+            @màu { màu_nền: $nền }
+
+            text($ds[0].tên, màu: $chữ, giữ_dòng: true)
+
+            nếu $ds.rỗng {
+                text("Danh sách trống")
+            }
+
+            button("Giao diện") {
+                khi_nhấn { đặt_chủ_đề() }
+            }
+        }
+    }
+}

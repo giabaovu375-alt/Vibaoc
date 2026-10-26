@@ -17,7 +17,7 @@ if ! rustc --print target-list | grep -qx "$TARGET"; then
   error "this Rust installation does not know target '$TARGET'. Install a Rust toolchain that provides it, then run this script again."
 fi
 
-WASM_BINDGEN_VERSION="$(awk '/name = "wasm-bindgen"/{found=1; next} found && /^version = /{gsub(/\"/, "", $3); print $3; exit}' "$ROOT_DIR/Cargo.lock")"
+WASM_BINDGEN_VERSION="$(awk '/name = "wasm-bindgen"/{found=1; next} found && /^version = /{gsub(/"/, "", $3); print $3; exit}' "$ROOT_DIR/Cargo.lock")"
 [ -n "$WASM_BINDGEN_VERSION" ] || error "could not determine the wasm-bindgen version from Cargo.lock"
 
 WASM_BINDGEN=""

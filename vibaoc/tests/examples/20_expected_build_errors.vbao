@@ -2,7 +2,7 @@
 // Dung de kiem tra vibaoc BAO LOI RO RANG cho tung truong hop, thay vi
 // crash hoac im lang sinh sai. Chi nen bat 1 loi tai 1 thoi diem — file
 // nay minh hoa NHIEU loi khac nhau bang comment, giu lai DUY NHAT 1
-// loi dang active o cuoi file (theme block bi tu choi) de co the build
+// loi dang active o cuoi file (component dinh nghia trung ten) de co the build
 // thu ngay; cac loi khac duoc ghi chu lai kem mo ta ket qua mong doi de
 // nguoi kiem thu tu bat cap/uncomment tung cai.
 //
@@ -20,10 +20,8 @@
 //    text(gia_tienn($gia))   // ket qua mong doi: LOI nhac ten ham sai
 //                            // "gia_tienn".
 //
-// 4) Component dinh nghia trung ten:
-//    @the TheThe(nhan: chuoi) { text($nhan) }
-//    @the TheThe(nhan: chuoi) { text("Ban sao") }
-//                            // ket qua mong doi: LOI nhac "TheThe".
+// 4) Component dinh nghia trung ten (DANG BAT o cuoi file):
+//    ket qua mong doi: LOI nhac "TheThe".
 //
 // 5) Range giam dan (N1 > N2) — KHONG duoc ho tro trong 0.1.0:
 //    vong_lap $i tu 5 den 1 { text("$i") }
@@ -38,9 +36,8 @@
 lang = "vi";
 
 ung_dung("App") {
-    theme SangToi {
-        $mau_chinh = xanh
-    }
+    @the TheThe(nhan: chuoi) { text($nhan) }
+    @the TheThe(nhan: chuoi) { text("Ban sao") }
     trang("/") {
         text("noi dung")
     }

@@ -6,16 +6,24 @@ lang = "vi";
 
 ung_dung("Layout demo") {
     trang("/") {
-        khoi(dem: 16, mau_nen: xam_nhat, radius: 8) {
+        khoi {
+            @khoang_cach { dem: 16, radius: 8 }
+            @mau { mau_nen: xam_nhat }
+
             text("Khoi (box) - display: block", dam: true)
         }
 
-        flex(huong: hang, gap: 8, can: giua, doc: giua) {
+        flex {
+            @flex_bo_cuc { huong: hang, gap: 8, doc: giua }
+            @chu { can: giua }
+
             text("Flex item 1")
             text("Flex item 2")
         }
 
-        grid(cot: "1fr 1fr 1fr", gap: 8) {
+        grid {
+            @grid_bo_cuc { cot: "1fr 1fr 1fr", gap: 8 }
+
             text("O 1")
             text("O 2")
             text("O 3")

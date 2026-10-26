@@ -1,0 +1,286 @@
+lang = "vi";
+
+ứng_dụng("Chat Groq") {
+    chủ_đề sáng {
+        $nền = trang
+        $chữ = xám_đậm
+        $phụ = xám
+        $nền_thẻ = xám_nhạt
+        $viền = "#E2E8F0"
+        $nhấn = xanh
+        $chữ_nhấn = trang
+    }
+
+    chủ_đề tối {
+        $nền = "#1a202c"
+        $chữ = "#e2e8f0"
+        $phụ = "#a0aec0"
+        $nền_thẻ = "#2d3748"
+        $viền = "#4a5568"
+        $nhấn = "#63b3ed"
+        $chữ_nhấn = "#1a202c"
+    }
+
+    giao_diện {
+        phông_chữ: "Inter, system-ui, -apple-system, sans-serif"
+        tải_phông: "https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+        cỡ: 16
+        màu: $chữ
+        màu_nền: $nền
+        hàng: 1.6
+        cuộn_mượt: true
+    }
+
+    trang("/", "Chat Groq", mô_tả: "Trò chuyện với mô hình ngôn ngữ qua Groq API.") {
+        state $khóa_api = "gsk_DAN_KHOA_VAO_DAY"
+        state $mô_hình = "openai/gpt-oss-120b"
+        state $lịch_sử = [
+            {role: "system", content: "Bạn là trợ lý hữu ích. Trả lời bằng tiếng Việt, ngắn gọn, rõ ràng."}
+        ]
+        state $nhập = ""
+        state $đang_chờ = false
+        state $phản_hồi = ""
+
+        đính_đầu {
+            khối {
+                @màu { màu_nền: $nền, màu_viền: $viền }
+                @khoảng_cách { đệm: "10 16", viền: 1 }
+
+                căn_giữa(max_rộng: 760) {
+                    flex {
+                        @flex_bố_cục { hướng: hàng, gap: 10, dọc: giữa }
+
+                        flex {
+                            @flex_bố_cục { hướng: hàng, dọc: giữa }
+                            @chữ { căn: giữa }
+                            @kích_thước { rộng: 36, cao: 36 }
+                            @màu { màu_nền: $nhấn }
+                            @khoảng_cách { radius: 18 }
+
+                            text("G", cỡ: 16, đậm: true, màu: $chữ_nhấn)
+                        }
+
+                        flex {
+                            @flex_bố_cục { hướng: cột, gap: 0 }
+
+                            text("Chat Groq", cỡ: 16, đậm: true)
+                            text("$mô_hình", cỡ: 12, màu: $phụ)
+                        }
+
+                        button("Giao diện", hiệu_ứng_hover: "lam_sang") {
+                            @màu { màu: $phụ }
+                            @khoảng_cách { đệm: "6 10", radius: 8, lề: "0 0 0 auto" }
+                            @chữ { cỡ: 14 }
+
+                            khi_nhấn { đặt_chủ_đề() }
+                        }
+
+                        button("Làm mới", hiệu_ứng_hover: "lam_sang") {
+                            @màu { màu: $phụ, màu_viền: $viền }
+                            @khoảng_cách { đệm: "6 10", radius: 8, viền: 1 }
+                            @chữ { cỡ: 14 }
+
+                            khi_nhấn {
+                                $lịch_sử = [
+                                    {role: "system", content: "Bạn là trợ lý hữu ích. Trả lời bằng tiếng Việt, ngắn gọn, rõ ràng."}
+                                ]
+                                $nhập = ""
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        căn_giữa(max_rộng: 760) {
+            flex {
+                @khoảng_cách { đệm: "20 16 140 16" }
+                @flex_bố_cục { hướng: cột, gap: 14 }
+
+                nếu $lịch_sử.độ_dài == 1 {
+                    flex {
+                        @flex_bố_cục { hướng: cột, gap: 12, dọc: giữa }
+                        @khoảng_cách { đệm: "48 0 16 0" }
+
+                        flex {
+                            @flex_bố_cục { hướng: hàng, dọc: giữa }
+                            @chữ { căn: giữa }
+                            @kích_thước { rộng: 64, cao: 64 }
+                            @màu { màu_nền: $nhấn }
+                            @khoảng_cách { radius: 32 }
+
+                            text("G", cỡ: 28, đậm: true, màu: $chữ_nhấn)
+                        }
+
+                        text("Xin chào, mình có thể giúp gì?", cỡ: 22, đậm: true)
+                        text("Hỏi bất kỳ điều gì hoặc chọn một gợi ý bên dưới.", cỡ: 14, màu: $phụ)
+
+                        flex {
+                            @flex_bố_cục { hướng: hàng, bọc: true, gap: 8 }
+                            @chữ { căn: giữa }
+                            @khoảng_cách { đệm: "8 0 0 0" }
+
+                            button("Giải thích vibe coding là gì", hiệu_ứng_hover: "lam_sang") {
+                                @màu { màu_nền: $nền_thẻ, màu: $chữ, màu_viền: $viền }
+                                @khoảng_cách { đệm: "8 14", radius: 18, viền: 1 }
+                                @chữ { cỡ: 14 }
+
+                                khi_nhấn { $nhập = "Giải thích vibe coding là gì" }
+                            }
+
+                            button("Gợi ý ý tưởng dự án nhỏ", hiệu_ứng_hover: "lam_sang") {
+                                @màu { màu_nền: $nền_thẻ, màu: $chữ, màu_viền: $viền }
+                                @khoảng_cách { đệm: "8 14", radius: 18, viền: 1 }
+                                @chữ { cỡ: 14 }
+
+                                khi_nhấn { $nhập = "Gợi ý ba ý tưởng dự án nhỏ để luyện tập lập trình web" }
+                            }
+
+                            button("Viết lời giới thiệu bản thân", hiệu_ứng_hover: "lam_sang") {
+                                @màu { màu_nền: $nền_thẻ, màu: $chữ, màu_viền: $viền }
+                                @khoảng_cách { đệm: "8 14", radius: 18, viền: 1 }
+                                @chữ { cỡ: 14 }
+
+                                khi_nhấn { $nhập = "Viết giúp mình một đoạn giới thiệu bản thân ngắn cho portfolio" }
+                            }
+                        }
+                    }
+                }
+
+                vòng_lặp $m trong $lịch_sử {
+                    khối {
+                        nếu $m.role == "user" {
+                            flex {
+                                @flex_bố_cục { hướng: hàng }
+                                @chữ { căn: phải }
+
+                                khối {
+                                    @khoảng_cách { đệm: "10 14", radius: 18 }
+                                    @màu { màu_nền: $nhấn }
+                                    @kích_thước { max_rộng: "85%" }
+
+                                    text($m.content, cỡ: 15, màu: $chữ_nhấn, giữ_dòng: true)
+                                }
+                            }
+                        }
+                        nếu $m.role == "assistant" {
+                            flex {
+                                @flex_bố_cục { hướng: hàng, gap: 8 }
+                                @chữ { căn: trái }
+
+                                flex {
+                                    @flex_bố_cục { hướng: hàng, dọc: giữa }
+                                    @chữ { căn: giữa }
+                                    @kích_thước { rộng: 28, cao: 28 }
+                                    @màu { màu_nền: $nhấn }
+                                    @khoảng_cách { radius: 14 }
+
+                                    text("G", cỡ: 13, đậm: true, màu: $chữ_nhấn)
+                                }
+
+                                khối {
+                                    @khoảng_cách { đệm: "10 14", radius: 18, viền: 1 }
+                                    @màu { màu_nền: $nền_thẻ, màu_viền: $viền }
+                                    @kích_thước { max_rộng: "85%" }
+
+                                    text($m.content, cỡ: 15, giữ_dòng: true)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                nếu $đang_chờ {
+                    flex {
+                        @flex_bố_cục { hướng: hàng, gap: 8 }
+                        @chữ { căn: trái }
+
+                        flex {
+                            @flex_bố_cục { hướng: hàng, dọc: giữa }
+                            @chữ { căn: giữa }
+                            @kích_thước { rộng: 28, cao: 28 }
+                            @màu { màu_nền: $nhấn }
+                            @khoảng_cách { radius: 14 }
+
+                            text("G", cỡ: 13, đậm: true, màu: $chữ_nhấn)
+                        }
+
+                        khối {
+                            @khoảng_cách { đệm: "10 14", radius: 18, viền: 1 }
+                            @màu { màu_nền: $nền_thẻ, màu_viền: $viền }
+
+                            text("Đang trả lời…", cỡ: 15, màu: $phụ)
+                        }
+                    }
+                }
+
+                khối {
+                    @định_danh { id: "cuoi" }
+                    @kích_thước { cao: 1 }
+                }
+            }
+        }
+
+        đính_màn_hình(vị_trí: dưới) {
+            khối {
+                @màu { màu_nền: $nền, màu_viền: $viền }
+                @khoảng_cách { đệm: "12 16", viền: 1 }
+
+                căn_giữa(max_rộng: 760) {
+                    form() {
+                        grid {
+                            @grid_bố_cục { cột: "1fr auto", gap: 8 }
+
+                            input {
+                                @khoảng_cách { đệm: "12 16", radius: 24, viền: 1 }
+                                @màu { màu_nền: $nền, màu: $chữ, màu_viền: $viền }
+                                @chữ { cỡ: 16 }
+                                @kích_thước { rộng: "100%" }
+                                @nhập_liệu { giá_trị: $nhập, chữ_trỏ: "Nhập tin nhắn…" }
+                            }
+
+                            nếu $đang_chờ {
+                                button("Gửi") {
+                                    @màu { màu_nền: $viền, màu: $phụ }
+                                    @khoảng_cách { đệm: "12 20", radius: 24 }
+                                    @nhập_liệu { vô_hiệu: true }
+                                }
+                            } không_thì {
+                                button("Gửi", hiệu_ứng_hover: "lam_sang") {
+                                    @màu { màu_nền: $nhấn, màu: $chữ_nhấn }
+                                    @khoảng_cách { đệm: "12 20", radius: 24 }
+                                }
+                            }
+                        }
+
+                        khi_gửi {
+                            nếu $nhập {
+                                nếu $đang_chờ == false {
+                                    thêm_vào_mảng($lịch_sử, {role: "user", content: $nhập})
+                                    $nhập = ""
+                                    $đang_chờ = true
+                                    cuộn_đến("cuoi")
+                                    $phản_hồi = gọi_api("POST", "https://api.groq.com/openai/v1/chat/completions", {model: $mô_hình, messages: $lịch_sử}, tiêu_đề: {Authorization: "Bearer $khóa_api"}) {
+                                        thành_công {
+                                            thêm_vào_mảng($lịch_sử, {role: "assistant", content: $phản_hồi.choices[0].message.content})
+                                            $đang_chờ = false
+                                            cuộn_đến("cuoi")
+                                        }
+                                        thất_bại {
+                                            $đang_chờ = false
+                                            nếu $phản_hồi.error.message {
+                                                thông_báo("Groq báo lỗi: $phản_hồi.error.message", kiểu: lỗi)
+                                            } không_thì {
+                                                thông_báo("Không kết nối được tới Groq. Kiểm tra mạng và khóa API.", kiểu: lỗi)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

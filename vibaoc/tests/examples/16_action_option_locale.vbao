@@ -1,0 +1,20 @@
+// 16 — Action option keys in either language. `type:`/`duration:` are
+// normalized to `kieu:`/`thoi_gian:` by the parser, so both buttons below
+// must behave identically at runtime. Toast kinds `success`/`error`/
+// `warning` are likewise mapped to `thanh_cong`/`loi`/`canh_bao`.
+lang = "vi";
+
+ung_dung("Kiem tra option key") {
+    trang("/") {
+        button("Toast kieu tieng Anh") {
+            khi_nhan {
+                thong_bao("Canh bao!", type: warning, duration: 5000)
+            }
+        }
+        button("Toast kieu tieng Viet") {
+            khi_nhan {
+                thong_bao("Canh bao!", kieu: canh_bao, thoi_gian: 5000)
+            }
+        }
+    }
+}

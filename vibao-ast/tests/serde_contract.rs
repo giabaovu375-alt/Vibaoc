@@ -1,34 +1,9 @@
-// VIBAO — vibao-ast/tests/serde_contract.rs
-//
-// These tests guard the JSON boundary between `vibaoc` (which
-// serializes Expr/Action into the expr/action registries embedded in
-// app.js, see codegen/expr.rs::register_expr and
-// codegen/action.rs::register_action_body) and `vibao-runtime` (which
-// deserializes that exact JSON back into real Expr/Action values at
-// boot, see runtime/expr_registry.rs and
-// runtime/action_registry.rs).
-//
-// Since both sides only agree on this contract through
-// `#[derive(Serialize, Deserialize)]` on the shared vibao-ast types,
-// there is nothing at compile time stopping a field rename, an enum
-// variant reorder, or a `#[serde(...)]` attribute change from silently
-// breaking the JSON compatibility between a compiler build and a
-// runtime build compiled at a different time. These tests round-trip
-// every Expr/Action variant through JSON exactly the way the real
-// pipeline does, catching that kind of drift immediately instead of it
-// only surfacing as a confusing runtime deserialize error in a browser.
-//
-// Not intended to be pushed to the public repo alongside the crate --
-// keep local as part of the pre-release regression suite.
-
 use vibao_ast::*;
 
 fn p() -> Pos {
     Pos { line: 1, column: 1 }
 }
 
-/// Round-trips a value through JSON exactly like the real registry
-/// boundary does, returning the deserialized copy.
 fn roundtrip<T: serde::Serialize + serde::de::DeserializeOwned>(value: &T) -> T {
     let json = serde_json::to_string(value).expect("serialization must succeed");
     serde_json::from_str(&json).unwrap_or_else(|e| {
@@ -38,10 +13,6 @@ fn roundtrip<T: serde::Serialize + serde::de::DeserializeOwned>(value: &T) -> T 
         )
     })
 }
-
-// ════════════════════════════════════════════════════════════
-// EXPR — every variant round-trips correctly
-// ════════════════════════════════════════════════════════════
 
 #[test]
 fn test_expr_literal_variants_roundtrip() {
@@ -113,17 +84,22 @@ fn test_expr_binary_and_unary_roundtrip() {
     }
 }
 
-/// Every BinaryOp variant must round-trip -- a missed variant here
-/// would silently desync the compiler and runtime's understanding of
-/// operator semantics (this is exactly the class of bug the Gte/Lte
-/// fix in expr_eval.rs::eval_binary guards against on the runtime
-/// side; this test guards the same risk at the serialization layer).
 #[test]
 fn test_every_binary_op_variant_roundtrips() {
     let ops = [
-        BinaryOp::Add, BinaryOp::Sub, BinaryOp::Mul, BinaryOp::Div, BinaryOp::Mod,
-        BinaryOp::Eq, BinaryOp::Neq, BinaryOp::Gt, BinaryOp::Gte, BinaryOp::Lt,
-        BinaryOp::Lte, BinaryOp::And, BinaryOp::Or,
+        BinaryOp::Add,
+        BinaryOp::Sub,
+        BinaryOp::Mul,
+        BinaryOp::Div,
+        BinaryOp::Mod,
+        BinaryOp::Eq,
+        BinaryOp::Neq,
+        BinaryOp::Gt,
+        BinaryOp::Gte,
+        BinaryOp::Lt,
+        BinaryOp::Lte,
+        BinaryOp::And,
+        BinaryOp::Or,
     ];
     for op in ops {
         let e = Expr::Binary {
@@ -135,7 +111,11 @@ fn test_every_binary_op_variant_roundtrips() {
         let back = roundtrip(&e);
         match back {
             Expr::Binary { op: back_op, .. } => {
-                assert_eq!(back_op, op, "BinaryOp::{:?} did not round-trip correctly", op);
+                assert_eq!(
+                    back_op, op,
+                    "BinaryOp::{:?} did not round-trip correctly",
+                    op
+                );
             }
             other => panic!("expected Binary, got {:?}", other),
         }
@@ -163,7 +143,10 @@ fn test_expr_call_roundtrips() {
 fn test_expr_color_func_roundtrips() {
     let e = Expr::ColorFunc {
         func: ColorFuncKind::TrongSuot,
-        color: Box::new(Expr::Literal(LiteralValue::Color("#000000".to_string()), p())),
+        color: Box::new(Expr::Literal(
+            LiteralValue::Color("#000000".to_string()),
+            p(),
+        )),
         amount: 50.0,
         pos: p(),
     };
@@ -179,7 +162,10 @@ fn test_expr_color_func_roundtrips() {
 
 #[test]
 fn test_expr_array_and_object_roundtrip() {
-    let arr = Expr::Array(vec![Expr::literal_num(1.0, p()), Expr::literal_num(2.0, p())], p());
+    let arr = Expr::Array(
+        vec![Expr::literal_num(1.0, p()), Expr::literal_num(2.0, p())],
+        p(),
+    );
     let back = roundtrip(&arr);
     match back {
         Expr::Array(items, _) => assert_eq!(items.len(), 2),
@@ -187,7 +173,10 @@ fn test_expr_array_and_object_roundtrip() {
     }
 
     let obj = Expr::Object(
-        vec![("ten".to_string(), Expr::literal_str("test".to_string(), p()))],
+        vec![(
+            "ten".to_string(),
+            Expr::literal_str("test".to_string(), p()),
+        )],
         p(),
     );
     let back = roundtrip(&obj);
@@ -217,14 +206,8 @@ fn test_expr_template_string_roundtrips() {
     }
 }
 
-/// A more realistic nested expression, exercising recursion through
-/// the serializer -- this is closer to what a real .vbao file's
-/// expressions actually look like once compiled.
 #[test]
 fn test_nested_expr_roundtrips() {
-    // $a + gia_tien($b) -- a Binary whose right side is a Call,
-    // exactly the shape used as evidence in the FunctionName
-    // validator investigation.
     let e = Expr::Binary {
         op: BinaryOp::Add,
         left: Box::new(Expr::Variable("a".to_string(), p())),
@@ -244,10 +227,6 @@ fn test_nested_expr_roundtrips() {
         other => panic!("expected Binary, got {:?}", other),
     }
 }
-
-// ════════════════════════════════════════════════════════════
-// ACTION — every variant round-trips correctly
-// ════════════════════════════════════════════════════════════
 
 #[test]
 fn test_action_assign_roundtrips() {
@@ -307,6 +286,14 @@ fn test_action_api_call_with_nested_callbacks_roundtrips() {
         method: "GET".to_string(),
         endpoint: Expr::literal_str("/health".to_string(), p()),
         data: None,
+        headers: Some(Expr::Object(
+            vec![(
+                "Authorization".to_string(),
+                Expr::literal_str("Bearer k".to_string(), p()),
+            )],
+            p(),
+        )),
+        background: true,
         on_success: Some(vec![Action::Assign {
             target: "status".to_string(),
             value: Expr::literal_str("ok".to_string(), p()),
@@ -324,7 +311,15 @@ fn test_action_api_call_with_nested_callbacks_roundtrips() {
     };
     let back = roundtrip(&a);
     match back {
-        Action::ApiCall { on_success, on_failure, .. } => {
+        Action::ApiCall {
+            headers,
+            background,
+            on_success,
+            on_failure,
+            ..
+        } => {
+            assert!(headers.is_some(), "headers must survive round-trip");
+            assert!(background, "background must survive round-trip");
             assert_eq!(
                 on_success.map(|v| v.len()),
                 Some(1),
@@ -340,10 +335,6 @@ fn test_action_api_call_with_nested_callbacks_roundtrips() {
     }
 }
 
-/// A full Vec<Action> (an event handler's body) round-trips, since
-/// this is the actual unit registered/deserialized by
-/// action.rs::register_action_body / action_registry.rs -- not a
-/// single Action.
 #[test]
 fn test_action_sequence_roundtrips_as_registered() {
     let actions = vec![
@@ -367,5 +358,9 @@ fn test_action_sequence_roundtrips_as_registered() {
     ];
     let json = serde_json::to_string(&actions).expect("serialization must succeed");
     let back: Vec<Action> = serde_json::from_str(&json).expect("deserialization must succeed");
-    assert_eq!(back.len(), 2, "the full action sequence must survive round-trip intact");
+    assert_eq!(
+        back.len(),
+        2,
+        "the full action sequence must survive round-trip intact"
+    );
 }

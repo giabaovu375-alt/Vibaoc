@@ -10,7 +10,7 @@ A source release builder needs Rust/Cargo, the `wasm32-unknown-unknown` target, 
 ## Build a release
 
 ```bash
-./scripts/build-release.sh 0.1.0
+./scripts/build-release.sh 0.1.5
 ```
 
 The script builds the native compiler, builds the runtime WASM, runs
@@ -19,7 +19,7 @@ The script builds the native compiler, builds the runtime WASM, runs
 ## Release archive
 
 ```text
-vibao-0.1.0-linux-arm64/
+vibao-0.1.5-linux-arm64/
 ├── vibaoc
 ├── pkg/
 │   ├── vibao_runtime.js
@@ -49,7 +49,7 @@ vibaoc build app.vbao
 ## Smoke test a release package
 
 ```bash
-cd release/stage/vibao-0.1.0-linux-arm64
+cd release/stage/vibao-0.1.5-linux-arm64
 ./vibaoc --version
 ./vibaoc build ../../../app.vbao --out /tmp/vibao-test
 ls /tmp/vibao-test/pkg
@@ -59,7 +59,7 @@ Expected runtime files are `vibao_runtime.js` and `vibao_runtime_bg.wasm`.
 
 ## Publish
 
-Create a GitHub Release with tag `v0.1.0` and upload each target archive.
+Create a GitHub Release with tag `v0.1.5` and upload each target archive.
 
 ## Supported targets
 

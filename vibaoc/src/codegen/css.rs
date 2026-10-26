@@ -1,18 +1,3 @@
-// ============================================================
-// VIBAO COMPILER (Rust) — codegen/css.rs
-// Shared utilities for generating CSS strings: OrderedMap (an
-// insertion-order-preserving map, hand-written instead of depending on
-// the external indexmap crate - see the note in layout.rs),
-// camelCase->kebab-case, assembling style/attribute strings, and the
-// base CSS (BASE_CSS) embedded in every page.
-// ============================================================
-
-/// A map that preserves the INSERTION ORDER of its keys - Rust's
-/// HashMap does not guarantee iteration order, but a CSS property's
-/// declaration order sometimes matters (a later property overrides an
-/// earlier one if they collide). Implemented minimally with
-/// Vec<(String, String)> - not using an external crate (indexmap) to
-/// preserve the project's offline-build philosophy (see Cargo.toml).
 #[derive(Debug, Clone, Default)]
 pub struct OrderedMap {
     entries: Vec<(String, String)>,
@@ -20,13 +5,11 @@ pub struct OrderedMap {
 
 impl OrderedMap {
     pub fn new() -> Self {
-        OrderedMap { entries: Vec::new() }
+        OrderedMap {
+            entries: Vec::new(),
+        }
     }
 
-    /// Inserts a key/value pair. If the key already exists, its value is
-    /// updated IN PLACE (keeping its original position in the order) -
-    /// matching JS object behavior (`obj[key] = value` doesn't change
-    /// enumeration order if the key already exists).
     pub fn insert(&mut self, key: String, value: String) {
         if let Some(entry) = self.entries.iter_mut().find(|(k, _)| *k == key) {
             entry.1 = value;
@@ -39,15 +22,11 @@ impl OrderedMap {
         self.entries.iter().find(|(k, _)| k == key).map(|(_, v)| v)
     }
 
-#[allow(dead_code)]
+    #[allow(dead_code)]
     pub fn contains_key(&self, key: &str) -> bool {
         self.get(key).is_some()
     }
 
-    /// Like HashMap::entry(...).or_insert_with(...) - only sets a value
-    /// if the key does NOT already exist. Used in props.rs for the
-    /// default borderStyle "solid" when "vien" is present but
-    /// "kieu_vien" hasn't been set.
     pub fn entry_or_insert_with(&mut self, key: &str, default: impl FnOnce() -> String) {
         if self.get(key).is_none() {
             self.insert(key.to_string(), default());
@@ -63,14 +42,6 @@ impl OrderedMap {
     }
 }
 
-// ════════════════════════════════════════════════════════════
-// camelCase -> kebab-case
-// ════════════════════════════════════════════════════════════
-
-/// Converts a camelCase property name (backgroundColor) into real CSS
-/// kebab-case (background-color). Equivalent to camelToKebab() in the
-/// old TS version (a regex replacing each uppercase letter with "-" +
-/// the lowercase letter).
 pub fn camel_to_kebab(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + 4);
     for ch in s.chars() {
@@ -84,13 +55,6 @@ pub fn camel_to_kebab(s: &str) -> String {
     out
 }
 
-// ════════════════════════════════════════════════════════════
-// STYLE / ATTR STRING BUILDERS
-// ════════════════════════════════════════════════════════════
-
-/// Converts an OrderedMap style (key camelCase -> value) into an inline
-/// CSS string usable in a style="..." attribute - skipping empty
-/// values. Equivalent to styleObjToString() in the old TS version.
 pub fn style_map_to_string(style: &OrderedMap) -> String {
     style
         .iter()
@@ -100,24 +64,6 @@ pub fn style_map_to_string(style: &OrderedMap) -> String {
         .join(";")
 }
 
-/// Same as style_map_to_string() but for LayoutCss directly, for
-/// printing inline instead of as a separate CSS rule block -
-/// equivalent to layoutCSSToStringInline() in the old TS version.
-///
-/// BUG ALREADY FIXED: the sentinel value "__dynamic__" (from
-/// get_static_value() - meaning "this prop's value is DYNAMIC, cannot
-/// be computed at build time") used to be printed directly as if it
-/// were STATIC CSS ("width:__dynamic__"), because this function used
-/// to have no awareness/check for this sentinel. The result: a property
-/// with a dynamic value (e.g. width: $do_rong on a layout tag) got
-/// "hard-locked" to meaningless CSS, and since __dynamic__ doesn't
-/// parse as a valid number/length, the browser silently ignored the
-/// entire declaration - the property kept the browser's default value
-/// and never changed, even though a separate dynamic binding
-/// (data-vb-style-*) was running correctly in parallel. Entries with
-/// "__dynamic__" are now filtered out entirely here - the actual
-/// dynamic binding replacement is generated elsewhere
-/// (gen_layout_element).
 pub fn layout_css_to_string_inline(css: &crate::codegen::layout::LayoutCss) -> String {
     css.iter()
         .filter(|(_, v)| v.as_str() != "__dynamic__")
@@ -126,14 +72,6 @@ pub fn layout_css_to_string_inline(css: &crate::codegen::layout::LayoutCss) -> S
         .join(";")
 }
 
-/// Generates a complete CSS rule block (selector { ... }) from
-/// LayoutCss - used to addCSS() into the page's shared stylesheet,
-/// unlike inline style (used for individual small overrides).
-/// Equivalent to layoutCSSToString().
-///
-/// The same bug/fix as layout_css_to_string_inline() above - filters
-/// out the "__dynamic__" sentinel to avoid generating a meaningless CSS
-/// rule.
 pub fn layout_css_to_string(selector: &str, css: &crate::codegen::layout::LayoutCss) -> String {
     let rules = css
         .iter()
@@ -144,80 +82,42 @@ pub fn layout_css_to_string(selector: &str, css: &crate::codegen::layout::Layout
     format!("{} {{\n{}\n}}", selector, rules)
 }
 
-/// Escapes a value for safe use inside an HTML attribute (different
-/// from escaping displayed HTML content - doesn't escape "&" to
-/// "&amp;" since the old TS version (escAttr/escAttr2) didn't either,
-/// only escaping the 3 characters that could break attribute syntax:
-/// the double-quote and the angle brackets).
 pub fn esc_attr(val: &str) -> String {
-    val.replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;")
+    val.replace('&', "&amp;")
+        .replace('"', "&quot;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }
 
-/// Escapes displayed HTML content (unlike esc_attr - used for text
-/// inside a tag, not inside an attribute) - equivalent to escHTML2() in
-/// error-handler.ts, but also needed here for static content.
 pub fn esc_html(val: &str) -> String {
-    val.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+    val.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }
 
-/// Indents every line of a code/HTML block by `spaces` spaces - used
-/// throughout codegen to build a readable nested HTML tree. Equivalent
-/// to indent2() (codegen) / indent() (action codegen) in the old TS
-/// version - merged into one since the logic was identical.
 pub fn indent(code: &str, spaces: usize) -> String {
     let pad = " ".repeat(spaces);
-    code.lines().map(|l| format!("{}{}", pad, l)).collect::<Vec<_>>().join("\n")
+    code.lines()
+        .map(|l| format!("{}{}", pad, l))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
-/// Defaults to 2 spaces - used at most indent() call sites for HTML.
 pub fn indent2(code: &str) -> String {
     indent(code, 2)
 }
 
-// ════════════════════════════════════════════════════════════
-// BASE CSS — embedded in every page (reset + animation keyframes + component style)
-// ════════════════════════════════════════════════════════════
-
-/// The ViBao runtime's base CSS: a basic reset, animation keyframes,
-/// and styles for the built-in complex components (tabs, modal,
-/// carousel, accordion, dropdown, toast, form, spinner, progress bar).
-/// Kept 1:1 identical to BASE_CSS in the old TS version - this is
-/// purely static data with no logic to mistranslate, so copying it
-/// verbatim is the safest choice.
-pub const BASE_CSS: &str = r#"/* ViBao Base CSS */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+pub const BASE_CSS: &str = r#"*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; }
 img { max-width: 100%; display: block; }
 button { cursor: pointer; border: none; background: none; font: inherit; }
 a { color: inherit; text-decoration: none; }
 input, textarea, select { font: inherit; }
 .vb-page { min-height: 100vh; }
-/* BUG ALREADY FIXED: this rule used to NOT exist - every .vb-page div
-   (one div per route) defaulted to display:block, and was only hidden
-   by JS inside router::activate_page() (which runs after WASM loads +
-   finishes booting). During the window where the HTML/CSS has already
-   been parsed but WASM hasn't run yet (slow network, or now even
-   longer since activate_page() awaits on_tai before hiding/showing -
-   see router.rs), the user would see ALL pages stacked on top of each
-   other. This plain CSS rule runs as soon as the browser finishes
-   parsing <head>, with no dependency on JS: only the .vb-page with
-   data-route="/" is shown by default (the SPA's root route), every
-   other .vb-page starts hidden. This deliberately does NOT use
-   ":not([data-route="/"])" based on DOM ORDER (e.g. `.vb-page ~
-   .vb-page`) because the order pages are declared in a .vbao file
-   doesn't guarantee route "/" always comes first - directly targeting
-   data-route="/" is the only way to correctly mean "the default root
-   route" in every case. If the initial URL isn't "/" (e.g. a user
-   navigates straight to /gioi-thieu), there's briefly a flash of the
-   wrong "/" page before JS can correct it - an acceptable tradeoff
-   compared to showing ALL pages stacked on top of each other.
-   router.rs remains the source of truth once navigating (overriding
-   with style="display:...").
-*/
 .vb-page[data-route]:not([data-route="/"]) { display: none; }
 [style*="display:none"] { display: none !important; }
+[data-vb-loop] { display: none; }
 
-/* ViBao Animation classes */
 @keyframes vb-fade-in { from { opacity:0 } to { opacity:1 } }
 @keyframes vb-truot-len { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
 @keyframes vb-truot-xuong { from { opacity:0; transform:translateY(-20px) } to { opacity:1; transform:translateY(0) } }
@@ -230,20 +130,18 @@ input, textarea, select { font: inherit; }
 .vb-anim-phong_to   { animation: vb-phong-to var(--vb-dur,0.4s) ease forwards }
 .vb-anim-rung       { animation: vb-rung var(--vb-dur,0.4s) ease }
 
-/* ViBao hover animation classes */
+[data-vb-anim-hover] { transition: transform .2s ease, box-shadow .2s ease, filter .2s ease }
 .vb-hover-phong_to  { transform: scale(1.05) !important }
 .vb-hover-lam_sang  { filter: brightness(1.1) !important }
+.vb-hover-nang_len  { transform: translateY(-4px) !important; box-shadow: 0 8px 24px rgba(0,0,0,.12) !important }
 
-/* Tabs */
 .vb-tabs .vb-tab-header { display:flex; gap:0; border-bottom:2px solid #e5e7eb }
 .vb-tab-btn { padding:10px 20px; background:none; border:none; cursor:pointer; color:#6b7280; font-weight:500 }
 .vb-tab-btn.vb-tab-active { color:#2563eb; border-bottom:2px solid #2563eb; margin-bottom:-2px }
 
-/* Modal */
 .vb-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; z-index:1000 }
 .vb-modal-box { background:#fff; border-radius:12px; padding:24px; max-height:90vh; overflow-y:auto }
 
-/* Carousel */
 .vb-carousel { position:relative; overflow:hidden }
 .vb-carousel-track { display:flex; transition:transform .3s ease }
 .vb-carousel-prev,.vb-carousel-next { position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,.3); color:#fff; border:none; padding:8px 14px; cursor:pointer; font-size:20px; border-radius:4px }
@@ -252,18 +150,15 @@ input, textarea, select { font: inherit; }
 .vb-dot { width:8px; height:8px; border-radius:50%; background:#d1d5db; border:none; cursor:pointer }
 .vb-dot.vb-dot-active { background:#2563eb }
 
-/* Accordion */
 .vb-accordion-btn { width:100%; text-align:left; padding:14px 16px; background:#f9fafb; border:none; cursor:pointer; font-weight:500; display:flex; justify-content:space-between }
 .vb-accordion-body { padding:16px }
 
-/* Dropdown */
 .vb-dropdown { position:relative; display:inline-block }
 .vb-dropdown-menu { position:absolute; top:100%; left:0; background:#fff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,.1); min-width:160px; z-index:100 }
 .vb-dropdown-right { left:auto; right:0 }
 .vb-dropdown-item { display:flex; align-items:center; gap:8px; width:100%; padding:10px 16px; background:none; border:none; cursor:pointer; text-align:left }
 .vb-dropdown-item:hover { background:#f3f4f6 }
 
-/* Toast */
 .vb-toast-container { position:fixed; top:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:9999 }
 .vb-toast { padding:12px 20px; border-radius:8px; color:#fff; font-weight:500; animation:vb-truot-len .3s ease }
 .vb-toast-thanh_cong { background:#10b981 }
@@ -271,7 +166,6 @@ input, textarea, select { font: inherit; }
 .vb-toast-canh_bao { background:#f59e0b }
 .vb-toast-info { background:#3b82f6 }
 
-/* Form */
 .vb-form { display:flex; flex-direction:column; gap:16px }
 .vb-nhom-input { display:flex; flex-direction:column; gap:6px }
 .vb-nhom-input label { font-weight:500; font-size:14px; color:#374151 }
@@ -280,17 +174,11 @@ input, textarea, select { font: inherit; }
 .vb-input-error { border-color:#ef4444 !important }
 .vb-error-msg { color:#ef4444; font-size:13px; margin-top:4px }
 
-/* Spinner */
 .vb-spinner { border:3px solid #e5e7eb; border-top-color:#2563eb; border-radius:50%; animation:vb-spin .8s linear infinite }
 @keyframes vb-spin { to { transform:rotate(360deg) } }
 
-/* Progress bar */
 .vb-progress { background:#e5e7eb; border-radius:999px; overflow:hidden }
 .vb-progress-bar { height:100%; background:#2563eb; transition:width .3s ease }"#;
-
-// ════════════════════════════════════════════════════════════
-// UNIT TESTS
-// ════════════════════════════════════════════════════════════
 
 #[cfg(test)]
 mod tests {
@@ -305,18 +193,15 @@ mod tests {
 
     #[test]
     fn test_layout_css_to_string_inline_filters_dynamic_sentinel() {
-        // BUG ALREADY FIXED: "__dynamic__" (a sentinel meaning "this
-        // value is dynamic, handled elsewhere") used to be printed
-        // directly as static CSS ("width:__dynamic__"), making that
-        // property never receive its real value - this was the exact
-        // cause of "box(width: $x)" on a layout tag never changing
-        // width on a button click, even though the dynamic binding
-        // (data-vb-style-width) was working correctly in parallel.
         let mut css = crate::codegen::layout::LayoutCss::new();
         css.insert("width".to_string(), "__dynamic__".to_string());
         css.insert("height".to_string(), "40px".to_string());
         let result = layout_css_to_string_inline(&css);
-        assert!(!result.contains("__dynamic__"), "the sentinel must not leak into static CSS: {}", result);
+        assert!(
+            !result.contains("__dynamic__"),
+            "the sentinel must not leak into static CSS: {}",
+            result
+        );
         assert!(result.contains("height:40px"));
     }
 
@@ -325,7 +210,11 @@ mod tests {
         let mut css = crate::codegen::layout::LayoutCss::new();
         css.insert("width".to_string(), "__dynamic__".to_string());
         let result = layout_css_to_string("#vb-box-1", &css);
-        assert!(!result.contains("__dynamic__"), "the sentinel must not leak into a CSS rule: {}", result);
+        assert!(
+            !result.contains("__dynamic__"),
+            "the sentinel must not leak into a CSS rule: {}",
+            result
+        );
     }
 
     #[test]
@@ -371,6 +260,12 @@ mod tests {
     #[test]
     fn test_esc_attr() {
         assert_eq!(esc_attr("a\"b<c>"), "a&quot;b&lt;c&gt;");
+    }
+
+    #[test]
+    fn test_esc_attr_escapes_ampersand_without_double_escaping() {
+        assert_eq!(esc_attr("a & b"), "a &amp; b");
+        assert_eq!(esc_attr("<a & b>"), "&lt;a &amp; b&gt;");
     }
 
     #[test]

@@ -1,21 +1,5 @@
-// ============================================================
-// VIBAO COMPILER (Rust) — locale/function_vi.rs
-// LOCALE: Vietnamese — maps an EXPRESSION FUNCTION name written in the
-// source (.vbao) to a FunctionName (the semantic identity, defined in
-// vibao_ast::semantic::function).
-//
-// STATUS: the vocabulary + locale mapping is wired into both the parser
-// and the validator. The parser normalizes a resolved name to its
-// canonical runtime name; the validator uses the same semantic resolver
-// to catch invalid function names.
-//
-// SOURCE OF TRUTH, matched 1:1: `vibao-runtime/src/runtime/expr_eval.rs::
-// eval_call()` — 6 names.
-// ============================================================
-
 use vibao_ast::FunctionName;
 
-/// (Vietnamese source name) -> FunctionName table — FULL 6/6 coverage.
 pub fn function_name_vi(name: &str) -> Option<FunctionName> {
     Some(match name {
         "gia_tien" => FunctionName::FormatPrice,
@@ -33,7 +17,12 @@ mod tests {
     use super::*;
 
     const ALL_FUNCTION_SURFACE_NAMES_VI: &[&str] = &[
-        "gia_tien", "ngay", "rut_gon", "hoa_chu", "phan_tram", "lam_tron",
+        "gia_tien",
+        "ngay",
+        "rut_gon",
+        "hoa_chu",
+        "phan_tram",
+        "lam_tron",
     ];
 
     #[test]

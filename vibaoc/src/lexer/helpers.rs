@@ -1,13 +1,4 @@
-// ============================================================
-// VIBAO COMPILER (Rust) — lexer/helpers.rs
-// HELPER FUNCTIONS (module-level, don't need &self)
-// ============================================================
-
 use super::token::TokenKind;
-
-// ════════════════════════════════════════════════════════════
-// 5. HELPER FUNCTIONS (module-level, don't need &self)
-// ════════════════════════════════════════════════════════════
 
 pub(crate) fn is_ident_start(ch: char) -> bool {
     ch.is_alphabetic() || ch == '_'
@@ -51,6 +42,6 @@ pub(crate) fn unescape(ch: char) -> char {
         'n' => '\n',
         't' => '\t',
         'r' => '\r',
-        other => other, // \" \\ \' and any other character pass through unchanged
+        other => other,
     }
 }

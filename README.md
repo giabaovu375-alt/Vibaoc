@@ -12,13 +12,14 @@ no Node.js, no bundler, no JavaScript framework required.
 ```vbao
 app("My app") {
     page("/") {
-        box(padding: 16) {
+        box {
+            @spacing { padding: 16 }
             text("Count: ", bold: true)
             button("Increment") {
                 on_click {
                     $count = $count + 1
                     if $count >= 10 {
-                        notify("Reached 10!", type: success)
+                        notify("Reached 10!", kieu: thanh_cong)
                     }
                 }
             }
@@ -30,15 +31,16 @@ app("My app") {
 The same program, written in Vietnamese:
 
 ```vbao
-ung_dung("Ung dung cua toi") {
+ứng_dụng("Ứng dụng của tôi") {
     trang("/") {
-        khoi(dem: 16) {
-            text("So dem: ", dam: true)
-            button("Tang") {
-                khi_nhan {
-                    $dem = $dem + 1
-                    neu $dem >= 10 {
-                        thong_bao("Da dat 10!", kieu: thanh_cong)
+        khối {
+            @khoảng_cách { đệm: 16 }
+            text("Số đếm: ", đậm: true)
+            button("Tăng") {
+                khi_nhấn {
+                    $đếm = $đếm + 1
+                    nếu $đếm >= 10 {
+                        thông_báo("Đã đạt 10!", kiểu: thành_công)
                     }
                 }
             }
@@ -47,8 +49,8 @@ ung_dung("Ung dung cua toi") {
 }
 ```
 
-Vietnamese and English keywords both resolve to the exact same AST —
-write in whichever you prefer, mix them freely, and switch anytime.
+Vietnamese (with or without diacritics) and English keywords all resolve to the
+exact same AST — write in whichever you prefer, mix them freely, and switch anytime.
 
 ## Goals
 
@@ -107,8 +109,18 @@ locales are very welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
   handled by a lightweight WebAssembly runtime instead of a large JS
   framework.
 - **Fails at compile time, not in production.** Unknown actions,
-  unknown functions, and several other common mistakes are caught by
-  the compiler with a clear message and a source location.
+  unknown functions, props in the wrong block, misused theme variables
+  and several other common mistakes are caught by the compiler with a
+  clear message and a source location.
+- **Light/dark themes built in.** Declare themes once, follow the OS
+  automatically, switch with one action, and the choice is remembered
+  without a flash on reload.
+- **Talks to real APIs.** `goi_api` / `api_call` supports headers, reading
+  nested responses (`$res.choices[0].message.content`) and background
+  loading so the page stays interactive.
+- **Static-host friendly.** `--site-url` writes `sitemap.xml`,
+  `robots.txt`, canonical and Open Graph tags; multi-route apps get a
+  `404.html` fallback.
 
 ## Quick start
 
@@ -127,17 +139,20 @@ notes, including Android/Termux setup.
 Then compile a `.vbao` file:
 
 ```bash
-vibaoc app.vbao
-# or, explicitly:
-vibaoc build app.vbao --out dist
+vibaoc check app.vbao                  # report errors only
+vibaoc build app.vbao --out dist       # write dist/
+vibaoc serve app.vbao --port 8000      # build, serve locally, rebuild on change
 ```
 
-Open `dist/index.html` in a browser to see the result.
+Open `dist/index.html` (or `http://127.0.0.1:8000`) in a browser.
 
-More sample apps are in [`examples/`](examples/): a counter
-(`counter.vbao`), a multi-page app with a reusable component
-(`multi_page.vbao`), and a small task manager with array CRUD
-(`task_manager.vbao`).
+Sample apps are in [`examples/`](examples/) (kept in the repository only,
+not shipped in release archives): a multi-page app with a reusable component
+(`multi_page.vbao`), a task manager with array CRUD
+(`task_manager.vbao`), a personal portfolio with light/dark
+themes and repositories loaded from GitHub (`portfolio.vbao`), and a chat
+client for the Groq API (`chat_groq.vbao`, put your own API key in it first
+and never commit the file with the key).
 
 ## Repository layout
 
@@ -162,8 +177,9 @@ Requirements:
 
 ```bash
 cargo test --workspace          # run the full test suite
-bash scripts/build-runtime.sh   # build the runtime package (WASM)
-bash scripts/build-release.sh 0.1.0   # build a release archive for the current platform
+bash scripts/build-runtime.sh   # build the runtime package (WASM); the e2e tests need it
+bash scripts/verify.sh          # fmt check, tests and build with warnings denied
+bash scripts/build-release.sh 0.1.5   # build a release archive for the current platform
 ```
 
 See [`scripts/RELEASE.md`](scripts/RELEASE.md) for the full release
@@ -175,40 +191,55 @@ process.
 |---|---|
 | [`docs/INSTALLATION.md`](docs/INSTALLATION.md) | Install instructions for every platform, plus building from source |
 | [`docs/SYNTAX_EN.md`](docs/SYNTAX_EN.md) | English syntax cheat-sheet |
-| [`docs/SYNTAX_VI.md`](docs/SYNTAX_VI.md) | Vietnamese syntax cheat-sheet |
+| [`docs/SYNTAX_VI.md`](docs/SYNTAX_VI.md) | Vietnamese syntax cheat-sheet (themes, API calls, components) |
+| [`docs/TRIEN_KHAI.md`](docs/TRIEN_KHAI.md) | Deploying to static hosts: `--site-url`, `404.html`, sitemap (in Vietnamese) |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release history (in Vietnamese) |
 | [`docs/VIBAO_SPEC.md`](docs/VIBAO_SPEC.md) | Full language specification |
-| [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | What's incomplete, disabled, or silently no-op in 0.1.0 |
+| [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) | What's incomplete, disabled, or silently no-op in 0.1.5 |
+| [`docs/PROFILE_GUIDE.md`](docs/PROFILE_GUIDE.md) | Building a personal web profile: assets, fonts, anchors, form (in Vietnamese) |
 | [`docs/README_VI.md`](docs/README_VI.md) | This README, in Vietnamese |
 
 ## A slightly longer example
 
-A small counter app with state, a conditional, and a loop:
+State, a conditional, a loop and a theme switch:
 
 ```vbao
 lang = "vi";
 
-ung_dung("Vi du ViBao") {
+ứng_dụng("Ví dụ ViBao") {
+    chủ_đề sáng { $nền = trang, $chữ = xám_đậm }
+    chủ_đề tối { $nền = "#1a202c", $chữ = "#e2e8f0" }
+
+    giao_diện { màu_nền: $nền, màu: $chữ }
+
     trang("/") {
-        state $dem = 0
-        state $tasks = [
-            {id: 1, tieu_de: "Viet tai lieu", xong: false},
-            {id: 2, tieu_de: "Sua loi giao dien", xong: true}
+        state $đếm = 0
+        state $việc = [
+            {id: 1, tên: "Viết tài liệu", xong: false},
+            {id: 2, tên: "Sửa lỗi giao diện", xong: true}
         ]
 
-        khoi(dem: 24, huong: cot, khoang_chu: 12) {
-            text("Bo dem: $dem", co: 20, dam: true)
-            button("Tang") {
-                khi_nhan { $dem = $dem + 1 }
+        flex {
+            @khoảng_cách { đệm: 24 }
+            @flex_bố_cục { hướng: cột, gap: 12 }
+
+            text("Bộ đếm: $đếm", cỡ: 20, đậm: true)
+            button("Tăng") {
+                khi_nhấn { $đếm = $đếm + 1 }
             }
 
-            neu $dem >= 10 {
-                text("Da dat 10!", mau: xanh_la)
-            } khong_thi {
-                text("Chua den 10", mau: xam)
+            nếu $đếm >= 10 {
+                text("Đã đạt 10!", màu: xanh_lá)
+            } không_thì {
+                text("Chưa đến 10", màu: xám)
             }
 
-            vong_lap $task trong $tasks {
-                text($task.tieu_de)
+            vòng_lặp $v trong $việc {
+                text($v.tên)
+            }
+
+            button("Đổi giao diện") {
+                khi_nhấn { đặt_chủ_đề() }
             }
         }
     }
@@ -217,21 +248,20 @@ ung_dung("Vi du ViBao") {
 
 ## Project status
 
-ViBao 0.1.0 is an early, first public release — usable for basic apps,
-but with real rough edges. A few worth knowing about:
+ViBao 0.1.5 is still early — usable for small apps and personal sites, but
+with real rough edges. A few worth knowing about:
 
-- Action option keys (`kieu:`/`thoi_gian:` in `notify(...)`) currently
-  only resolve in Vietnamese, even in an all-English file — the
-  English-looking `type:`/`duration:` compiles with no error but is
-  silently ignored.
 - Several components (`modal`, `tabs`, `table`, `chart`, and others) are
   still placeholders that render an empty `<div>`. Use `@the` to build
   the equivalent yourself in the meantime.
 - `direction`/`gap`/`letter_spacing` have no effect on `box` — only on
   `flex`/`grid`/`scroll`.
+- Every route shares one `index.html`, so titles and Open Graph tags are
+  the same site-wide; hosting under a sub-path is not verified yet.
+- API keys written in a `.vbao` file are visible in the browser.
 
 The full list, including what's disabled, what needs more real-world
-testing, and what's intentionally out of scope for 0.1.0, is in
+testing, and what's intentionally out of scope for 0.1.5, is in
 [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md). Bug reports and feedback —
 on the rough edges above, the locale/keyword design, or anything else —
 are very welcome; see [Contributing](#contributing).
@@ -252,6 +282,7 @@ The workspace's test suite spans three layers:
   `vibaoc build app.vbao` from an end user would produce.
 
 ```bash
+bash scripts/build-runtime.sh   # once, so the e2e tests can find the runtime
 cargo test --workspace
 ```
 
