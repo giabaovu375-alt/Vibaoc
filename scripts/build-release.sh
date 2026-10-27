@@ -18,10 +18,11 @@ ARCH="$(uname -m)"
 case "$OS" in
   linux) OS_NAME="linux" ;;
   darwin) OS_NAME="macos" ;;
+  mingw*|msys*|cygwin*) OS_NAME="windows" ;;
   *) error "unsupported operating system '$OS'" ;;
 esac
 case "$ARCH" in
-  x86_64|amd64) ARCH_NAME="x64" ;;
+  x86_64|amd64) ARCH_NAME="x86_64" ;;
   arm64|aarch64) ARCH_NAME="arm64" ;;
   *) error "unsupported CPU architecture '$ARCH'" ;;
 esac

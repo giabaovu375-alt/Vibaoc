@@ -16,12 +16,14 @@
   `twitter:card`; sinh `404.html` khi có từ 2 route.
 - **`vibaoc serve`**: build, mở server cục bộ, tự build lại khi sửa file.
 - **Ví dụ mới**: `portfolio.vbao` (theme, repo lấy từ GitHub) và `chat_groq.vbao`.
+- **Phát hành**: workflow GitHub Actions `release.yml` build gói cho Linux, Windows và macOS khi đẩy tag `v*`, kèm `SHA256SUMS.txt`.
 
 ### Sửa
 
 - Tên biến `$` viết có dấu (`$tên`, `$kỹ_năng`) giờ được chuẩn hoá như mọi identifier khác; nội suy chuỗi nhận tên biến có dấu.
 - `căn: trái`/`phải` trong `flex` sinh đúng `justify-content` (trước đây giá trị tiếng Việt lọt thẳng ra CSS).
 - CSS nền không còn mang theo comment nhà phát triển vào `style.css` của trang build ra.
+- `build-release.sh` đặt tên gói `x86_64` (trước đây `x64`) để khớp với `install.sh` và `INSTALLATION.md`; nhận diện cả Windows (Git Bash).
 - Bỏ khai báo `[profile.release]` trong `vibao-runtime/Cargo.toml`: Cargo vốn bỏ qua khai báo này ở crate không phải gốc
   workspace và in cảnh báo mỗi lần build.
 

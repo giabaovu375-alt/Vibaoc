@@ -35,7 +35,7 @@ After publishing the archive, end users install with one command:
 curl -fsSL https://raw.githubusercontent.com/giabaovu375-alt/Vibaoc/main/scripts/install.sh | sh
 ```
 
-The installer detects Linux/macOS and x64/arm64, chooses a suitable PATH
+The installer detects Linux/macOS and x86_64/arm64, chooses a suitable PATH
 location (including Termux `$PREFIX/bin`), installs the compiler and browser
 runtime together, and updates a user shell profile when necessary. Users do
 not install Rust, Cargo, rustup, wasm-pack, wasm-bindgen, or manually copy WASM.
@@ -56,6 +56,24 @@ ls /tmp/vibao-test/pkg
 ```
 
 Expected runtime files are `vibao_runtime.js` and `vibao_runtime_bg.wasm`.
+
+## Release packages from GitHub Actions
+
+Pushing a tag that starts with `v` runs `.github/workflows/release.yml`. It builds the compiler and the WASM runtime on
+Linux x86_64, Windows x86_64, macOS arm64 and macOS x86_64, smoke-tests each package, then attaches the packages and
+`SHA256SUMS.txt` to the GitHub release for that tag.
+
+```bash
+git tag v0.1.5
+git push origin v0.1.5
+```
+
+The Linux arm64 package (for Termux) links against Android libraries, so it is built on the device with
+`bash scripts/build-release.sh 0.1.5` and attached by hand:
+
+```bash
+gh release upload v0.1.5 release/vibao-0.1.5-linux-arm64.tar.gz
+```
 
 ## Publish
 
